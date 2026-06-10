@@ -1358,9 +1358,9 @@ function ForgeChallenge({ profile }) {
   async function generateChallenges() {
     setGenerating(true);
     try {
-      const response = await fetch('/api/generate', {
+      const response = await fetch('https://bffcrhjdibxqfmdreksi.supabase.co/functions/v1/generate', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${SUPABASE_ANON_KEY}` },
         body: JSON.stringify({
           prompt: 'Generate 7 daily challenges for ESix10 Initiative — a faith-based community built on Ephesians 6:10. Mix categories: Scripture (priority), Physical, Mental, Preparedness, Leadership. Each challenge doable in one day, direct faith-forward voice. Return ONLY JSON array, no markdown: [{"title":"","description":"","category":"Scripture|Physical|Mental|Preparedness|Leadership"}]',
           max_tokens: 2000
@@ -1504,9 +1504,9 @@ function ForgeWOD({ profile }) {
   async function generateWODs() {
     setGenerating(true);
     try {
-      const response = await fetch('/api/generate', {
+      const response = await fetch('https://bffcrhjdibxqfmdreksi.supabase.co/functions/v1/generate', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${SUPABASE_ANON_KEY}` },
         body: JSON.stringify({
           prompt: 'Generate 7 WODs for ESix10 — faith-based community focused on physical readiness. Bodyweight only or minimal equipment. Direct no-nonsense voice. Return ONLY JSON array: [{"title":"","warmup":"","main_work":"","cooldown":"","coaching_notes":"","estimated_minutes":30,"difficulty":3}] difficulty 1-5, main_work include sets/reps clearly.',
           max_tokens: 3000
