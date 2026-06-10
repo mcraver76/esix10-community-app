@@ -733,6 +733,8 @@ function Messages({ profile, members }) {
   }, [activeRoom]);
 
   async function loadMessages() {
+    if (!activeRoom) return;
+    console.log("Querying room:", activeRoom);
     const { data: msgs, error } = await supabase
       .from("messages")
       .select("*")
@@ -744,7 +746,8 @@ function Messages({ profile, members }) {
     if (!msgs || msgs.length === 0) { setMessages([]); return; }
 
     // Get unique user IDs and fetch their profiles
-    const userIds = [...new Set(msgs.map(m => m.user_id))];
+    const userIds = [...new Set(msgs.map(m => m.user_id).filter(Boolean))];
+    if (userIds.length === 0) { setMessages([]); return; }
     const { data: profiles } = await supabase
       .from("profiles")
       .select("id, full_name, username, group_id")
