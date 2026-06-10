@@ -1,5 +1,16 @@
-import { useState, useEffect, useRef } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import { createClient } from "@supabase/supabase-js";
+
+// Mobile detection hook
+function useMobile() {
+  const [isMobile, setIsMobile] = React.useState(window.innerWidth <= 768);
+  useEffect(() => {
+    const handler = () => setIsMobile(window.innerWidth <= 768);
+    window.addEventListener('resize', handler);
+    return () => window.removeEventListener('resize', handler);
+  }, []);
+  return isMobile;
+}
 
 const SUPABASE_URL = "https://bffcrhjdibxqfmdreksi.supabase.co";
 const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImJmZmNyaGpkaWJ4cWZtZHJla3NpIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODEwNjkwMzgsImV4cCI6MjA5NjY0NTAzOH0.yZ7IunHcwTlMKu0uDvKnBnBLBpdDCsPLVWTygmaveEo";
@@ -33,8 +44,8 @@ const displayName = (profile) => {
 // ─── Styles ───────────────────────────────────────────────────────────────────
 const S = {
   app: { minHeight: "100vh", background: "#0a0a0a", color: "#fff", fontFamily: "'Lato', sans-serif", fontSize: 15 },
-  nav: { position: "fixed", top: 0, left: 0, right: 0, height: 70, background: "rgba(10,10,10,0.95)", borderBottom: "1px solid rgba(255,102,0,0.2)", display: "flex", alignItems: "center", justifyContent: "space-between", padding: "0 32px", zIndex: 100 },
-  navLogo: { fontFamily: "'Cinzel', serif", fontSize: 20, fontWeight: 600, color: "#fff", letterSpacing: "0.08em" },
+  nav: { position: "fixed", top: 0, left: 0, right: 0, height: 60, background: "rgba(10,10,10,0.98)", borderBottom: "1px solid rgba(255,102,0,0.2)", display: "flex", alignItems: "center", justifyContent: "space-between", padding: "0 16px", zIndex: 100 },
+  navLogo: { fontFamily: "'Cinzel', serif", fontSize: 16, fontWeight: 600, color: "#fff", letterSpacing: "0.08em" },
   navLogoSub: { color: "#FF6600", fontSize: 9, display: "block", letterSpacing: "0.35em", marginTop: -2 },
   navRight: { display: "flex", alignItems: "center", gap: 16 },
   badge: { background: "rgba(255,102,0,0.15)", color: "#FF6600", padding: "4px 12px", borderRadius: 20, fontSize: 12, fontWeight: 600, letterSpacing: "0.1em", textTransform: "uppercase" },
@@ -989,73 +1000,100 @@ export default function App() {
 
   const myGroup = GROUPS.find(g => g.id === profile.group_id);
   const isAdmin = profile?.role === "admin";
+  const isMobile = useMobile();
+
+  const NAV_ITEMS = [
+    { id: "feed", label: "Feed", icon: "📋" },
+    { id: "messages", label: "Chat", icon: "💬" },
+    { id: "events", label: "Events", icon: "📅" },
+    { id: "members", label: "Members", icon: "👥" },
+    { id: "profile", label: "Profile", icon: "👤" },
+  ];
+
+  const CONTENT = (
+    <div style={{ flex: 1, padding: isMobile ? "16px 16px 80px" : "32px 32px 60px", maxWidth: isMobile ? "100%" : 800, overflow: "hidden" }}>
+      {tab === "feed" && (
+        <div>
+          {isMobile && (
+            <div style={{ display: "flex", gap: 8, marginBottom: 16, overflowX: "auto", paddingBottom: 4 }}>
+              {[{ id: "all", label: "All" }, ...(profile.role === "admin" ? GROUPS : GROUPS.filter(g => g.id === profile.group_id))].map(g => (
+                <button key={g.id} onClick={() => setFeedGroup(g.id)}
+                  style={{ ...S.tab(feedGroup === g.id), padding: "8px 14px", fontSize: 11, whiteSpace: "nowrap", flexShrink: 0, border: "none", cursor: "pointer" }}>
+                  {g.label || "All"}
+                </button>
+              ))}
+            </div>
+          )}
+          <Feed profile={profile} activeGroup={feedGroup} />
+        </div>
+      )}
+      {tab === "events" && <Events profile={profile} />}
+      {tab === "messages" && <Messages profile={profile} members={allMembers} />}
+      {tab === "members" && <Members profile={profile} />}
+      {tab === "profile" && <Profile profile={profile} onUpdate={setProfile} onSignOut={signOut} />}
+    </div>
+  );
 
   return (
-    <div style={S.app}>
+    <div style={{ ...S.app, paddingBottom: isMobile ? 60 : 0 }}>
       <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@400;600&family=Lato:wght@300;400;700&display=swap" rel="stylesheet" />
 
       {/* NAV */}
-      <nav style={S.nav}>
-        <div>
-          <span style={S.navLogo}>ESix10<span style={S.navLogoSub}>Community</span></span>
-        </div>
+      <nav style={{ ...S.nav, height: isMobile ? 56 : 70, padding: isMobile ? "0 12px" : "0 32px" }}>
+        <span style={{ ...S.navLogo, fontSize: isMobile ? 16 : 20 }}>ESix10<span style={S.navLogoSub}>Community</span></span>
         <div style={S.navRight}>
-          <span style={S.badge}>{myGroup?.icon} {myGroup?.label}</span>
-          {isAdmin && <span style={{ ...S.badge, background: "rgba(255,102,0,0.3)", color: "#FF6600" }}>Admin</span>}
-          <div style={{ width: 36, height: 36, borderRadius: "50%", background: "rgba(255,102,0,0.15)", display: "flex", alignItems: "center", justifyContent: "center", color: "#FF6600", fontFamily: "'Cinzel', serif", fontWeight: 600, cursor: "pointer" }} onClick={() => setTab("profile")}>
-            {(profile.username || profile.full_name || profile.email || "?")[0].toUpperCase()}
+          <span style={{ ...S.badge, fontSize: 10 }}>{myGroup?.icon} {isMobile ? "" : myGroup?.label}</span>
+          {isAdmin && !isMobile && <span style={{ ...S.badge, background: "rgba(255,102,0,0.3)", color: "#FF6600" }}>Admin</span>}
+          <div style={{ width: 32, height: 32, borderRadius: "50%", background: "rgba(255,102,0,0.15)", display: "flex", alignItems: "center", justifyContent: "center", color: "#FF6600", fontFamily: "'Cinzel', serif", fontWeight: 600, cursor: "pointer", fontSize: 13 }} onClick={() => setTab("profile")}>
+            {(profile.username || profile.full_name || "?")[0].toUpperCase()}
           </div>
         </div>
       </nav>
 
-      {/* MAIN */}
-      <div style={{ display: "flex", paddingTop: 70 }}>
-
-        {/* SIDEBAR */}
-        <div style={{ width: 220, minHeight: "calc(100vh - 70px)", borderRight: "1px solid rgba(255,255,255,0.05)", padding: "24px 16px", position: "sticky", top: 70, flexShrink: 0 }}>
-          <div style={{ marginBottom: 24 }}>
-            <p style={{ ...S.eyebrow, marginBottom: 12 }}>Feed</p>
-            {[
-              { id: "all", label: "My Feed", icon: "◎" },
-              ...(profile.role === "admin" ? GROUPS : GROUPS.filter(g => g.id === profile.group_id))
-            ].map(g => (
-              <div key={g.id}
-                onClick={() => { setTab("feed"); setFeedGroup(g.id); }}
-                style={{ padding: "10px 12px", borderRadius: 4, cursor: "pointer", marginBottom: 2, background: tab === "feed" && feedGroup === g.id ? "rgba(255,102,0,0.1)" : "transparent", color: tab === "feed" && feedGroup === g.id ? "#FF6600" : "#888", fontSize: 13, display: "flex", alignItems: "center", gap: 8 }}>
-                <span>{g.icon || "◎"}</span> {g.label || "My Feed"}
+      {isMobile ? (
+        <div style={{ paddingTop: 56 }}>
+          {CONTENT}
+          {/* BOTTOM TAB BAR */}
+          <div style={{ position: "fixed", bottom: 0, left: 0, right: 0, height: 60, background: "rgba(10,10,10,0.98)", borderTop: "1px solid rgba(255,102,0,0.15)", display: "flex", zIndex: 100 }}>
+            {NAV_ITEMS.map(item => (
+              <div key={item.id} onClick={() => setTab(item.id)}
+                style={{ flex: 1, display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", gap: 2, cursor: "pointer", color: tab === item.id ? "#FF6600" : "#555", fontSize: 9, letterSpacing: "0.05em", textTransform: "uppercase" }}>
+                <span style={{ fontSize: 18 }}>{item.icon}</span>
+                <span>{item.label}</span>
               </div>
             ))}
           </div>
-          <div style={{ marginBottom: 24 }}>
-            <p style={{ ...S.eyebrow, marginBottom: 12 }}>Navigation</p>
-            {[
-              { id: "events", label: "Events", icon: "📅" },
-              { id: "messages", label: "Messages", icon: "💬" },
-              { id: "members", label: "Members", icon: "👥" },
-              { id: "profile", label: "My Profile", icon: "👤" },
-            ].map(item => (
-              <div key={item.id}
-                onClick={() => setTab(item.id)}
-                style={{ padding: "10px 12px", borderRadius: 4, cursor: "pointer", marginBottom: 2, background: tab === item.id ? "rgba(255,102,0,0.1)" : "transparent", color: tab === item.id ? "#FF6600" : "#888", fontSize: 13, display: "flex", alignItems: "center", gap: 8 }}>
-                <span>{item.icon}</span> {item.label}
-              </div>
-            ))}
-          </div>
-          <div style={{ marginTop: "auto", paddingTop: 16, borderTop: "1px solid rgba(255,255,255,0.05)" }}>
-            <div style={{ fontSize: 12, color: "#555", marginBottom: 4 }}>{formatName(profile.full_name)}</div>
-            <div style={{ fontSize: 11, color: "#444" }}>{profile.email}</div>
-          </div>
         </div>
-
-        {/* CONTENT */}
-        <div style={{ flex: 1, padding: "32px 32px 60px", maxWidth: 800 }}>
-          {tab === "feed" && <Feed profile={profile} activeGroup={feedGroup} />}
-          {tab === "events" && <Events profile={profile} />}
-          {tab === "messages" && <Messages profile={profile} members={allMembers} />}
-          {tab === "members" && <Members profile={profile} />}
-          {tab === "profile" && <Profile profile={profile} onUpdate={setProfile} onSignOut={signOut} />}
+      ) : (
+        <div style={{ display: "flex", paddingTop: 70 }}>
+          {/* SIDEBAR */}
+          <div style={{ width: 200, minHeight: "calc(100vh - 70px)", borderRight: "1px solid rgba(255,255,255,0.05)", padding: "24px 12px", position: "sticky", top: 70, flexShrink: 0 }}>
+            <div style={{ marginBottom: 24 }}>
+              <p style={{ ...S.eyebrow, marginBottom: 12 }}>Feed</p>
+              {[{ id: "all", label: "My Feed", icon: "◎" }, ...(profile.role === "admin" ? GROUPS : GROUPS.filter(g => g.id === profile.group_id))].map(g => (
+                <div key={g.id} onClick={() => { setTab("feed"); setFeedGroup(g.id); }}
+                  style={{ padding: "10px 12px", borderRadius: 4, cursor: "pointer", marginBottom: 2, background: tab === "feed" && feedGroup === g.id ? "rgba(255,102,0,0.1)" : "transparent", color: tab === "feed" && feedGroup === g.id ? "#FF6600" : "#888", fontSize: 13, display: "flex", alignItems: "center", gap: 8 }}>
+                  <span>{g.icon || "◎"}</span> {g.label || "My Feed"}
+                </div>
+              ))}
+            </div>
+            <div style={{ marginBottom: 24 }}>
+              <p style={{ ...S.eyebrow, marginBottom: 12 }}>Navigation</p>
+              {NAV_ITEMS.filter(i => i.id !== "feed").map(item => (
+                <div key={item.id} onClick={() => setTab(item.id)}
+                  style={{ padding: "10px 12px", borderRadius: 4, cursor: "pointer", marginBottom: 2, background: tab === item.id ? "rgba(255,102,0,0.1)" : "transparent", color: tab === item.id ? "#FF6600" : "#888", fontSize: 13, display: "flex", alignItems: "center", gap: 8 }}>
+                  <span>{item.icon}</span> {item.label}
+                </div>
+              ))}
+            </div>
+            <div style={{ paddingTop: 16, borderTop: "1px solid rgba(255,255,255,0.05)" }}>
+              <div style={{ fontSize: 12, color: "#555", marginBottom: 2 }}>{profile.username ? `@${profile.username}` : formatName(profile.full_name)}</div>
+              <div style={{ fontSize: 11, color: "#444" }}>{profile.email}</div>
+            </div>
+          </div>
+          {CONTENT}
         </div>
-      </div>
+      )}
     </div>
   );
 }
