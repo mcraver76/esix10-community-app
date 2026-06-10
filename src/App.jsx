@@ -61,7 +61,9 @@ create table if not exists profiles (
   full_name text,
   group_id text,
   role text default 'member',
+  status text default 'pending',
   city text,
+  state text,
   bio text,
   created_at timestamp default now()
 );
@@ -130,7 +132,39 @@ function SetupModal({ onClose }) {
   );
 }
 
-function AuthScreen({ onAuth }) {
+function PendingScreen({ profile, onSignOut }) {
+  const group = GROUPS.find(g => g.id === profile.group_id);
+  return (
+    <div style={{ minHeight: "100vh", background: "#0a0a0a", display: "flex", alignItems: "center", justifyContent: "center", padding: 24 }}>
+      <div style={{ maxWidth: 480, width: "100%", textAlign: "center" }}>
+        <span style={{ fontFamily: "'Cinzel', serif", fontSize: 28, fontWeight: 600, color: "#fff" }}>ESix10</span>
+        <span style={{ color: "#FF6600", fontSize: 10, display: "block", letterSpacing: "0.35em", textTransform: "uppercase", marginBottom: 32 }}>Community</span>
+        <div style={{ ...S.card, textAlign: "left" }}>
+          <div style={{ textAlign: "center", marginBottom: 24 }}>
+            <div style={{ width: 60, height: 60, borderRadius: "50%", background: "rgba(255,102,0,0.1)", border: "2px solid rgba(255,102,0,0.3)", display: "flex", alignItems: "center", justifyContent: "center", margin: "0 auto 16px", fontSize: 24 }}>⏳</div>
+            <span style={S.eyebrow}>Application Received</span>
+            <h2 style={{ ...S.h2, fontSize: 22 }}>Pending Approval</h2>
+          </div>
+          <div style={S.divider} />
+          <p style={{ ...S.grey, lineHeight: 1.8, marginBottom: 16 }}>
+            Your application to join the <strong style={{ color: "#FF6600" }}>{group?.label || "ESix10"} community</strong> has been received and is being reviewed.
+          </p>
+          <p style={{ ...S.grey, lineHeight: 1.8, marginBottom: 24 }}>
+            You will receive an email confirmation once your application has been approved. This typically takes 24–48 hours.
+          </p>
+          <div style={{ background: "rgba(255,102,0,0.06)", border: "1px solid rgba(255,102,0,0.15)", borderRadius: 4, padding: "16px 20px", marginBottom: 24 }}>
+            <p style={{ color: "#AAAAAA", fontSize: 14, fontStyle: "italic", lineHeight: 1.7 }}>
+              "Iron sharpens iron, so one person sharpens another." — Proverbs 27:17
+            </p>
+          </div>
+          <button style={{ ...S.btnGhost, width: "100%", textAlign: "center" }} onClick={onSignOut}>Sign Out</button>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+
   const [mode, setMode] = useState("login");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
@@ -476,6 +510,18 @@ function Members({ profile }) {
     loadMembers();
   }
 
+  async function approve(id) {
+    await supabase.from("profiles").update({ status: "approved" }).eq("id", id);
+    loadMembers();
+  }
+
+  async function deny(id) {
+    await supabase.from("profiles").update({ status: "denied" }).eq("id", id);
+    loadMembers();
+  }
+
+  const pending = members.filter(m => m.status === "pending");
+
   let filtered = profile.role === "admin" && filter !== "all"
     ? members.filter(m => m.group_id === filter)
     : members;
@@ -484,6 +530,7 @@ function Members({ profile }) {
     filtered = filtered.filter(m => m.state?.toLowerCase().includes(stateFilter.toLowerCase()));
   }
 
+  const approved = filtered.filter(m => m.status === "approved" || m.role === "admin");
   const states = [...new Set(members.map(m => m.state).filter(Boolean))].sort();
   const myGroup = GROUPS.find(g => g.id === profile.group_id);
 
@@ -524,7 +571,42 @@ function Members({ profile }) {
         )}
       </div>
       <div style={{ marginTop: 20, display: "grid", gap: 8 }}>
-        {filtered.map(m => (
+
+        {/* PENDING APPROVALS — admin only */}
+        {profile.role === "admin" && pending.length > 0 && (
+          <div style={{ marginBottom: 24 }}>
+            <div style={{ display: "flex", alignItems: "center", gap: 12, marginBottom: 12 }}>
+              <span style={{ fontFamily: "'Cinzel', serif", fontSize: 16, color: "#fff" }}>Pending Approval</span>
+              <span style={{ background: "#FF6600", color: "#fff", borderRadius: 20, padding: "2px 10px", fontSize: 12, fontWeight: 600 }}>{pending.length}</span>
+            </div>
+            {pending.map(m => (
+              <div key={m.id} style={{ ...S.card, padding: "16px 20px", marginBottom: 8, borderLeft: "3px solid #FF6600" }}>
+                <div style={S.flexBetween}>
+                  <div style={S.flex}>
+                    <div style={{ width: 40, height: 40, borderRadius: "50%", background: "rgba(255,102,0,0.15)", display: "flex", alignItems: "center", justifyContent: "center", color: "#FF6600", fontFamily: "'Cinzel', serif", fontWeight: 600 }}>
+                      {(m.full_name || m.email || "?")[0].toUpperCase()}
+                    </div>
+                    <div>
+                      <div style={{ color: "#fff", fontFamily: "'Cinzel', serif", fontSize: 15 }}>{m.full_name || "Unnamed"}</div>
+                      <div style={S.muted}>{m.email}</div>
+                      {(m.city || m.state) && <div style={{ color: "#FF6600", fontSize: 12, marginTop: 2 }}>📍 {[m.city, m.state].filter(Boolean).join(", ")}</div>}
+                    </div>
+                  </div>
+                  <div style={S.flex}>
+                    <span style={S.badge}>{GROUPS.find(g => g.id === m.group_id)?.label || "No Group"}</span>
+                    <button style={{ ...S.btnSm, background: "#51cf66" }} onClick={() => approve(m.id)}>✓ Approve</button>
+                    <button style={S.btnDanger} onClick={() => deny(m.id)}>✕ Deny</button>
+                  </div>
+                </div>
+                {m.bio && <p style={{ ...S.muted, fontSize: 13, marginTop: 10, fontStyle: "italic" }}>{m.bio}</p>}
+              </div>
+            ))}
+            <div style={{ height: 1, background: "rgba(255,255,255,0.05)", margin: "20px 0" }} />
+          </div>
+        )}
+
+        {/* APPROVED MEMBERS */}
+        {approved.map(m => (
           <div key={m.id} style={{ ...S.card, padding: "16px 20px" }}>
             <div style={S.flexBetween}>
               <div style={S.flex}>
@@ -556,8 +638,60 @@ function Members({ profile }) {
       </div>
     </div>
   );
+}({ profile, onUpdate, onSignOut }) {
+  const [form, setForm] = useState({ full_name: profile.full_name || "", city: profile.city || "", state: profile.state || "", bio: profile.bio || "", group_id: profile.group_id || "" });
+  const [saving, setSaving] = useState(false);
+  const [msg, setMsg] = useState("");
+
+  async function save() {
+    setSaving(true);
+    await supabase.from("profiles").update(form).eq("id", profile.id);
+    setMsg("Profile saved.");
+    onUpdate({ ...profile, ...form });
+    setSaving(false);
+    setTimeout(() => setMsg(""), 3000);
+  }
+
+  return (
+    <div style={{ maxWidth: 600 }}>
+      <h2 style={S.h2}>Your Profile</h2>
+      <div style={S.divider} />
+      <div style={{ ...S.card, marginTop: 20 }}>
+        <div style={{ marginBottom: 16 }}>
+          <label style={S.label}>Full Name</label>
+          <input style={S.input} value={form.full_name} onChange={e => setForm({ ...form, full_name: e.target.value })} />
+        </div>
+        <div style={S.grid2}>
+          <div style={{ marginBottom: 16 }}>
+            <label style={S.label}>City</label>
+            <input style={S.input} placeholder="City" value={form.city} onChange={e => setForm({ ...form, city: e.target.value })} />
+          </div>
+          <div style={{ marginBottom: 16 }}>
+            <label style={S.label}>State</label>
+            <input style={S.input} placeholder="State" value={form.state} onChange={e => setForm({ ...form, state: e.target.value })} />
+          </div>
+        </div>
+        <div style={{ marginBottom: 16 }}>
+          <label style={S.label}>Your Group</label>
+          <select style={S.input} value={form.group_id} onChange={e => setForm({ ...form, group_id: e.target.value })}>
+            {GROUPS.map(g => <option key={g.id} value={g.id}>{g.label} — {g.subtitle}</option>)}
+          </select>
+        </div>
+        <div style={{ marginBottom: 20 }}>
+          <label style={S.label}>Bio</label>
+          <textarea style={{ ...S.input, minHeight: 80 }} placeholder="Tell the community a little about yourself..." value={form.bio} onChange={e => setForm({ ...form, bio: e.target.value })} />
+        </div>
+        {msg && <p style={S.success}>{msg}</p>}
+        <div style={S.flex}>
+          <button style={S.btn} onClick={save} disabled={saving}>{saving ? "Saving..." : "Save Profile"}</button>
+          <button style={S.btnGhost} onClick={onSignOut}>Sign Out</button>
+        </div>
+      </div>
+    </div>
+  );
 }
 
+// ─── Profile ──────────────────────────────────────────────────────────────────
 function Profile({ profile, onUpdate, onSignOut }) {
   const [form, setForm] = useState({ full_name: profile.full_name || "", city: profile.city || "", state: profile.state || "", bio: profile.bio || "", group_id: profile.group_id || "" });
   const [saving, setSaving] = useState(false);
@@ -636,23 +770,25 @@ export default function App() {
     try {
       const { data, error } = await supabase.from("profiles").select("*").eq("id", u.id).single();
       if (error && error.code === "PGRST116") {
-        // Profile doesn't exist yet — create it
+        // Profile doesn't exist yet — create it as pending
+        const isAdmin = u.email === ADMIN_EMAIL;
         await supabase.from("profiles").insert({ 
           id: u.id, 
           email: u.email, 
           full_name: u.user_metadata?.full_name || "", 
-          role: u.email === ADMIN_EMAIL ? "admin" : "member" 
+          role: isAdmin ? "admin" : "member",
+          status: isAdmin ? "approved" : "pending"
         });
         const { data: newProfile } = await supabase.from("profiles").select("*").eq("id", u.id).single();
         setProfile(newProfile);
       } else if (error) {
-        // Table doesn't exist
         setShowSetup(true);
       } else {
-        // Update role if admin email
-        if (u.email === ADMIN_EMAIL && data.role !== "admin") {
-          await supabase.from("profiles").update({ role: "admin" }).eq("id", u.id);
+        // Auto-approve and set admin role for admin email
+        if (u.email === ADMIN_EMAIL && (data.role !== "admin" || data.status !== "approved")) {
+          await supabase.from("profiles").update({ role: "admin", status: "approved" }).eq("id", u.id);
           data.role = "admin";
+          data.status = "approved";
         }
         setProfile(data);
       }
@@ -679,6 +815,7 @@ export default function App() {
   if (!user) return <AuthScreen onAuth={(u) => loadProfile(u)} />;
   if (showSetup) return <SetupModal onClose={() => { setShowSetup(false); loadProfile(user); }} />;
   if (!profile?.group_id) return <GroupSelect user={user} onSelect={(g) => { setProfile({ ...profile, group_id: g }); setFeedGroup(g); }} />;
+  if (profile?.status === "pending") return <PendingScreen profile={profile} onSignOut={signOut} />;
 
   const myGroup = GROUPS.find(g => g.id === profile.group_id);
   const isAdmin = profile.role === "admin";
