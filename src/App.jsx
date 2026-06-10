@@ -1321,7 +1321,7 @@ function ForgeChallenge({ profile }) {
   useEffect(() => { loadChallenge(); }, []);
 
   async function loadChallenge() {
-    const { data } = await supabase.from('forge_challenges').select('*').eq('scheduled_date', today).single();
+    const { data } = await supabase.from('forge_challenges').select('*').eq('scheduled_date', today).maybeSingle();
     setChallenge(data || null);
     if (data) {
       const { count } = await supabase.from('forge_challenge_completions').select('*', { count: 'exact', head: true }).eq('challenge_id', data.id);
@@ -1474,7 +1474,7 @@ function ForgeWOD({ profile }) {
   useEffect(() => { loadWOD(); }, []);
 
   async function loadWOD() {
-    const { data } = await supabase.from('forge_wods').select('*').eq('scheduled_date', today).single();
+    const { data } = await supabase.from('forge_wods').select('*').eq('scheduled_date', today).maybeSingle();
     setWod(data || null);
     if (data) {
       const { count } = await supabase.from('forge_wod_completions').select('*', { count: 'exact', head: true }).eq('wod_id', data.id);
