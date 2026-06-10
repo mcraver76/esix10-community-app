@@ -745,10 +745,19 @@ function Messages({ profile, members }) {
   async function send() {
     if (!body.trim() || !activeRoom) return;
     setPosting(true);
-    await supabase.from("messages").insert({ room_id: activeRoom, user_id: profile.id, body: body.trim() });
-    setBody("");
+    const { error } = await supabase.from("messages").insert({ 
+      room_id: activeRoom, 
+      user_id: profile.id, 
+      body: body.trim() 
+    });
+    if (error) {
+      alert(`Message failed: ${error.message}`);
+      console.error("Message error:", error);
+    } else {
+      setBody("");
+      loadMessages();
+    }
     setPosting(false);
-    loadMessages();
   }
 
   async function deleteMessage(id) {
