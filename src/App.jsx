@@ -1347,7 +1347,7 @@ export default function App() {
       </nav>
 
       {isMobile ? (
-        <div style={{ paddingTop: 56 }}>
+        <div style={{ paddingTop: 96 }}>
           {CONTENT}
           {/* BOTTOM TAB BAR */}
           <div style={{ position: "fixed", bottom: 0, left: 0, right: 0, height: 60, background: "rgba(10,10,10,0.98)", borderTop: "1px solid rgba(255,102,0,0.15)", display: "flex", zIndex: 100 }}>
