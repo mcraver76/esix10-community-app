@@ -733,13 +733,32 @@ function Messages({ profile, members }) {
   }, [activeRoom]);
 
   async function loadMessages() {
-    const { data } = await supabase
+    const { data: msgs, error } = await supabase
       .from("messages")
-      .select("*, profiles(full_name, username, group_id)")
+      .select("*")
       .eq("room_id", activeRoom)
       .order("created_at", { ascending: true })
       .limit(50);
-    setMessages(data || []);
+    
+    if (error) { console.error("Messages error:", error); return; }
+    if (!msgs || msgs.length === 0) { setMessages([]); return; }
+
+    // Get unique user IDs and fetch their profiles
+    const userIds = [...new Set(msgs.map(m => m.user_id))];
+    const { data: profiles } = await supabase
+      .from("profiles")
+      .select("id, full_name, username, group_id")
+      .in("id", userIds);
+
+    const profileMap = {};
+    (profiles || []).forEach(p => { profileMap[p.id] = p; });
+
+    const enriched = msgs.map(m => ({
+      ...m,
+      profiles: profileMap[m.user_id] || null
+    }));
+
+    setMessages(enriched);
   }
 
   async function send() {
