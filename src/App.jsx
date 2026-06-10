@@ -1358,17 +1358,16 @@ function ForgeChallenge({ profile }) {
   async function generateChallenges() {
     setGenerating(true);
     try {
-      const response = await fetch('https://api.anthropic.com/v1/messages', {
+      const response = await fetch('/api/generate', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          model: 'claude-sonnet-4-20250514',
-          max_tokens: 2000,
-          messages: [{ role: 'user', content: 'Generate 7 daily challenges for ESix10 Initiative — a faith-based community built on Ephesians 6:10. Mix categories: Scripture (priority), Physical, Mental, Preparedness, Leadership. Each challenge doable in one day, direct faith-forward voice. Return ONLY JSON array, no markdown: [{"title":"","description":"","category":"Scripture|Physical|Mental|Preparedness|Leadership"}]' }]
+          prompt: 'Generate 7 daily challenges for ESix10 Initiative — a faith-based community built on Ephesians 6:10. Mix categories: Scripture (priority), Physical, Mental, Preparedness, Leadership. Each challenge doable in one day, direct faith-forward voice. Return ONLY JSON array, no markdown: [{"title":"","description":"","category":"Scripture|Physical|Mental|Preparedness|Leadership"}]',
+          max_tokens: 2000
         })
       });
       const data = await response.json();
-      const text = data.content[0].text.replace(/```json|```/g, '').trim();
+      const text = data.content.replace(/```json|```/g, '').trim();
       const challenges = JSON.parse(text);
       const insertData = challenges.map((c, i) => {
         const d = new Date(); d.setDate(d.getDate() + i + 1);
@@ -1504,17 +1503,16 @@ function ForgeWOD({ profile }) {
   async function generateWODs() {
     setGenerating(true);
     try {
-      const response = await fetch('https://api.anthropic.com/v1/messages', {
+      const response = await fetch('/api/generate', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          model: 'claude-sonnet-4-20250514',
-          max_tokens: 3000,
-          messages: [{ role: 'user', content: 'Generate 7 WODs for ESix10 — faith-based community focused on physical readiness. Bodyweight only or minimal equipment. Direct no-nonsense voice. Return ONLY JSON array: [{"title":"","warmup":"","main_work":"","cooldown":"","coaching_notes":"","estimated_minutes":30,"difficulty":3}] difficulty 1-5, main_work include sets/reps clearly.' }]
+          prompt: 'Generate 7 WODs for ESix10 — faith-based community focused on physical readiness. Bodyweight only or minimal equipment. Direct no-nonsense voice. Return ONLY JSON array: [{"title":"","warmup":"","main_work":"","cooldown":"","coaching_notes":"","estimated_minutes":30,"difficulty":3}] difficulty 1-5, main_work include sets/reps clearly.',
+          max_tokens: 3000
         })
       });
       const data = await response.json();
-      const text = data.content[0].text.replace(/```json|```/g, '').trim();
+      const text = data.content.replace(/```json|```/g, '').trim();
       const wods = JSON.parse(text);
       const insertData = wods.map((w, i) => {
         const d = new Date(); d.setDate(d.getDate() + i + 1);
