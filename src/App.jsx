@@ -560,19 +560,31 @@ export default function App() {
 
   async function loadProfile(u) {
     setUser(u);
-    const { data, error } = await supabase.from("profiles").select("*").eq("id", u.id).single();
-    if (error && error.code === "PGRST116") {
-      // Table doesn't exist yet
+    try {
+      const { data, error } = await supabase.from("profiles").select("*").eq("id", u.id).single();
+      if (error && error.code === "PGRST116") {
+        // Profile doesn't exist yet — create it
+        await supabase.from("profiles").insert({ 
+          id: u.id, 
+          email: u.email, 
+          full_name: u.user_metadata?.full_name || "", 
+          role: u.email === ADMIN_EMAIL ? "admin" : "member" 
+        });
+        const { data: newProfile } = await supabase.from("profiles").select("*").eq("id", u.id).single();
+        setProfile(newProfile);
+      } else if (error) {
+        // Table doesn't exist
+        setShowSetup(true);
+      } else {
+        // Update role if admin email
+        if (u.email === ADMIN_EMAIL && data.role !== "admin") {
+          await supabase.from("profiles").update({ role: "admin" }).eq("id", u.id);
+          data.role = "admin";
+        }
+        setProfile(data);
+      }
+    } catch(e) {
       setShowSetup(true);
-      setLoading(false);
-      return;
-    }
-    if (!data) {
-      await supabase.from("profiles").insert({ id: u.id, email: u.email, full_name: u.user_metadata?.full_name, role: u.email === ADMIN_EMAIL ? "admin" : "member" });
-      const { data: newProfile } = await supabase.from("profiles").select("*").eq("id", u.id).single();
-      setProfile(newProfile);
-    } else {
-      setProfile(data);
     }
     setLoading(false);
   }
