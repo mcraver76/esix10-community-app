@@ -25,6 +25,23 @@ const GROUPS = [
 
 const ADMIN_EMAIL = "michael@esix10.com";
 
+const REACTIONS = ["🔥", "💪", "🙏", "❤️", "✝️"];
+
+const VERSES = [
+  { text: "Be strong in the Lord and in his mighty power.", ref: "Ephesians 6:10" },
+  { text: "Iron sharpens iron, so one person sharpens another.", ref: "Proverbs 27:17" },
+  { text: "I can do all things through Christ who strengthens me.", ref: "Philippians 4:13" },
+  { text: "For God has not given us a spirit of fear, but of power and of love and of a sound mind.", ref: "2 Timothy 1:7" },
+  { text: "The Lord is my strength and my shield; my heart trusts in him.", ref: "Psalm 28:7" },
+  { text: "Be watchful, stand firm in the faith, act like men, be strong.", ref: "1 Corinthians 16:13" },
+  { text: "No weapon formed against you shall prosper.", ref: "Isaiah 54:17" },
+];
+
+const getTodayVerse = () => {
+  const day = new Date().getDay();
+  return VERSES[day % VERSES.length];
+};
+
 // Format name as First name + Last initial
 const formatName = (fullName) => {
   if (!fullName) return "Member";
@@ -40,6 +57,21 @@ const displayName = (profile) => {
 };
 
 
+
+// ─── Global CSS ───────────────────────────────────────────────────────────────
+const GLOBAL_CSS = `
+@keyframes fadeUp { from { opacity:0; transform:translateY(16px); } to { opacity:1; transform:translateY(0); } }
+@keyframes slideIn { from { opacity:0; transform:translateX(-12px); } to { opacity:1; transform:translateX(0); } }
+@keyframes pulse { 0%,100% { opacity:1; } 50% { opacity:0.5; } }
+@keyframes shimmer { 0% { background-position: -200% 0; } 100% { background-position: 200% 0; } }
+.fade-up { animation: fadeUp 0.4s ease forwards; }
+.slide-in { animation: slideIn 0.3s ease forwards; }
+.tab-content { animation: fadeUp 0.3s ease forwards; }
+.reaction-btn:hover { transform: scale(1.2); transition: transform 0.15s; }
+.post-card:hover { border-color: rgba(255,102,0,0.2) !important; transition: border-color 0.2s; }
+.online-dot { width:8px; height:8px; border-radius:50%; background:#51cf66; display:inline-block; animation: pulse 2s infinite; }
+.verse-banner { background: linear-gradient(135deg, rgba(255,102,0,0.08) 0%, rgba(192,154,47,0.08) 100%); border: 1px solid rgba(255,102,0,0.2); border-radius:6px; padding:16px 20px; margin-bottom:20px; }
+`;
 
 // ─── Styles ───────────────────────────────────────────────────────────────────
 const S = {
@@ -350,28 +382,21 @@ function GroupSelect({ user, onSelect }) {
   );
 }
 
-function Feed({ profile, activeGroup }) {
+function Feed({ profile, activeGroup, isNewMember }) {
   const [posts, setPosts] = useState([]);
   const [body, setBody] = useState("");
   const [loading, setLoading] = useState(false);
   const [posting, setPosting] = useState(false);
+  const [postReactions, setPostReactions] = useState({});
+  const [showWelcome, setShowWelcome] = useState(isNewMember);
   const bottomRef = useRef(null);
-
-  // Determine what groups this member can see
-  const canSeeGroup = (groupId) => {
-    if (profile.role === "admin") return true;
-    if (activeGroup === "all") return groupId === profile.group_id;
-    return groupId === profile.group_id || groupId === activeGroup;
-  };
-
-  // Can only post to own group
+  const verse = getTodayVerse();
   const canPost = activeGroup === "all" || activeGroup === profile.group_id;
   const postTarget = activeGroup === "all" ? profile.group_id : activeGroup;
 
   useEffect(() => {
     loadPosts();
-    const channel = supabase
-      .channel("posts-realtime")
+    const channel = supabase.channel("posts-realtime")
       .on("postgres_changes", { event: "*", schema: "public", table: "posts" }, () => loadPosts())
       .subscribe();
     return () => supabase.removeChannel(channel);
@@ -379,27 +404,22 @@ function Feed({ profile, activeGroup }) {
 
   async function loadPosts() {
     setLoading(true);
-    let q = supabase.from("posts").select("*, profiles(full_name, group_id, role)").order("created_at", { ascending: false }).limit(50);
-    
-    // Non-admins can only see their own group
-    if (profile.role !== "admin") {
-      q = q.eq("group_id", profile.group_id);
-    } else if (activeGroup !== "all") {
-      q = q.eq("group_id", activeGroup);
-    }
-    
+    let q = supabase.from("posts").select("*, profiles(full_name, username, group_id, role)").order("created_at", { ascending: false }).limit(50);
+    if (profile.role !== "admin") q = q.eq("group_id", profile.group_id);
+    else if (activeGroup !== "all") q = q.eq("group_id", activeGroup);
     const { data } = await q;
     setPosts(data || []);
+    const reactionMap = {};
+    (data || []).forEach(p => { reactionMap[p.id] = p.reactions || {}; });
+    setPostReactions(reactionMap);
     setLoading(false);
   }
 
   async function submitPost() {
     if (!body.trim() || !canPost) return;
     setPosting(true);
-    await supabase.from("posts").insert({ user_id: profile.id, group_id: postTarget, body: body.trim() });
-    setBody("");
-    setPosting(false);
-    loadPosts();
+    await supabase.from("posts").insert({ user_id: profile.id, group_id: postTarget, body: body.trim(), reactions: {} });
+    setBody(""); setPosting(false); loadPosts();
   }
 
   async function deletePost(id) {
@@ -407,67 +427,95 @@ function Feed({ profile, activeGroup }) {
     loadPosts();
   }
 
-  const groupName = GROUPS.find(g => g.id === (postTarget))?.label || "Your Group";
+  async function addReaction(postId, emoji) {
+    const current = postReactions[postId] || {};
+    const updated = { ...current, [emoji]: (current[emoji] || 0) + 1 };
+    await supabase.from("posts").update({ reactions: updated }).eq("id", postId);
+    setPostReactions(prev => ({ ...prev, [postId]: updated }));
+  }
+
+  const groupName = GROUPS.find(g => g.id === postTarget)?.label || "Your Group";
 
   return (
-    <div>
+    <div className="tab-content">
+      {showWelcome && (
+        <div style={{ background: "linear-gradient(135deg, rgba(255,102,0,0.15), rgba(192,154,47,0.1))", border: "1px solid rgba(255,102,0,0.3)", borderRadius: 6, padding: "20px 24px", marginBottom: 20, position: "relative" }}>
+          <button onClick={() => setShowWelcome(false)} style={{ position: "absolute", top: 12, right: 16, background: "none", border: "none", color: "#666", cursor: "pointer", fontSize: 18 }}>x</button>
+          <span style={S.eyebrow}>Welcome to ESix10</span>
+          <h3 style={{ fontFamily: "'Cinzel', serif", fontSize: 20, color: "#fff", marginBottom: 8 }}>You are in. Now stand firm.</h3>
+          <p style={{ color: "#AAAAAA", fontSize: 14, lineHeight: 1.7 }}>You have joined the {GROUPS.find(g => g.id === profile.group_id)?.label}. Introduce yourself, engage with the community, and stand firm. Ephesians 6:10</p>
+        </div>
+      )}
+      <div className="verse-banner" style={{ marginBottom: 20 }}>
+        <div style={{ display: "flex", alignItems: "flex-start", gap: 12 }}>
+          <span style={{ fontSize: 20 }}>✝️</span>
+          <div>
+            <span style={{ ...S.eyebrow, marginBottom: 4 }}>Verse of the Day</span>
+            <p style={{ fontFamily: "'Cinzel', serif", fontSize: 14, fontStyle: "italic", color: "#fff", lineHeight: 1.7, marginBottom: 4 }}>"{verse.text}"</p>
+            <p style={{ color: "#FF6600", fontSize: 12, letterSpacing: "0.1em" }}>— {verse.ref}</p>
+          </div>
+        </div>
+      </div>
       <div style={S.card}>
         <label style={S.label}>Share with {groupName}</label>
         {!canPost && profile.role !== "admin" ? (
-          <p style={{ ...S.muted, padding: "16px 0" }}>You can only post to your own group — {GROUPS.find(g => g.id === profile.group_id)?.label}.</p>
+          <p style={{ ...S.muted, padding: "16px 0" }}>You can only post to your own group.</p>
         ) : (
           <>
-            <textarea
-              style={{ ...S.input, minHeight: 90, resize: "vertical" }}
-              placeholder="What's on your mind? Share a win, ask a question, encourage someone..."
-              value={body}
-              onChange={e => setBody(e.target.value)}
-            />
+            <textarea style={{ ...S.input, minHeight: 90, resize: "vertical" }} placeholder="Share a win, ask a question, encourage someone..." value={body} onChange={e => setBody(e.target.value)} />
             <div style={{ display: "flex", justifyContent: "flex-end", marginTop: 12 }}>
-              <button style={S.btn} onClick={submitPost} disabled={posting || !body.trim()}>
-                {posting ? "Posting..." : "Post"}
-              </button>
+              <button style={S.btn} onClick={submitPost} disabled={posting || !body.trim()}>{posting ? "Posting..." : "Post"}</button>
             </div>
           </>
         )}
       </div>
       <div style={{ marginTop: 20 }}>
-        {loading && <p style={{ ...S.muted, textAlign: "center", padding: 40 }}>Loading posts...</p>}
+        {loading && <p style={{ ...S.muted, textAlign: "center", padding: 40 }}>Loading...</p>}
         {!loading && posts.length === 0 && (
           <div style={{ textAlign: "center", padding: 60 }}>
             <p style={{ ...S.grey, fontSize: 18, fontFamily: "'Cinzel', serif", marginBottom: 8 }}>No posts yet.</p>
             <p style={S.muted}>Be the first to post in {groupName}.</p>
           </div>
         )}
-        {posts.map(post => (
-          <div key={post.id} style={S.post}>
-            <div style={S.flexBetween}>
-              <div style={S.flex}>
-                <div style={{ width: 36, height: 36, borderRadius: "50%", background: "rgba(255,102,0,0.15)", display: "flex", alignItems: "center", justifyContent: "center", color: "#FF6600", fontFamily: "'Cinzel', serif", fontSize: 14, fontWeight: 600 }}>
-                  {(post.profiles?.full_name || "?")[0].toUpperCase()}
+        {posts.map(post => {
+          const reactions = postReactions[post.id] || post.reactions || {};
+          return (
+            <div key={post.id} className="post-card" style={{ ...S.post, marginBottom: 12 }}>
+              <div style={S.flexBetween}>
+                <div style={S.flex}>
+                  <div style={{ width: 38, height: 38, borderRadius: "50%", background: "linear-gradient(135deg, rgba(255,102,0,0.3), rgba(192,154,47,0.2))", display: "flex", alignItems: "center", justifyContent: "center", color: "#FF6600", fontFamily: "'Cinzel', serif", fontSize: 15, fontWeight: 600, border: "1px solid rgba(255,102,0,0.2)" }}>
+                    {(post.profiles?.username || post.profiles?.full_name || "?")[0].toUpperCase()}
+                  </div>
+                  <div>
+                    <span style={S.postAuthor}>{displayName(post.profiles)}</span>
+                    {post.profiles?.role === "admin" && <span style={{ ...S.badge, marginLeft: 8, fontSize: 10 }}>Admin</span>}
+                    <span style={S.postTime}>{new Date(post.created_at).toLocaleDateString()}</span>
+                  </div>
                 </div>
-                <div>
-                  <span style={S.postAuthor}>{displayName(post.profiles)}</span>
-                  {post.profiles?.role === "admin" && <span style={{ ...S.badge, marginLeft: 8, fontSize: 10 }}>Admin</span>}
-                  <span style={S.postTime}>{new Date(post.created_at).toLocaleDateString()}</span>
+                <div style={S.flex}>
+                  <span style={{ ...S.badge, fontSize: 10 }}>{GROUPS.find(g => g.id === post.group_id)?.label}</span>
+                  {(profile.role === "admin" || profile.id === post.user_id) && (
+                    <button style={S.btnDanger} onClick={() => deletePost(post.id)}>Delete</button>
+                  )}
                 </div>
               </div>
-              <div style={S.flex}>
-                <span style={{ ...S.badge, fontSize: 10 }}>{GROUPS.find(g => g.id === post.group_id)?.label || post.group_id}</span>
-                {(profile.role === "admin" || profile.id === post.user_id) && (
-                  <button style={S.btnDanger} onClick={() => deletePost(post.id)}>Delete</button>
-                )}
+              <p style={S.postBody}>{post.body}</p>
+              <div style={{ display: "flex", gap: 6, marginTop: 12, flexWrap: "wrap" }}>
+                {REACTIONS.map(emoji => (
+                  <button key={emoji} className="reaction-btn" onClick={() => addReaction(post.id, emoji)}
+                    style={{ background: reactions[emoji] ? "rgba(255,102,0,0.12)" : "rgba(255,255,255,0.03)", border: reactions[emoji] ? "1px solid rgba(255,102,0,0.3)" : "1px solid rgba(255,255,255,0.06)", borderRadius: 20, padding: "4px 10px", cursor: "pointer", fontSize: 13, color: reactions[emoji] ? "#FF6600" : "#666", display: "flex", alignItems: "center", gap: 4 }}>
+                    {emoji}{reactions[emoji] ? <span style={{ fontSize: 11 }}>{reactions[emoji]}</span> : null}
+                  </button>
+                ))}
               </div>
             </div>
-            <p style={S.postBody}>{post.body}</p>
-          </div>
-        ))}
+          );
+        })}
       </div>
       <div ref={bottomRef} />
     </div>
   );
 }
-
 function Events({ profile }) {
   const [events, setEvents] = useState([]);
   const [showForm, setShowForm] = useState(false);
@@ -1143,6 +1191,13 @@ export default function App() {
       let q = supabase.from("profiles").select("*").eq("status", "approved");
       if (profile.role !== "admin") q = q.eq("group_id", profile.group_id);
       q.then(({ data }) => setAllMembers(data || []));
+      // Update last seen
+      supabase.from("profiles").update({ last_seen: new Date().toISOString() }).eq("id", profile.id);
+      // Update every 2 minutes
+      const interval = setInterval(() => {
+        supabase.from("profiles").update({ last_seen: new Date().toISOString() }).eq("id", profile.id);
+      }, 120000);
+      return () => clearInterval(interval);
     }
   }, [profile?.id]);
 
@@ -1251,6 +1306,7 @@ export default function App() {
   return (
     <div style={{ ...S.app, paddingBottom: isMobile ? 60 : 0 }}>
       <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@400;600&family=Lato:wght@300;400;700&display=swap" rel="stylesheet" />
+      <style>{GLOBAL_CSS}</style>
 
       {/* NAV */}
       <nav style={{ ...S.nav, height: isMobile ? 56 : 70, padding: isMobile ? "0 12px" : "0 32px" }}>
