@@ -1367,6 +1367,7 @@ function ForgeChallenge({ profile }) {
         })
       });
       const data = await response.json();
+      if (!data.content) throw new Error(data.error || 'No content returned');
       const text = data.content.replace(/```json|```/g, '').trim();
       const challenges = JSON.parse(text);
       const insertData = challenges.map((c, i) => {
@@ -1512,6 +1513,7 @@ function ForgeWOD({ profile }) {
         })
       });
       const data = await response.json();
+      if (!data.content) throw new Error(data.error || 'No content returned');
       const text = data.content.replace(/```json|```/g, '').trim();
       const wods = JSON.parse(text);
       const insertData = wods.map((w, i) => {
