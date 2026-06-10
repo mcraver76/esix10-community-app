@@ -247,11 +247,22 @@ function Feed({ profile, activeGroup }) {
   const [posting, setPosting] = useState(false);
   const bottomRef = useRef(null);
 
+  // Determine what groups this member can see
+  const canSeeGroup = (groupId) => {
+    if (profile.role === "admin") return true;
+    if (activeGroup === "all") return groupId === profile.group_id;
+    return groupId === profile.group_id || groupId === activeGroup;
+  };
+
+  // Can only post to own group
+  const canPost = activeGroup === "all" || activeGroup === profile.group_id;
+  const postTarget = activeGroup === "all" ? profile.group_id : activeGroup;
+
   useEffect(() => {
     loadPosts();
     const channel = supabase
       .channel("posts-realtime")
-      .on("postgres_changes", { event: "*", schema: "public", table: "posts", filter: activeGroup !== "all" ? `group_id=eq.${activeGroup}` : undefined }, () => loadPosts())
+      .on("postgres_changes", { event: "*", schema: "public", table: "posts" }, () => loadPosts())
       .subscribe();
     return () => supabase.removeChannel(channel);
   }, [activeGroup]);
@@ -259,16 +270,23 @@ function Feed({ profile, activeGroup }) {
   async function loadPosts() {
     setLoading(true);
     let q = supabase.from("posts").select("*, profiles(full_name, group_id, role)").order("created_at", { ascending: false }).limit(50);
-    if (activeGroup !== "all") q = q.eq("group_id", activeGroup);
+    
+    // Non-admins can only see their own group
+    if (profile.role !== "admin") {
+      q = q.eq("group_id", profile.group_id);
+    } else if (activeGroup !== "all") {
+      q = q.eq("group_id", activeGroup);
+    }
+    
     const { data } = await q;
     setPosts(data || []);
     setLoading(false);
   }
 
   async function submitPost() {
-    if (!body.trim()) return;
+    if (!body.trim() || !canPost) return;
     setPosting(true);
-    await supabase.from("posts").insert({ user_id: profile.id, group_id: activeGroup === "all" ? profile.group_id : activeGroup, body: body.trim() });
+    await supabase.from("posts").insert({ user_id: profile.id, group_id: postTarget, body: body.trim() });
     setBody("");
     setPosting(false);
     loadPosts();
@@ -279,23 +297,29 @@ function Feed({ profile, activeGroup }) {
     loadPosts();
   }
 
-  const groupName = GROUPS.find(g => g.id === activeGroup)?.label || "All Groups";
+  const groupName = GROUPS.find(g => g.id === (postTarget))?.label || "Your Group";
 
   return (
     <div>
       <div style={S.card}>
         <label style={S.label}>Share with {groupName}</label>
-        <textarea
-          style={{ ...S.input, minHeight: 90, resize: "vertical" }}
-          placeholder="What's on your mind? Share a win, ask a question, encourage someone..."
-          value={body}
-          onChange={e => setBody(e.target.value)}
-        />
-        <div style={{ display: "flex", justifyContent: "flex-end", marginTop: 12 }}>
-          <button style={S.btn} onClick={submitPost} disabled={posting || !body.trim()}>
-            {posting ? "Posting..." : "Post"}
-          </button>
-        </div>
+        {!canPost && profile.role !== "admin" ? (
+          <p style={{ ...S.muted, padding: "16px 0" }}>You can only post to your own group — {GROUPS.find(g => g.id === profile.group_id)?.label}.</p>
+        ) : (
+          <>
+            <textarea
+              style={{ ...S.input, minHeight: 90, resize: "vertical" }}
+              placeholder="What's on your mind? Share a win, ask a question, encourage someone..."
+              value={body}
+              onChange={e => setBody(e.target.value)}
+            />
+            <div style={{ display: "flex", justifyContent: "flex-end", marginTop: 12 }}>
+              <button style={S.btn} onClick={submitPost} disabled={posting || !body.trim()}>
+                {posting ? "Posting..." : "Post"}
+              </button>
+            </div>
+          </>
+        )}
       </div>
       <div style={{ marginTop: 20 }}>
         {loading && <p style={{ ...S.muted, textAlign: "center", padding: 40 }}>Loading posts...</p>}
@@ -635,11 +659,14 @@ export default function App() {
         <div style={{ width: 220, minHeight: "calc(100vh - 70px)", borderRight: "1px solid rgba(255,255,255,0.05)", padding: "24px 16px", position: "sticky", top: 70, flexShrink: 0 }}>
           <div style={{ marginBottom: 24 }}>
             <p style={{ ...S.eyebrow, marginBottom: 12 }}>Feed</p>
-            {[{ id: "all", label: "All Groups", icon: "◎" }, ...GROUPS].map(g => (
+            {[
+              { id: "all", label: "My Feed", icon: "◎" },
+              ...(profile.role === "admin" ? GROUPS : GROUPS.filter(g => g.id === profile.group_id))
+            ].map(g => (
               <div key={g.id}
                 onClick={() => { setTab("feed"); setFeedGroup(g.id); }}
                 style={{ padding: "10px 12px", borderRadius: 4, cursor: "pointer", marginBottom: 2, background: tab === "feed" && feedGroup === g.id ? "rgba(255,102,0,0.1)" : "transparent", color: tab === "feed" && feedGroup === g.id ? "#FF6600" : "#888", fontSize: 13, display: "flex", alignItems: "center", gap: 8 }}>
-                <span>{g.icon || "◎"}</span> {g.label || "All Groups"}
+                <span>{g.icon || "◎"}</span> {g.label || "My Feed"}
               </div>
             ))}
           </div>
