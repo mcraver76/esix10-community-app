@@ -671,14 +671,14 @@ function Members({ profile }) {
 
   return (
     <div>
-      <div style={S.flexBetween}>
-        <h2 style={{ ...S.h2, margin: 0 }}>
+      <div style={{ marginBottom: 8 }}>
+        <h2 style={{ ...S.h2, margin: "0 0 12px 0" }}>
           {profile.role === "admin" ? `Members (${filtered.length})` : `${myGroup?.label} (${filtered.length})`}
         </h2>
         {profile.role === "admin" && (
-          <div style={S.flex}>
+          <div style={{ display: "flex", gap: 6, flexWrap: "wrap" }}>
             {["all", ...GROUPS.map(g => g.id)].map(f => (
-              <button key={f} style={S.tab(filter === f)} onClick={() => setFilter(f)}>
+              <button key={f} style={{ ...S.tab(filter === f), padding: "8px 14px", fontSize: 11 }} onClick={() => setFilter(f)}>
                 {f === "all" ? "All" : GROUPS.find(g => g.id === f)?.label}
               </button>
             ))}
@@ -742,31 +742,25 @@ function Members({ profile }) {
 
         {/* APPROVED MEMBERS */}
         {approved.map(m => (
-          <div key={m.id} style={{ ...S.card, padding: "16px 20px" }}>
-            <div style={S.flexBetween}>
-              <div style={S.flex}>
-                <div style={{ width: 40, height: 40, borderRadius: "50%", background: "rgba(255,102,0,0.15)", display: "flex", alignItems: "center", justifyContent: "center", color: "#FF6600", fontFamily: "'Cinzel', serif", fontWeight: 600 }}>
-                  {(m.full_name || m.email || "?")[0].toUpperCase()}
-                </div>
-                <div>
-                  <div style={{ color: "#fff", fontFamily: "'Cinzel', serif", fontSize: 15 }}>{formatName(m.full_name)}</div>
-                  <div style={S.muted}>{m.email}</div>
-                  {(m.city || m.state) && (
-                    <div style={{ color: "#FF6600", fontSize: 12, marginTop: 2 }}>
-                      📍 {[m.city, m.state].filter(Boolean).join(", ")}
-                    </div>
-                  )}
-                </div>
+          <div key={m.id} style={{ ...S.card, padding: "16px" }}>
+            <div style={{ display: "flex", alignItems: "flex-start", gap: 12 }}>
+              <div style={{ width: 40, height: 40, borderRadius: "50%", background: "rgba(255,102,0,0.15)", display: "flex", alignItems: "center", justifyContent: "center", color: "#FF6600", fontFamily: "'Cinzel', serif", fontWeight: 600, flexShrink: 0 }}>
+                {(m.full_name || m.email || "?")[0].toUpperCase()}
               </div>
-              <div style={S.flex}>
-                <span style={S.badge}>{GROUPS.find(g => g.id === m.group_id)?.label || "No Group"}</span>
-                <span style={{ ...S.badge, background: m.role === "admin" ? "rgba(255,102,0,0.3)" : "rgba(255,255,255,0.05)", color: m.role === "admin" ? "#FF6600" : "#666" }}>{m.role}</span>
+              <div style={{ flex: 1, minWidth: 0 }}>
+                <div style={{ display: "flex", alignItems: "center", gap: 8, flexWrap: "wrap", marginBottom: 4 }}>
+                  <span style={{ color: "#fff", fontFamily: "'Cinzel', serif", fontSize: 14 }}>{formatName(m.full_name)}</span>
+                  <span style={{ ...S.badge, fontSize: 10 }}>{GROUPS.find(g => g.id === m.group_id)?.label || "No Group"}</span>
+                  {m.role === "admin" && <span style={{ ...S.badge, background: "rgba(255,102,0,0.3)", color: "#FF6600", fontSize: 10 }}>Admin</span>}
+                </div>
+                {profile.role === "admin" && <div style={{ ...S.muted, fontSize: 12 }}>{m.email}</div>}
+                {(m.city || m.state) && <div style={{ color: "#FF6600", fontSize: 12, marginTop: 2 }}>📍 {[m.city, m.state].filter(Boolean).join(", ")}</div>}
                 {profile.role === "admin" && m.id !== profile.id && (
-                  <div style={S.flex}>
-                    <button style={S.btnSm} onClick={() => updateRole(m.id, m.role === "admin" ? "member" : "admin")}>
+                  <div style={{ display: "flex", gap: 8, marginTop: 10, flexWrap: "wrap" }}>
+                    <button style={{ ...S.btnSm, fontSize: 10, padding: "6px 12px" }} onClick={() => updateRole(m.id, m.role === "admin" ? "member" : "admin")}>
                       {m.role === "admin" ? "Remove Admin" : "Make Admin"}
                     </button>
-                    <button style={S.btnDanger} onClick={() => removeMember(m.id)}>Remove</button>
+                    <button style={{ ...S.btnDanger, fontSize: 10, padding: "6px 10px" }} onClick={() => removeMember(m.id)}>Remove</button>
                   </div>
                 )}
               </div>
@@ -808,6 +802,7 @@ function Messages({ profile, members }) {
   function selectRoom(roomId) {
     setActiveRoom(roomId);
     localStorage.setItem(`esix10_room_${profile.id}`, roomId);
+    if (window.innerWidth <= 768) setShowRoomList(false);
   }
 
   useEffect(() => {
@@ -860,34 +855,97 @@ function Messages({ profile, members }) {
   }
 
   const currentRoom = [...GROUP_ROOMS, ...dmRooms].find(r => r.id === activeRoom);
+  const isMobileChat = useMobile();
+  const [showRoomList, setShowRoomList] = useState(!activeRoom);
+
+  function selectRoomMobile(roomId) {
+    selectRoom(roomId);
+    setShowRoomList(false);
+  }
+
+  const ROOM_LIST = (
+    <div style={{ width: isMobileChat ? "100%" : 220, borderRight: isMobileChat ? "none" : "1px solid rgba(255,255,255,0.05)", flexShrink: 0, overflowY: "auto", height: isMobileChat ? "calc(100vh - 200px)" : "auto" }}>
+      <div style={{ padding: "16px 12px" }}>
+        <p style={{ ...S.eyebrow, marginBottom: 12 }}>Group Chats</p>
+        {GROUP_ROOMS.map(room => (
+          <div key={room.id} onClick={() => isMobileChat ? selectRoomMobile(room.id) : selectRoom(room.id)}
+            style={{ padding: "12px 16px", borderRadius: 4, cursor: "pointer", marginBottom: 4, background: activeRoom === room.id ? "rgba(255,102,0,0.1)" : "rgba(255,255,255,0.02)", color: activeRoom === room.id ? "#FF6600" : "#CCCCCC", fontSize: 14, display: "flex", alignItems: "center", gap: 12, border: "1px solid rgba(255,255,255,0.04)" }}>
+            <span style={{ fontSize: 20 }}>{room.icon}</span>
+            <span>{room.label}</span>
+            {isMobileChat && <span style={{ marginLeft: "auto", color: "#555", fontSize: 16 }}>›</span>}
+          </div>
+        ))}
+      </div>
+      <div style={{ padding: "0 12px 16px" }}>
+        <p style={{ ...S.eyebrow, marginBottom: 12 }}>Direct Messages</p>
+        {dmRooms.length === 0 && <p style={{ ...S.muted, fontSize: 12 }}>No members yet</p>}
+        {dmRooms.map(room => (
+          <div key={room.id} onClick={() => isMobileChat ? selectRoomMobile(room.id) : selectRoom(room.id)}
+            style={{ padding: "12px 16px", borderRadius: 4, cursor: "pointer", marginBottom: 4, background: activeRoom === room.id ? "rgba(255,102,0,0.1)" : "rgba(255,255,255,0.02)", color: activeRoom === room.id ? "#FF6600" : "#CCCCCC", fontSize: 14, display: "flex", alignItems: "center", gap: 12, border: "1px solid rgba(255,255,255,0.04)" }}>
+            <div style={{ width: 32, height: 32, borderRadius: "50%", background: "rgba(255,102,0,0.15)", display: "flex", alignItems: "center", justifyContent: "center", color: "#FF6600", fontSize: 13, fontWeight: 600, flexShrink: 0 }}>
+              {(room.member.username || room.member.full_name || "?")[0].toUpperCase()}
+            </div>
+            <span style={{ overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{room.label}</span>
+            {isMobileChat && <span style={{ marginLeft: "auto", color: "#555", fontSize: 16 }}>›</span>}
+          </div>
+        ))}
+      </div>
+    </div>
+  );
+
+  const CHAT_VIEW = (
+    <div style={{ flex: 1, display: "flex", flexDirection: "column", height: isMobileChat ? "calc(100vh - 200px)" : "auto" }}>
+      <div style={{ padding: "12px 16px", borderBottom: "1px solid rgba(255,255,255,0.05)", display: "flex", alignItems: "center", gap: 12 }}>
+        {isMobileChat && (
+          <button onClick={() => setShowRoomList(true)} style={{ background: "none", border: "none", color: "#FF6600", fontSize: 20, cursor: "pointer", padding: "0 4px", lineHeight: 1 }}>‹</button>
+        )}
+        <span style={{ fontSize: 20 }}>{currentRoom?.icon}</span>
+        <span style={{ fontFamily: "'Cinzel', serif", fontSize: 15, color: "#fff" }}>{currentRoom?.label}</span>
+      </div>
+      <div style={{ flex: 1, overflowY: "auto", padding: "12px 16px", display: "flex", flexDirection: "column", gap: 8 }}>
+        {messages.length === 0 && <div style={{ textAlign: "center", padding: 40 }}><p style={S.muted}>No messages yet. Start the conversation.</p></div>}
+        {messages.map(msg => {
+          const isOwn = msg.user_id === profile.id;
+          const senderName = msg.sender_name || "Member";
+          return (
+            <div key={msg.id} style={{ display: "flex", flexDirection: isOwn ? "row-reverse" : "row", alignItems: "flex-start", gap: 8 }}>
+              <div style={{ width: 28, height: 28, borderRadius: "50%", background: isOwn ? "rgba(255,102,0,0.3)" : "rgba(255,255,255,0.05)", display: "flex", alignItems: "center", justifyContent: "center", color: isOwn ? "#FF6600" : "#666", fontSize: 11, fontWeight: 600, flexShrink: 0 }}>
+                {(msg.sender_name || "?")[0].toUpperCase()}
+              </div>
+              <div style={{ maxWidth: "75%" }}>
+                <div style={{ fontSize: 10, color: "#555", marginBottom: 3, textAlign: isOwn ? "right" : "left" }}>
+                  {senderName} · {new Date(msg.created_at).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })}
+                </div>
+                <div style={{ background: isOwn ? "rgba(255,102,0,0.15)" : "rgba(255,255,255,0.05)", border: isOwn ? "1px solid rgba(255,102,0,0.2)" : "1px solid rgba(255,255,255,0.06)", borderRadius: 8, padding: "8px 12px", color: "#fff", fontSize: 14, lineHeight: 1.6, wordBreak: "break-word" }}>
+                  {msg.body}
+                </div>
+                {(isOwn || profile.role === "admin") && (
+                  <button style={{ background: "none", border: "none", cursor: "pointer", fontSize: 10, color: "#555", marginTop: 2, textAlign: isOwn ? "right" : "left", display: "block", width: "100%" }} onClick={() => deleteMessage(msg.id)}>delete</button>
+                )}
+              </div>
+            </div>
+          );
+        })}
+        <div ref={bottomRef} />
+      </div>
+      <div style={{ padding: "10px 12px", borderTop: "1px solid rgba(255,255,255,0.05)", display: "flex", gap: 8 }}>
+        <input style={{ ...S.input, flex: 1, fontSize: 14, padding: "10px 14px" }} placeholder="Type a message..." value={body} onChange={e => setBody(e.target.value)} onKeyDown={e => { if (e.key === "Enter" && !e.shiftKey) { e.preventDefault(); send(); }}} />
+        <button style={{ ...S.btn, padding: "10px 16px", flexShrink: 0 }} onClick={send} disabled={posting || !body.trim()}>Send</button>
+      </div>
+    </div>
+  );
+
+  if (isMobileChat) {
+    return (
+      <div style={{ margin: "-16px -16px 0" }}>
+        {showRoomList || !activeRoom ? ROOM_LIST : CHAT_VIEW}
+      </div>
+    );
+  }
 
   return (
     <div style={{ display: "flex", gap: 0, height: "calc(100vh - 130px)", minHeight: 500 }}>
-      <div style={{ width: 220, borderRight: "1px solid rgba(255,255,255,0.05)", flexShrink: 0, overflowY: "auto" }}>
-        <div style={{ padding: "16px 12px" }}>
-          <p style={{ ...S.eyebrow, marginBottom: 12 }}>Group Chats</p>
-          {GROUP_ROOMS.map(room => (
-            <div key={room.id} onClick={() => selectRoom(room.id)}
-              style={{ padding: "10px 12px", borderRadius: 4, cursor: "pointer", marginBottom: 2, background: activeRoom === room.id ? "rgba(255,102,0,0.1)" : "transparent", color: activeRoom === room.id ? "#FF6600" : "#888", fontSize: 13, display: "flex", alignItems: "center", gap: 8 }}>
-              <span>{room.icon}</span> {room.label}
-            </div>
-          ))}
-        </div>
-        <div style={{ padding: "0 12px 16px" }}>
-          <p style={{ ...S.eyebrow, marginBottom: 12 }}>Direct Messages</p>
-          {dmRooms.length === 0 && <p style={{ ...S.muted, fontSize: 12 }}>No members yet</p>}
-          {dmRooms.map(room => (
-            <div key={room.id} onClick={() => selectRoom(room.id)}
-              style={{ padding: "10px 12px", borderRadius: 4, cursor: "pointer", marginBottom: 2, background: activeRoom === room.id ? "rgba(255,102,0,0.1)" : "transparent", color: activeRoom === room.id ? "#FF6600" : "#888", fontSize: 13, display: "flex", alignItems: "center", gap: 8 }}>
-              <div style={{ width: 24, height: 24, borderRadius: "50%", background: "rgba(255,102,0,0.15)", display: "flex", alignItems: "center", justifyContent: "center", color: "#FF6600", fontSize: 11, fontWeight: 600, flexShrink: 0 }}>
-                {(room.member.username || room.member.full_name || "?")[0].toUpperCase()}
-              </div>
-              <span style={{ overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{room.label}</span>
-            </div>
-          ))}
-        </div>
-      </div>
-
+      {ROOM_LIST}
       <div style={{ flex: 1, display: "flex", flexDirection: "column" }}>
         {!activeRoom ? (
           <div style={{ flex: 1, display: "flex", alignItems: "center", justifyContent: "center", flexDirection: "column", gap: 12 }}>
@@ -895,44 +953,7 @@ function Messages({ profile, members }) {
             <p style={{ fontFamily: "'Cinzel', serif", fontSize: 18, color: "#fff" }}>Select a conversation</p>
             <p style={S.muted}>Choose a group chat or direct message</p>
           </div>
-        ) : (
-          <>
-            <div style={{ padding: "16px 20px", borderBottom: "1px solid rgba(255,255,255,0.05)", display: "flex", alignItems: "center", gap: 12 }}>
-              <span style={{ fontSize: 20 }}>{currentRoom?.icon}</span>
-              <span style={{ fontFamily: "'Cinzel', serif", fontSize: 16, color: "#fff" }}>{currentRoom?.label}</span>
-            </div>
-            <div style={{ flex: 1, overflowY: "auto", padding: "16px 20px", display: "flex", flexDirection: "column", gap: 8 }}>
-              {messages.length === 0 && <div style={{ textAlign: "center", padding: 40 }}><p style={S.muted}>No messages yet. Start the conversation.</p></div>}
-              {messages.map(msg => {
-                const isOwn = msg.user_id === profile.id;
-                const senderName = msg.sender_name || "Member";
-                return (
-                  <div key={msg.id} style={{ display: "flex", flexDirection: isOwn ? "row-reverse" : "row", alignItems: "flex-start", gap: 10 }}>
-                    <div style={{ width: 32, height: 32, borderRadius: "50%", background: isOwn ? "rgba(255,102,0,0.3)" : "rgba(255,255,255,0.05)", display: "flex", alignItems: "center", justifyContent: "center", color: isOwn ? "#FF6600" : "#666", fontSize: 12, fontWeight: 600, flexShrink: 0 }}>
-                      {(msg.sender_name || "?")[0].toUpperCase()}
-                    </div>
-                    <div style={{ maxWidth: "70%" }}>
-                      <div style={{ fontSize: 11, color: "#555", marginBottom: 4, textAlign: isOwn ? "right" : "left" }}>
-                        {senderName} · {new Date(msg.created_at).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })}
-                      </div>
-                      <div style={{ background: isOwn ? "rgba(255,102,0,0.15)" : "rgba(255,255,255,0.05)", border: isOwn ? "1px solid rgba(255,102,0,0.2)" : "1px solid rgba(255,255,255,0.06)", borderRadius: 8, padding: "10px 14px", color: "#fff", fontSize: 14, lineHeight: 1.6, wordBreak: "break-word" }}>
-                        {msg.body}
-                      </div>
-                      {(isOwn || profile.role === "admin") && (
-                        <button style={{ background: "none", border: "none", cursor: "pointer", fontSize: 11, color: "#555", marginTop: 2, textAlign: isOwn ? "right" : "left", display: "block", width: "100%" }} onClick={() => deleteMessage(msg.id)}>delete</button>
-                      )}
-                    </div>
-                  </div>
-                );
-              })}
-              <div ref={bottomRef} />
-            </div>
-            <div style={{ padding: "12px 20px", borderTop: "1px solid rgba(255,255,255,0.05)", display: "flex", gap: 10 }}>
-              <input style={{ ...S.input, flex: 1 }} placeholder="Type a message..." value={body} onChange={e => setBody(e.target.value)} onKeyDown={e => { if (e.key === "Enter" && !e.shiftKey) { e.preventDefault(); send(); }}} />
-              <button style={{ ...S.btn, padding: "10px 20px", flexShrink: 0 }} onClick={send} disabled={posting || !body.trim()}>Send</button>
-            </div>
-          </>
-        )}
+        ) : CHAT_VIEW}
       </div>
     </div>
   );
