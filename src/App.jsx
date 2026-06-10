@@ -690,7 +690,10 @@ function Members({ profile }) {
 
 // ─── Messaging ────────────────────────────────────────────────────────────────
 function Messages({ profile, members }) {
-  const [activeRoom, setActiveRoom] = useState(null);
+  const defaultRoom = `group_${profile.group_id}`;
+  const [activeRoom, setActiveRoom] = useState(
+    localStorage.getItem(`esix10_room_${profile.id}`) || defaultRoom
+  );
   const [messages, setMessages] = useState([]);
   const [body, setBody] = useState("");
   const [posting, setPosting] = useState(false);
@@ -711,6 +714,11 @@ function Messages({ profile, members }) {
       type: "dm",
       member: m
     }));
+
+  function selectRoom(roomId) {
+    setActiveRoom(roomId);
+    localStorage.setItem(`esix10_room_${profile.id}`, roomId);
+  }
 
   useEffect(() => {
     if (!activeRoom) return;
@@ -755,7 +763,7 @@ function Messages({ profile, members }) {
         <div style={{ padding: "16px 12px" }}>
           <p style={{ ...S.eyebrow, marginBottom: 12 }}>Group Chats</p>
           {GROUP_ROOMS.map(room => (
-            <div key={room.id} onClick={() => setActiveRoom(room.id)}
+            <div key={room.id} onClick={() => selectRoom(room.id)}
               style={{ padding: "10px 12px", borderRadius: 4, cursor: "pointer", marginBottom: 2, background: activeRoom === room.id ? "rgba(255,102,0,0.1)" : "transparent", color: activeRoom === room.id ? "#FF6600" : "#888", fontSize: 13, display: "flex", alignItems: "center", gap: 8 }}>
               <span>{room.icon}</span> {room.label}
             </div>
@@ -765,7 +773,7 @@ function Messages({ profile, members }) {
           <p style={{ ...S.eyebrow, marginBottom: 12 }}>Direct Messages</p>
           {dmRooms.length === 0 && <p style={{ ...S.muted, fontSize: 12 }}>No members yet</p>}
           {dmRooms.map(room => (
-            <div key={room.id} onClick={() => setActiveRoom(room.id)}
+            <div key={room.id} onClick={() => selectRoom(room.id)}
               style={{ padding: "10px 12px", borderRadius: 4, cursor: "pointer", marginBottom: 2, background: activeRoom === room.id ? "rgba(255,102,0,0.1)" : "transparent", color: activeRoom === room.id ? "#FF6600" : "#888", fontSize: 13, display: "flex", alignItems: "center", gap: 8 }}>
               <div style={{ width: 24, height: 24, borderRadius: "50%", background: "rgba(255,102,0,0.15)", display: "flex", alignItems: "center", justifyContent: "center", color: "#FF6600", fontSize: 11, fontWeight: 600, flexShrink: 0 }}>
                 {(room.member.username || room.member.full_name || "?")[0].toUpperCase()}
