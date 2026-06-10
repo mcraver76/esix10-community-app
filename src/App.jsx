@@ -725,8 +725,8 @@ function Messages({ profile, members }) {
     loadMessages();
     const channel = supabase
       .channel(`messages-${activeRoom}`)
-      .on("postgres_changes", { event: "INSERT", schema: "public", table: "messages", filter: `room_id=eq.${activeRoom}` }, (payload) => {
-        setMessages(prev => [payload.new, ...prev].slice(0, 100));
+      .on("postgres_changes", { event: "INSERT", schema: "public", table: "messages", filter: `room_id=eq.${activeRoom}` }, () => {
+        loadMessages();
       })
       .subscribe();
     return () => supabase.removeChannel(channel);
@@ -748,6 +748,7 @@ function Messages({ profile, members }) {
     await supabase.from("messages").insert({ room_id: activeRoom, user_id: profile.id, body: body.trim() });
     setBody("");
     setPosting(false);
+    loadMessages();
   }
 
   async function deleteMessage(id) {
