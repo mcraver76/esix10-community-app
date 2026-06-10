@@ -958,13 +958,14 @@ export default function App() {
   if (profile?.status === "pending") return <PendingScreen profile={profile} onSignOut={signOut} />;
 
   const myGroup = GROUPS.find(g => g.id === profile.group_id);
-  const isAdmin = profile.role === "admin";
+  const isAdmin = profile?.role === "admin";
 
   useEffect(() => {
-    if (profile) loadAllMembers();
+    if (profile?.id) loadAllMembers();
   }, [profile?.id]);
 
   async function loadAllMembers() {
+    if (!profile) return;
     let q = supabase.from("profiles").select("*").eq("status", "approved");
     if (profile.role !== "admin") q = q.eq("group_id", profile.group_id);
     const { data } = await q;
