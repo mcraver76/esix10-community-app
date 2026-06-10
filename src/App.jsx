@@ -505,6 +505,12 @@ function Members({ profile }) {
     setMembers(data || []);
   }
 
+  async function removeMember(id) {
+    if (!window.confirm("Are you sure you want to remove this member? This cannot be undone.")) return;
+    await supabase.from("profiles").delete().eq("id", id);
+    loadMembers();
+  }
+
   async function updateRole(id, role) {
     await supabase.from("profiles").update({ role }).eq("id", id);
     loadMembers();
@@ -627,9 +633,12 @@ function Members({ profile }) {
                 <span style={S.badge}>{GROUPS.find(g => g.id === m.group_id)?.label || "No Group"}</span>
                 <span style={{ ...S.badge, background: m.role === "admin" ? "rgba(255,102,0,0.3)" : "rgba(255,255,255,0.05)", color: m.role === "admin" ? "#FF6600" : "#666" }}>{m.role}</span>
                 {profile.role === "admin" && m.id !== profile.id && (
-                  <button style={S.btnSm} onClick={() => updateRole(m.id, m.role === "admin" ? "member" : "admin")}>
-                    {m.role === "admin" ? "Remove Admin" : "Make Admin"}
-                  </button>
+                  <div style={S.flex}>
+                    <button style={S.btnSm} onClick={() => updateRole(m.id, m.role === "admin" ? "member" : "admin")}>
+                      {m.role === "admin" ? "Remove Admin" : "Make Admin"}
+                    </button>
+                    <button style={S.btnDanger} onClick={() => removeMember(m.id)}>Remove</button>
+                  </div>
                 )}
               </div>
             </div>
