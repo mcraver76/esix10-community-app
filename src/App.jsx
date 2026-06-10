@@ -164,7 +164,7 @@ function PendingScreen({ profile, onSignOut }) {
   );
 }
 
-
+function AuthScreen({ onAuth }) {
   const [mode, setMode] = useState("login");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
@@ -638,60 +638,8 @@ function Members({ profile }) {
       </div>
     </div>
   );
-}({ profile, onUpdate, onSignOut }) {
-  const [form, setForm] = useState({ full_name: profile.full_name || "", city: profile.city || "", state: profile.state || "", bio: profile.bio || "", group_id: profile.group_id || "" });
-  const [saving, setSaving] = useState(false);
-  const [msg, setMsg] = useState("");
-
-  async function save() {
-    setSaving(true);
-    await supabase.from("profiles").update(form).eq("id", profile.id);
-    setMsg("Profile saved.");
-    onUpdate({ ...profile, ...form });
-    setSaving(false);
-    setTimeout(() => setMsg(""), 3000);
-  }
-
-  return (
-    <div style={{ maxWidth: 600 }}>
-      <h2 style={S.h2}>Your Profile</h2>
-      <div style={S.divider} />
-      <div style={{ ...S.card, marginTop: 20 }}>
-        <div style={{ marginBottom: 16 }}>
-          <label style={S.label}>Full Name</label>
-          <input style={S.input} value={form.full_name} onChange={e => setForm({ ...form, full_name: e.target.value })} />
-        </div>
-        <div style={S.grid2}>
-          <div style={{ marginBottom: 16 }}>
-            <label style={S.label}>City</label>
-            <input style={S.input} placeholder="City" value={form.city} onChange={e => setForm({ ...form, city: e.target.value })} />
-          </div>
-          <div style={{ marginBottom: 16 }}>
-            <label style={S.label}>State</label>
-            <input style={S.input} placeholder="State" value={form.state} onChange={e => setForm({ ...form, state: e.target.value })} />
-          </div>
-        </div>
-        <div style={{ marginBottom: 16 }}>
-          <label style={S.label}>Your Group</label>
-          <select style={S.input} value={form.group_id} onChange={e => setForm({ ...form, group_id: e.target.value })}>
-            {GROUPS.map(g => <option key={g.id} value={g.id}>{g.label} — {g.subtitle}</option>)}
-          </select>
-        </div>
-        <div style={{ marginBottom: 20 }}>
-          <label style={S.label}>Bio</label>
-          <textarea style={{ ...S.input, minHeight: 80 }} placeholder="Tell the community a little about yourself..." value={form.bio} onChange={e => setForm({ ...form, bio: e.target.value })} />
-        </div>
-        {msg && <p style={S.success}>{msg}</p>}
-        <div style={S.flex}>
-          <button style={S.btn} onClick={save} disabled={saving}>{saving ? "Saving..." : "Save Profile"}</button>
-          <button style={S.btnGhost} onClick={onSignOut}>Sign Out</button>
-        </div>
-      </div>
-    </div>
-  );
 }
 
-// ─── Profile ──────────────────────────────────────────────────────────────────
 function Profile({ profile, onUpdate, onSignOut }) {
   const [form, setForm] = useState({ full_name: profile.full_name || "", city: profile.city || "", state: profile.state || "", bio: profile.bio || "", group_id: profile.group_id || "" });
   const [saving, setSaving] = useState(false);
