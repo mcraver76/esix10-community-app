@@ -14,6 +14,22 @@ const GROUPS = [
 
 const ADMIN_EMAIL = "michael@esix10.com";
 
+// Format name as First name + Last initial
+const formatName = (fullName) => {
+  if (!fullName) return "Member";
+  const parts = fullName.trim().split(" ");
+  if (parts.length === 1) return parts[0];
+  return `${parts[0]} ${parts[parts.length - 1][0]}.`;
+};
+
+// Display name — username if set, otherwise first + last initial
+const displayName = (profile) => {
+  if (profile?.username) return `@${profile.username}`;
+  return formatName(profile?.full_name);
+};
+
+
+
 // ─── Styles ───────────────────────────────────────────────────────────────────
 const S = {
   app: { minHeight: "100vh", background: "#0a0a0a", color: "#fff", fontFamily: "'Lato', sans-serif", fontSize: 15 },
@@ -59,6 +75,7 @@ create table if not exists profiles (
   id uuid references auth.users on delete cascade primary key,
   email text,
   full_name text,
+  username text unique,
   group_id text,
   role text default 'member',
   status text default 'pending',
@@ -100,8 +117,22 @@ alter table events enable row level security;
 create policy "Anyone can view events" on events for select using (true);
 create policy "Admins can manage events" on events for all using (true);
 
+-- Table: messages
+create table if not exists messages (
+  id uuid default gen_random_uuid() primary key,
+  room_id text not null,
+  user_id uuid references profiles(id) on delete cascade,
+  body text not null,
+  created_at timestamp default now()
+);
+alter table messages enable row level security;
+create policy "view messages" on messages for select using (true);
+create policy "insert messages" on messages for insert with check (auth.uid() = user_id);
+create policy "delete own messages" on messages for delete using (auth.uid() = user_id);
+
 -- Enable realtime
-alter publication supabase_realtime add table posts;`;
+alter publication supabase_realtime add table posts;
+alter publication supabase_realtime add table messages;`;
 
 // ─── Components ───────────────────────────────────────────────────────────────
 
@@ -169,6 +200,7 @@ function AuthScreen({ onAuth }) {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [name, setName] = useState("");
+  const [username, setUsername] = useState("");
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
   const [msg, setMsg] = useState("");
@@ -184,7 +216,7 @@ function AuthScreen({ onAuth }) {
         const { data, error } = await supabase.auth.signUp({ email, password, options: { data: { full_name: name } } });
         if (error) throw error;
         if (data.user) {
-          await supabase.from("profiles").upsert({ id: data.user.id, email, full_name: name, role: email === ADMIN_EMAIL ? "admin" : "member" });
+          await supabase.from("profiles").upsert({ id: data.user.id, email, full_name: name, username: username.toLowerCase().replace(/[^a-z0-9_]/g, ""), role: email === ADMIN_EMAIL ? "admin" : "member" });
           setMsg("Account created! Check your email to confirm, then log in.");
           setMode("login");
         }
@@ -210,10 +242,17 @@ function AuthScreen({ onAuth }) {
             <button style={S.tab(mode === "signup")} onClick={() => setMode("signup")}>Join</button>
           </div>
           {mode === "signup" && (
-            <div style={{ marginBottom: 16 }}>
-              <label style={S.label}>Full Name</label>
-              <input style={S.input} placeholder="Your full name" value={name} onChange={e => setName(e.target.value)} />
-            </div>
+            <>
+              <div style={{ marginBottom: 16 }}>
+                <label style={S.label}>Full Name</label>
+                <input style={S.input} placeholder="Your full name" value={name} onChange={e => setName(e.target.value)} />
+              </div>
+              <div style={{ marginBottom: 16 }}>
+                <label style={S.label}>Username</label>
+                <input style={S.input} placeholder="Choose a username (e.g. warrior_dad)" value={username} onChange={e => setUsername(e.target.value)} />
+                <p style={{ color: "#555", fontSize: 11, marginTop: 4 }}>Letters, numbers, and underscores only. Shown publicly.</p>
+              </div>
+            </>
           )}
           <div style={{ marginBottom: 16 }}>
             <label style={S.label}>Email Address</label>
@@ -371,7 +410,7 @@ function Feed({ profile, activeGroup }) {
                   {(post.profiles?.full_name || "?")[0].toUpperCase()}
                 </div>
                 <div>
-                  <span style={S.postAuthor}>{post.profiles?.full_name || "Member"}</span>
+                  <span style={S.postAuthor}>{displayName(post.profiles)}</span>
                   {post.profiles?.role === "admin" && <span style={{ ...S.badge, marginLeft: 8, fontSize: 10 }}>Admin</span>}
                   <span style={S.postTime}>{new Date(post.created_at).toLocaleDateString()}</span>
                 </div>
@@ -593,8 +632,8 @@ function Members({ profile }) {
                       {(m.full_name || m.email || "?")[0].toUpperCase()}
                     </div>
                     <div>
-                      <div style={{ color: "#fff", fontFamily: "'Cinzel', serif", fontSize: 15 }}>{m.full_name || "Unnamed"}</div>
-                      <div style={S.muted}>{m.email}</div>
+                      <div style={{ color: "#fff", fontFamily: "'Cinzel', serif", fontSize: 15 }}>{formatName(m.full_name)}</div>
+                      <div style={S.muted}>{profile.role === "admin" ? m.email : ""}</div>
                       {(m.city || m.state) && <div style={{ color: "#FF6600", fontSize: 12, marginTop: 2 }}>📍 {[m.city, m.state].filter(Boolean).join(", ")}</div>}
                     </div>
                   </div>
@@ -620,7 +659,7 @@ function Members({ profile }) {
                   {(m.full_name || m.email || "?")[0].toUpperCase()}
                 </div>
                 <div>
-                  <div style={{ color: "#fff", fontFamily: "'Cinzel', serif", fontSize: 15 }}>{m.full_name || "Unnamed"}</div>
+                  <div style={{ color: "#fff", fontFamily: "'Cinzel', serif", fontSize: 15 }}>{formatName(m.full_name)}</div>
                   <div style={S.muted}>{m.email}</div>
                   {(m.city || m.state) && (
                     <div style={{ color: "#FF6600", fontSize: 12, marginTop: 2 }}>
@@ -649,8 +688,146 @@ function Members({ profile }) {
   );
 }
 
+// ─── Messaging ────────────────────────────────────────────────────────────────
+function Messages({ profile, members }) {
+  const [activeRoom, setActiveRoom] = useState(null);
+  const [messages, setMessages] = useState([]);
+  const [body, setBody] = useState("");
+  const [posting, setPosting] = useState(false);
+  const bottomRef = useRef(null);
+
+  const GROUP_ROOMS = [
+    { id: `group_${profile.group_id}`, label: `${GROUPS.find(g => g.id === profile.group_id)?.label} Chat`, icon: "💬", type: "group" },
+    ...(profile.role === "admin" ? GROUPS.filter(g => g.id !== profile.group_id).map(g => ({ id: `group_${g.id}`, label: `${g.label} Chat`, icon: "💬", type: "group" })) : []),
+    ...(profile.role === "admin" ? [{ id: "group_all", label: "Leadership Chat", icon: "📢", type: "group" }] : []),
+  ];
+
+  const dmRooms = members
+    .filter(m => m.id !== profile.id && m.status === "approved")
+    .map(m => ({
+      id: `dm_${[profile.id, m.id].sort().join("_")}`,
+      label: m.username ? `@${m.username}` : formatName(m.full_name),
+      icon: "👤",
+      type: "dm",
+      member: m
+    }));
+
+  useEffect(() => {
+    if (!activeRoom) return;
+    loadMessages();
+    const channel = supabase
+      .channel(`messages-${activeRoom}`)
+      .on("postgres_changes", { event: "INSERT", schema: "public", table: "messages", filter: `room_id=eq.${activeRoom}` }, (payload) => {
+        setMessages(prev => [payload.new, ...prev].slice(0, 100));
+      })
+      .subscribe();
+    return () => supabase.removeChannel(channel);
+  }, [activeRoom]);
+
+  async function loadMessages() {
+    const { data } = await supabase
+      .from("messages")
+      .select("*, profiles(full_name, username, group_id)")
+      .eq("room_id", activeRoom)
+      .order("created_at", { ascending: false })
+      .limit(50);
+    setMessages(data || []);
+  }
+
+  async function send() {
+    if (!body.trim() || !activeRoom) return;
+    setPosting(true);
+    await supabase.from("messages").insert({ room_id: activeRoom, user_id: profile.id, body: body.trim() });
+    setBody("");
+    setPosting(false);
+  }
+
+  async function deleteMessage(id) {
+    await supabase.from("messages").delete().eq("id", id);
+    loadMessages();
+  }
+
+  const currentRoom = [...GROUP_ROOMS, ...dmRooms].find(r => r.id === activeRoom);
+
+  return (
+    <div style={{ display: "flex", gap: 0, height: "calc(100vh - 130px)", minHeight: 500 }}>
+      <div style={{ width: 220, borderRight: "1px solid rgba(255,255,255,0.05)", flexShrink: 0, overflowY: "auto" }}>
+        <div style={{ padding: "16px 12px" }}>
+          <p style={{ ...S.eyebrow, marginBottom: 12 }}>Group Chats</p>
+          {GROUP_ROOMS.map(room => (
+            <div key={room.id} onClick={() => setActiveRoom(room.id)}
+              style={{ padding: "10px 12px", borderRadius: 4, cursor: "pointer", marginBottom: 2, background: activeRoom === room.id ? "rgba(255,102,0,0.1)" : "transparent", color: activeRoom === room.id ? "#FF6600" : "#888", fontSize: 13, display: "flex", alignItems: "center", gap: 8 }}>
+              <span>{room.icon}</span> {room.label}
+            </div>
+          ))}
+        </div>
+        <div style={{ padding: "0 12px 16px" }}>
+          <p style={{ ...S.eyebrow, marginBottom: 12 }}>Direct Messages</p>
+          {dmRooms.length === 0 && <p style={{ ...S.muted, fontSize: 12 }}>No members yet</p>}
+          {dmRooms.map(room => (
+            <div key={room.id} onClick={() => setActiveRoom(room.id)}
+              style={{ padding: "10px 12px", borderRadius: 4, cursor: "pointer", marginBottom: 2, background: activeRoom === room.id ? "rgba(255,102,0,0.1)" : "transparent", color: activeRoom === room.id ? "#FF6600" : "#888", fontSize: 13, display: "flex", alignItems: "center", gap: 8 }}>
+              <div style={{ width: 24, height: 24, borderRadius: "50%", background: "rgba(255,102,0,0.15)", display: "flex", alignItems: "center", justifyContent: "center", color: "#FF6600", fontSize: 11, fontWeight: 600, flexShrink: 0 }}>
+                {(room.member.username || room.member.full_name || "?")[0].toUpperCase()}
+              </div>
+              <span style={{ overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{room.label}</span>
+            </div>
+          ))}
+        </div>
+      </div>
+
+      <div style={{ flex: 1, display: "flex", flexDirection: "column" }}>
+        {!activeRoom ? (
+          <div style={{ flex: 1, display: "flex", alignItems: "center", justifyContent: "center", flexDirection: "column", gap: 12 }}>
+            <span style={{ fontSize: 40 }}>💬</span>
+            <p style={{ fontFamily: "'Cinzel', serif", fontSize: 18, color: "#fff" }}>Select a conversation</p>
+            <p style={S.muted}>Choose a group chat or direct message</p>
+          </div>
+        ) : (
+          <>
+            <div style={{ padding: "16px 20px", borderBottom: "1px solid rgba(255,255,255,0.05)", display: "flex", alignItems: "center", gap: 12 }}>
+              <span style={{ fontSize: 20 }}>{currentRoom?.icon}</span>
+              <span style={{ fontFamily: "'Cinzel', serif", fontSize: 16, color: "#fff" }}>{currentRoom?.label}</span>
+            </div>
+            <div style={{ flex: 1, overflowY: "auto", padding: "16px 20px", display: "flex", flexDirection: "column-reverse", gap: 8 }}>
+              <div ref={bottomRef} />
+              {messages.length === 0 && <div style={{ textAlign: "center", padding: 40 }}><p style={S.muted}>No messages yet. Start the conversation.</p></div>}
+              {messages.map(msg => {
+                const isOwn = msg.user_id === profile.id;
+                const senderName = msg.profiles?.username ? `@${msg.profiles.username}` : formatName(msg.profiles?.full_name);
+                return (
+                  <div key={msg.id} style={{ display: "flex", flexDirection: isOwn ? "row-reverse" : "row", alignItems: "flex-start", gap: 10 }}>
+                    <div style={{ width: 32, height: 32, borderRadius: "50%", background: isOwn ? "rgba(255,102,0,0.3)" : "rgba(255,255,255,0.05)", display: "flex", alignItems: "center", justifyContent: "center", color: isOwn ? "#FF6600" : "#666", fontSize: 12, fontWeight: 600, flexShrink: 0 }}>
+                      {(msg.profiles?.username || msg.profiles?.full_name || "?")[0].toUpperCase()}
+                    </div>
+                    <div style={{ maxWidth: "70%" }}>
+                      <div style={{ fontSize: 11, color: "#555", marginBottom: 4, textAlign: isOwn ? "right" : "left" }}>
+                        {senderName} · {new Date(msg.created_at).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })}
+                      </div>
+                      <div style={{ background: isOwn ? "rgba(255,102,0,0.15)" : "rgba(255,255,255,0.05)", border: isOwn ? "1px solid rgba(255,102,0,0.2)" : "1px solid rgba(255,255,255,0.06)", borderRadius: 8, padding: "10px 14px", color: "#fff", fontSize: 14, lineHeight: 1.6, wordBreak: "break-word" }}>
+                        {msg.body}
+                      </div>
+                      {(isOwn || profile.role === "admin") && (
+                        <button style={{ background: "none", border: "none", cursor: "pointer", fontSize: 11, color: "#555", marginTop: 2, textAlign: isOwn ? "right" : "left", display: "block", width: "100%" }} onClick={() => deleteMessage(msg.id)}>delete</button>
+                      )}
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+            <div style={{ padding: "12px 20px", borderTop: "1px solid rgba(255,255,255,0.05)", display: "flex", gap: 10 }}>
+              <input style={{ ...S.input, flex: 1 }} placeholder="Type a message..." value={body} onChange={e => setBody(e.target.value)} onKeyDown={e => { if (e.key === "Enter" && !e.shiftKey) { e.preventDefault(); send(); }}} />
+              <button style={{ ...S.btn, padding: "10px 20px", flexShrink: 0 }} onClick={send} disabled={posting || !body.trim()}>Send</button>
+            </div>
+          </>
+        )}
+      </div>
+    </div>
+  );
+}
+
 function Profile({ profile, onUpdate, onSignOut }) {
-  const [form, setForm] = useState({ full_name: profile.full_name || "", city: profile.city || "", state: profile.state || "", bio: profile.bio || "", group_id: profile.group_id || "" });
+  const [form, setForm] = useState({ full_name: profile.full_name || "", username: profile.username || "", city: profile.city || "", state: profile.state || "", bio: profile.bio || "", group_id: profile.group_id || "" });
   const [saving, setSaving] = useState(false);
   const [msg, setMsg] = useState("");
 
@@ -671,6 +848,11 @@ function Profile({ profile, onUpdate, onSignOut }) {
         <div style={{ marginBottom: 16 }}>
           <label style={S.label}>Full Name</label>
           <input style={S.input} value={form.full_name} onChange={e => setForm({ ...form, full_name: e.target.value })} />
+        </div>
+        <div style={{ marginBottom: 16 }}>
+          <label style={S.label}>Username</label>
+          <input style={S.input} placeholder="your_username" value={form.username || ""} onChange={e => setForm({ ...form, username: e.target.value.toLowerCase().replace(/[^a-z0-9_]/g, "") })} />
+          <p style={{ color: "#555", fontSize: 11, marginTop: 4 }}>Shown publicly in posts and member list.</p>
         </div>
         <div style={S.grid2}>
           <div style={{ marginBottom: 16 }}>
@@ -710,6 +892,7 @@ export default function App() {
   const [tab, setTab] = useState("feed");
   const [feedGroup, setFeedGroup] = useState("all");
   const [showSetup, setShowSetup] = useState(false);
+  const [allMembers, setAllMembers] = useState([]);
 
   useEffect(() => {
     supabase.auth.getSession().then(({ data }) => {
@@ -777,6 +960,17 @@ export default function App() {
   const myGroup = GROUPS.find(g => g.id === profile.group_id);
   const isAdmin = profile.role === "admin";
 
+  useEffect(() => {
+    if (profile) loadAllMembers();
+  }, [profile?.id]);
+
+  async function loadAllMembers() {
+    let q = supabase.from("profiles").select("*").eq("status", "approved");
+    if (profile.role !== "admin") q = q.eq("group_id", profile.group_id);
+    const { data } = await q;
+    setAllMembers(data || []);
+  }
+
   return (
     <div style={S.app}>
       <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@400;600&family=Lato:wght@300;400;700&display=swap" rel="stylesheet" />
@@ -790,7 +984,7 @@ export default function App() {
           <span style={S.badge}>{myGroup?.icon} {myGroup?.label}</span>
           {isAdmin && <span style={{ ...S.badge, background: "rgba(255,102,0,0.3)", color: "#FF6600" }}>Admin</span>}
           <div style={{ width: 36, height: 36, borderRadius: "50%", background: "rgba(255,102,0,0.15)", display: "flex", alignItems: "center", justifyContent: "center", color: "#FF6600", fontFamily: "'Cinzel', serif", fontWeight: 600, cursor: "pointer" }} onClick={() => setTab("profile")}>
-            {(profile.full_name || profile.email || "?")[0].toUpperCase()}
+            {(profile.username || profile.full_name || profile.email || "?")[0].toUpperCase()}
           </div>
         </div>
       </nav>
@@ -817,6 +1011,7 @@ export default function App() {
             <p style={{ ...S.eyebrow, marginBottom: 12 }}>Navigation</p>
             {[
               { id: "events", label: "Events", icon: "📅" },
+              { id: "messages", label: "Messages", icon: "💬" },
               { id: "members", label: "Members", icon: "👥" },
               { id: "profile", label: "My Profile", icon: "👤" },
             ].map(item => (
@@ -828,7 +1023,7 @@ export default function App() {
             ))}
           </div>
           <div style={{ marginTop: "auto", paddingTop: 16, borderTop: "1px solid rgba(255,255,255,0.05)" }}>
-            <div style={{ fontSize: 12, color: "#555", marginBottom: 4 }}>{profile.full_name}</div>
+            <div style={{ fontSize: 12, color: "#555", marginBottom: 4 }}>{formatName(profile.full_name)}</div>
             <div style={{ fontSize: 11, color: "#444" }}>{profile.email}</div>
           </div>
         </div>
@@ -837,6 +1032,7 @@ export default function App() {
         <div style={{ flex: 1, padding: "32px 32px 60px", maxWidth: 800 }}>
           {tab === "feed" && <Feed profile={profile} activeGroup={feedGroup} />}
           {tab === "events" && <Events profile={profile} />}
+          {tab === "messages" && <Messages profile={profile} members={allMembers} />}
           {tab === "members" && <Members profile={profile} />}
           {tab === "profile" && <Profile profile={profile} onUpdate={setProfile} onSignOut={signOut} />}
         </div>
