@@ -458,12 +458,12 @@ function Events({ profile }) {
 function Members({ profile }) {
   const [members, setMembers] = useState([]);
   const [filter, setFilter] = useState(profile.role === "admin" ? "all" : profile.group_id);
+  const [stateFilter, setStateFilter] = useState("");
 
   useEffect(() => { loadMembers(); }, []);
 
   async function loadMembers() {
-    let q = supabase.from("profiles").select("*").order("created_at", { ascending: false });
-    // Non-admins only see their own group
+    let q = supabase.from("profiles").select("*").order("state", { ascending: true });
     if (profile.role !== "admin") {
       q = q.eq("group_id", profile.group_id);
     }
@@ -476,10 +476,15 @@ function Members({ profile }) {
     loadMembers();
   }
 
-  const filtered = profile.role === "admin" && filter !== "all" 
-    ? members.filter(m => m.group_id === filter) 
+  let filtered = profile.role === "admin" && filter !== "all"
+    ? members.filter(m => m.group_id === filter)
     : members;
 
+  if (stateFilter) {
+    filtered = filtered.filter(m => m.state?.toLowerCase().includes(stateFilter.toLowerCase()));
+  }
+
+  const states = [...new Set(members.map(m => m.state).filter(Boolean))].sort();
   const myGroup = GROUPS.find(g => g.id === profile.group_id);
 
   return (
@@ -498,6 +503,26 @@ function Members({ profile }) {
           </div>
         )}
       </div>
+
+      <div style={{ display: "flex", gap: 12, marginTop: 16, marginBottom: 4, alignItems: "center" }}>
+        <div style={{ flex: 1 }}>
+          <input
+            style={{ ...S.input, padding: "10px 14px", fontSize: 13 }}
+            placeholder="Filter by state..."
+            value={stateFilter}
+            onChange={e => setStateFilter(e.target.value)}
+          />
+        </div>
+        {states.length > 0 && (
+          <div style={{ display: "flex", gap: 6, flexWrap: "wrap" }}>
+            {states.map(s => (
+              <button key={s} style={{ ...S.tab(stateFilter === s), padding: "6px 12px", fontSize: 11 }} onClick={() => setStateFilter(stateFilter === s ? "" : s)}>
+                {s}
+              </button>
+            ))}
+          </div>
+        )}
+      </div>
       <div style={{ marginTop: 20, display: "grid", gap: 8 }}>
         {filtered.map(m => (
           <div key={m.id} style={{ ...S.card, padding: "16px 20px" }}>
@@ -508,7 +533,12 @@ function Members({ profile }) {
                 </div>
                 <div>
                   <div style={{ color: "#fff", fontFamily: "'Cinzel', serif", fontSize: 15 }}>{m.full_name || "Unnamed"}</div>
-                  <div style={S.muted}>{m.email} {m.city && `· ${m.city}`}</div>
+                  <div style={S.muted}>{m.email}</div>
+                  {(m.city || m.state) && (
+                    <div style={{ color: "#FF6600", fontSize: 12, marginTop: 2 }}>
+                      📍 {[m.city, m.state].filter(Boolean).join(", ")}
+                    </div>
+                  )}
                 </div>
               </div>
               <div style={S.flex}>
@@ -529,7 +559,7 @@ function Members({ profile }) {
 }
 
 function Profile({ profile, onUpdate, onSignOut }) {
-  const [form, setForm] = useState({ full_name: profile.full_name || "", city: profile.city || "", bio: profile.bio || "", group_id: profile.group_id || "" });
+  const [form, setForm] = useState({ full_name: profile.full_name || "", city: profile.city || "", state: profile.state || "", bio: profile.bio || "", group_id: profile.group_id || "" });
   const [saving, setSaving] = useState(false);
   const [msg, setMsg] = useState("");
 
@@ -551,9 +581,15 @@ function Profile({ profile, onUpdate, onSignOut }) {
           <label style={S.label}>Full Name</label>
           <input style={S.input} value={form.full_name} onChange={e => setForm({ ...form, full_name: e.target.value })} />
         </div>
-        <div style={{ marginBottom: 16 }}>
-          <label style={S.label}>City & State</label>
-          <input style={S.input} placeholder="City, State" value={form.city} onChange={e => setForm({ ...form, city: e.target.value })} />
+        <div style={S.grid2}>
+          <div style={{ marginBottom: 16 }}>
+            <label style={S.label}>City</label>
+            <input style={S.input} placeholder="City" value={form.city} onChange={e => setForm({ ...form, city: e.target.value })} />
+          </div>
+          <div style={{ marginBottom: 16 }}>
+            <label style={S.label}>State</label>
+            <input style={S.input} placeholder="State" value={form.state} onChange={e => setForm({ ...form, state: e.target.value })} />
+          </div>
         </div>
         <div style={{ marginBottom: 16 }}>
           <label style={S.label}>Your Group</label>
