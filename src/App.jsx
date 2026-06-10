@@ -212,6 +212,8 @@ function AuthScreen({ onAuth }) {
   const [password, setPassword] = useState("");
   const [name, setName] = useState("");
   const [username, setUsername] = useState("");
+  const [agreed, setAgreed] = useState(false);
+  const [showTerms, setShowTerms] = useState(false);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
   const [msg, setMsg] = useState("");
@@ -224,6 +226,7 @@ function AuthScreen({ onAuth }) {
         if (error) throw error;
         onAuth(data.user);
       } else {
+        if (!agreed) { setError("You must agree to the Community Standards to join."); setLoading(false); return; }
         const { data, error } = await supabase.auth.signUp({ email, password, options: { data: { full_name: name } } });
         if (error) throw error;
         if (data.user) {
@@ -262,6 +265,29 @@ function AuthScreen({ onAuth }) {
                 <label style={S.label}>Username</label>
                 <input style={S.input} placeholder="Choose a username (e.g. warrior_dad)" value={username} onChange={e => setUsername(e.target.value)} />
                 <p style={{ color: "#555", fontSize: 11, marginTop: 4 }}>Letters, numbers, and underscores only. Shown publicly.</p>
+              </div>
+              <div style={{ marginBottom: 16, background: "rgba(255,102,0,0.04)", border: "1px solid rgba(255,102,0,0.15)", borderRadius: 4, padding: 16 }}>
+                <div style={{ display: "flex", alignItems: "flex-start", gap: 12 }}>
+                  <input type="checkbox" checked={agreed} onChange={e => setAgreed(e.target.checked)} style={{ marginTop: 3, accentColor: "#FF6600", width: 16, height: 16, flexShrink: 0 }} />
+                  <div>
+                    <p style={{ color: "#AAAAAA", fontSize: 13, lineHeight: 1.7 }}>
+                      I have read and agree to the <span style={{ color: "#FF6600", cursor: "pointer", textDecoration: "underline" }} onClick={() => setShowTerms(!showTerms)}>ESix10 Community Standards</span>.
+                    </p>
+                    {showTerms && (
+                      <div style={{ marginTop: 12, padding: 12, background: "rgba(0,0,0,0.3)", borderRadius: 4 }}>
+                        <p style={{ color: "#AAAAAA", fontSize: 12, lineHeight: 1.9 }}>
+                          <strong style={{ color: "#FF6600" }}>1. Real people. Real respect.</strong> Treat everyone the way you'd want to be treated in your own home.<br/><br/>
+                          <strong style={{ color: "#FF6600" }}>2. Language.</strong> We're adults. Real talk happens. But know your audience — keep it from becoming someone else's burden. If you wouldn't say it to someone's face at church, think twice.<br/><br/>
+                          <strong style={{ color: "#FF6600" }}>3. Confidentiality.</strong> What's shared here stays here. Someone's prayer request, struggle, or testimony is not yours to share outside these walls. Period.<br/><br/>
+                          <strong style={{ color: "#FF6600" }}>4. No harassment.</strong> We sharpen each other — we don't tear each other apart. Disagreement is fine. Disrespect is not.<br/><br/>
+                          <strong style={{ color: "#FF6600" }}>5. Faith-forward.</strong> This community was built on Ephesians 6:10. We don't all look the same or sound the same, but we stand on the same foundation. Honor that.<br/><br/>
+                          <strong style={{ color: "#FF6600" }}>6. Admin authority is final.</strong> The ESix10 team has the right to remove anyone who disrupts the community. This is someone's house — act accordingly.<br/><br/>
+                          <strong style={{ color: "#FF6600" }}>7. Membership is a privilege.</strong> It can be revoked at any time for conduct that goes against the spirit of this community.
+                        </p>
+                      </div>
+                    )}
+                  </div>
+                </div>
               </div>
             </>
           )}
@@ -859,6 +885,191 @@ function Messages({ profile, members }) {
   );
 }
 
+// ─── Prayer Requests ──────────────────────────────────────────────────────────
+function PrayerRequests({ profile }) {
+  const [prayers, setPrayers] = useState([]);
+  const [body, setBody] = useState("");
+  const [anonymous, setAnonymous] = useState(false);
+  const [posting, setPosting] = useState(false);
+
+  useEffect(() => { loadPrayers(); }, []);
+
+  async function loadPrayers() {
+    const { data } = await supabase.from("prayers").select("*").eq("group_id", profile.group_id).order("pinned", { ascending: false }).order("created_at", { ascending: false }).limit(50);
+    setPrayers(data || []);
+  }
+
+  async function submitPrayer() {
+    if (!body.trim()) return;
+    setPosting(true);
+    const authorName = anonymous ? "Anonymous" : (profile.username ? `@${profile.username}` : formatName(profile.full_name));
+    await supabase.from("prayers").insert({ user_id: profile.id, group_id: profile.group_id, body: body.trim(), anonymous, author_name: authorName, reactions: 0, pinned: false });
+    setBody(""); setPosting(false); loadPrayers();
+  }
+
+  async function react(id, current) {
+    await supabase.from("prayers").update({ reactions: (current || 0) + 1 }).eq("id", id);
+    loadPrayers();
+  }
+
+  async function pin(id, pinned) {
+    await supabase.from("prayers").update({ pinned: !pinned }).eq("id", id);
+    loadPrayers();
+  }
+
+  async function deletePrayer(id) {
+    await supabase.from("prayers").delete().eq("id", id);
+    loadPrayers();
+  }
+
+  return (
+    <div>
+      <span style={S.eyebrow}>Prayer Requests</span>
+      <h2 style={{ ...S.h2, marginBottom: 20 }}>Lift Each Other Up</h2>
+      <div style={S.card}>
+        <label style={S.label}>Share a Prayer Request</label>
+        <textarea style={{ ...S.input, minHeight: 80, resize: "vertical" }} placeholder="Share what's on your heart. This community stands with you." value={body} onChange={e => setBody(e.target.value)} />
+        <div style={{ ...S.flexBetween, marginTop: 12 }}>
+          <label style={{ display: "flex", alignItems: "center", gap: 8, cursor: "pointer", color: "#888", fontSize: 13 }}>
+            <input type="checkbox" checked={anonymous} onChange={e => setAnonymous(e.target.checked)} style={{ accentColor: "#FF6600" }} />
+            Post anonymously
+          </label>
+          <button style={S.btn} onClick={submitPrayer} disabled={posting || !body.trim()}>{posting ? "Posting..." : "Submit Request"}</button>
+        </div>
+      </div>
+      <div style={{ marginTop: 20 }}>
+        {prayers.length === 0 && <div style={{ textAlign: "center", padding: 60 }}><p style={{ fontFamily: "'Cinzel', serif", fontSize: 18, color: "#fff", marginBottom: 8 }}>No prayer requests yet.</p><p style={S.muted}>Be the first to share.</p></div>}
+        {prayers.map(p => (
+          <div key={p.id} style={{ ...S.post, borderLeft: p.pinned ? "3px solid #FF6600" : "none", marginBottom: 12 }}>
+            <div style={S.flexBetween}>
+              <div style={S.flex}>
+                <div style={{ width: 36, height: 36, borderRadius: "50%", background: "rgba(255,102,0,0.15)", display: "flex", alignItems: "center", justifyContent: "center", color: "#FF6600", fontSize: 16 }}>{p.anonymous ? "🙏" : (p.author_name || "?")[0].toUpperCase()}</div>
+                <div>
+                  <span style={S.postAuthor}>{p.author_name || "Member"}</span>
+                  {p.pinned && <span style={{ ...S.badge, marginLeft: 8, fontSize: 10 }}>📌 Pinned</span>}
+                  <span style={S.postTime}>{new Date(p.created_at).toLocaleDateString()}</span>
+                </div>
+              </div>
+              <div style={S.flex}>
+                {profile.role === "admin" && <button style={S.btnSm} onClick={() => pin(p.id, p.pinned)}>{p.pinned ? "Unpin" : "📌 Pin"}</button>}
+                {(profile.role === "admin" || profile.id === p.user_id) && <button style={S.btnDanger} onClick={() => deletePrayer(p.id)}>Remove</button>}
+              </div>
+            </div>
+            <p style={S.postBody}>{p.body}</p>
+            <button onClick={() => react(p.id, p.reactions)} style={{ background: "rgba(255,102,0,0.08)", border: "1px solid rgba(255,102,0,0.2)", borderRadius: 20, padding: "6px 16px", color: "#FF6600", cursor: "pointer", fontSize: 13, marginTop: 12, display: "flex", alignItems: "center", gap: 6 }}>
+              🙏 {p.reactions || 0} {p.reactions === 1 ? "praying" : "praying"}
+            </button>
+          </div>
+        ))}
+      </div>
+    </div>
+  );
+}
+
+// ─── Daily Devotion ────────────────────────────────────────────────────────────
+function Devotion({ profile }) {
+  const [devotions, setDevotions] = useState([]);
+  const [form, setForm] = useState({ title: "", scripture: "", scripture_ref: "", body: "" });
+  const [showForm, setShowForm] = useState(false);
+  const [posting, setPosting] = useState(false);
+  const [comment, setComment] = useState({});
+  const [comments, setComments] = useState({});
+
+  useEffect(() => { loadDevotions(); }, []);
+
+  async function loadDevotions() {
+    const { data } = await supabase.from("devotions").select("*").order("created_at", { ascending: false }).limit(7);
+    setDevotions(data || []);
+    if (data?.length > 0) loadComments(data[0].id);
+  }
+
+  async function loadComments(devotionId) {
+    const { data } = await supabase.from("devotion_comments").select("*").eq("devotion_id", devotionId).order("created_at", { ascending: true });
+    setComments(prev => ({ ...prev, [devotionId]: data || [] }));
+  }
+
+  async function postDevotion() {
+    if (!form.title || !form.body) return;
+    setPosting(true);
+    await supabase.from("devotions").insert({ ...form, author_name: "ESix10 Admin", reactions: 0 });
+    setForm({ title: "", scripture: "", scripture_ref: "", body: "" });
+    setShowForm(false); loadDevotions(); setPosting(false);
+  }
+
+  async function react(id, current) {
+    await supabase.from("devotions").update({ reactions: (current || 0) + 1 }).eq("id", id);
+    loadDevotions();
+  }
+
+  async function postComment(devotionId) {
+    if (!comment[devotionId]?.trim()) return;
+    const authorName = profile.username ? `@${profile.username}` : formatName(profile.full_name);
+    await supabase.from("devotion_comments").insert({ devotion_id: devotionId, user_id: profile.id, author_name: authorName, body: comment[devotionId].trim() });
+    setComment(prev => ({ ...prev, [devotionId]: "" }));
+    loadComments(devotionId);
+  }
+
+  async function deleteDevotion(id) {
+    await supabase.from("devotions").delete().eq("id", id);
+    loadDevotions();
+  }
+
+  return (
+    <div>
+      <div style={S.flexBetween}>
+        <div><span style={S.eyebrow}>Daily Devotion</span><h2 style={{ ...S.h2, margin: 0 }}>Word for Today</h2></div>
+        {profile.role === "admin" && <button style={S.btn} onClick={() => setShowForm(!showForm)}>{showForm ? "Cancel" : "+ Post Devotion"}</button>}
+      </div>
+      {showForm && profile.role === "admin" && (
+        <div style={{ ...S.card, marginTop: 20 }}>
+          <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 16, marginBottom: 16 }}>
+            <div style={{ gridColumn: "1/-1" }}><label style={S.label}>Title</label><input style={S.input} placeholder="Devotion title" value={form.title} onChange={e => setForm({ ...form, title: e.target.value })} /></div>
+            <div><label style={S.label}>Scripture</label><input style={S.input} placeholder="Scripture text" value={form.scripture} onChange={e => setForm({ ...form, scripture: e.target.value })} /></div>
+            <div><label style={S.label}>Reference</label><input style={S.input} placeholder="e.g. Ephesians 6:10" value={form.scripture_ref} onChange={e => setForm({ ...form, scripture_ref: e.target.value })} /></div>
+            <div style={{ gridColumn: "1/-1" }}><label style={S.label}>Reflection</label><textarea style={{ ...S.input, minHeight: 120 }} placeholder="Today's devotional reflection..." value={form.body} onChange={e => setForm({ ...form, body: e.target.value })} /></div>
+          </div>
+          <button style={S.btn} onClick={postDevotion} disabled={posting || !form.title || !form.body}>{posting ? "Posting..." : "Post Devotion"}</button>
+        </div>
+      )}
+      <div style={{ marginTop: 20 }}>
+        {devotions.length === 0 && <div style={{ textAlign: "center", padding: 60 }}><p style={{ fontFamily: "'Cinzel', serif", fontSize: 18, color: "#fff", marginBottom: 8 }}>No devotions yet.</p>{profile.role === "admin" && <p style={S.muted}>Post the first devotion for the community.</p>}</div>}
+        {devotions.map((d, idx) => (
+          <div key={d.id} style={{ ...S.card, marginBottom: 16, borderTop: idx === 0 ? "3px solid #FF6600" : "1px solid rgba(255,255,255,0.06)" }}>
+            <div style={S.flexBetween}>
+              <div>
+                {idx === 0 && <span style={{ ...S.badge, marginBottom: 8, display: "inline-block" }}>Today</span>}
+                <h3 style={{ fontFamily: "'Cinzel', serif", fontSize: 20, fontWeight: 400, color: "#fff", marginBottom: 8 }}>{d.title}</h3>
+                {d.scripture && <div style={{ background: "rgba(255,102,0,0.06)", border: "1px solid rgba(255,102,0,0.15)", borderRadius: 4, padding: "12px 16px", marginBottom: 12 }}><p style={{ color: "#fff", fontFamily: "'Cinzel', serif", fontSize: 14, fontStyle: "italic", lineHeight: 1.7 }}>"{d.scripture}"</p>{d.scripture_ref && <p style={{ color: "#FF6600", fontSize: 12, marginTop: 4, letterSpacing: "0.1em" }}>— {d.scripture_ref}</p>}</div>}
+              </div>
+              {profile.role === "admin" && <button style={S.btnDanger} onClick={() => deleteDevotion(d.id)}>Remove</button>}
+            </div>
+            <p style={{ ...S.postBody, marginBottom: 12 }}>{d.body}</p>
+            <div style={S.flexBetween}>
+              <button onClick={() => react(d.id, d.reactions)} style={{ background: "rgba(255,102,0,0.08)", border: "1px solid rgba(255,102,0,0.2)", borderRadius: 20, padding: "6px 14px", color: "#FF6600", cursor: "pointer", fontSize: 13, display: "flex", alignItems: "center", gap: 6 }}>❤️ {d.reactions || 0}</button>
+              <span style={S.muted}>{new Date(d.created_at).toLocaleDateString("en-US", { weekday: "long", month: "long", day: "numeric" })}</span>
+            </div>
+            {idx === 0 && (
+              <div style={{ borderTop: "1px solid rgba(255,255,255,0.05)", paddingTop: 16, marginTop: 16 }}>
+                <p style={{ ...S.eyebrow, marginBottom: 12 }}>Responses</p>
+                {(comments[d.id] || []).map(c => (
+                  <div key={c.id} style={{ display: "flex", gap: 10, marginBottom: 12 }}>
+                    <div style={{ width: 28, height: 28, borderRadius: "50%", background: "rgba(255,102,0,0.1)", display: "flex", alignItems: "center", justifyContent: "center", color: "#FF6600", fontSize: 11, fontWeight: 600, flexShrink: 0 }}>{(c.author_name || "?")[0].toUpperCase()}</div>
+                    <div><span style={{ color: "#fff", fontSize: 13, fontWeight: 600 }}>{c.author_name}</span><p style={{ color: "#AAAAAA", fontSize: 14, marginTop: 4, lineHeight: 1.6 }}>{c.body}</p></div>
+                  </div>
+                ))}
+                <div style={{ display: "flex", gap: 10, marginTop: 12 }}>
+                  <input style={{ ...S.input, flex: 1, padding: "10px 14px" }} placeholder="Share a reflection..." value={comment[d.id] || ""} onChange={e => setComment(prev => ({ ...prev, [d.id]: e.target.value }))} onKeyDown={e => e.key === "Enter" && postComment(d.id)} />
+                  <button style={{ ...S.btnSm, flexShrink: 0 }} onClick={() => postComment(d.id)}>Post</button>
+                </div>
+              </div>
+            )}
+          </div>
+        ))}
+      </div>
+    </div>
+  );
+}
+
 function Profile({ profile, onUpdate, onSignOut }) {
   const [form, setForm] = useState({ full_name: profile.full_name || "", username: profile.username || "", city: profile.city || "", state: profile.state || "", bio: profile.bio || "", group_id: profile.group_id || "" });
   const [saving, setSaving] = useState(false);
@@ -1005,10 +1216,10 @@ export default function App() {
 
   const NAV_ITEMS = [
     { id: "feed", label: "Feed", icon: "📋" },
+    { id: "prayer", label: "Prayer", icon: "🙏" },
+    { id: "devotion", label: "Devotion", icon: "📖" },
     { id: "messages", label: "Chat", icon: "💬" },
-    { id: "events", label: "Events", icon: "📅" },
     { id: "members", label: "Members", icon: "👥" },
-    { id: "profile", label: "Profile", icon: "👤" },
   ];
 
   const CONTENT = (
@@ -1028,6 +1239,8 @@ export default function App() {
           <Feed profile={profile} activeGroup={feedGroup} />
         </div>
       )}
+      {tab === "prayer" && <PrayerRequests profile={profile} />}
+      {tab === "devotion" && <Devotion profile={profile} />}
       {tab === "events" && <Events profile={profile} />}
       {tab === "messages" && <Messages profile={profile} members={allMembers} />}
       {tab === "members" && <Members profile={profile} />}
@@ -1080,7 +1293,7 @@ export default function App() {
             </div>
             <div style={{ marginBottom: 24 }}>
               <p style={{ ...S.eyebrow, marginBottom: 12 }}>Navigation</p>
-              {NAV_ITEMS.filter(i => i.id !== "feed").map(item => (
+              {NAV_ITEMS.filter(i => i.id !== "feed").concat([{ id: "events", label: "Events", icon: "📅" }, { id: "profile", label: "My Profile", icon: "👤" }]).map(item => (
                 <div key={item.id} onClick={() => setTab(item.id)}
                   style={{ padding: "10px 12px", borderRadius: 4, cursor: "pointer", marginBottom: 2, background: tab === item.id ? "rgba(255,102,0,0.1)" : "transparent", color: tab === item.id ? "#FF6600" : "#888", fontSize: 13, display: "flex", alignItems: "center", gap: 8 }}>
                   <span>{item.icon}</span> {item.label}
