@@ -734,43 +734,25 @@ function Messages({ profile, members }) {
 
   async function loadMessages() {
     if (!activeRoom) return;
-    console.log("Querying room:", activeRoom);
-    const { data: msgs, error } = await supabase
+    const { data, error } = await supabase
       .from("messages")
       .select("*")
       .eq("room_id", activeRoom)
       .order("created_at", { ascending: true })
       .limit(50);
-    
     if (error) { console.error("Messages error:", error); return; }
-    if (!msgs || msgs.length === 0) { setMessages([]); return; }
-
-    // Get unique user IDs and fetch their profiles
-    const userIds = [...new Set(msgs.map(m => m.user_id).filter(Boolean))];
-    if (userIds.length === 0) { setMessages([]); return; }
-    const { data: profiles } = await supabase
-      .from("profiles")
-      .select("id, full_name, username, group_id")
-      .in("id", userIds);
-
-    const profileMap = {};
-    (profiles || []).forEach(p => { profileMap[p.id] = p; });
-
-    const enriched = msgs.map(m => ({
-      ...m,
-      profiles: profileMap[m.user_id] || null
-    }));
-
-    setMessages(enriched);
+    setMessages(data || []);
   }
 
   async function send() {
     if (!body.trim() || !activeRoom) return;
     setPosting(true);
+    const senderName = profile.username ? `@${profile.username}` : formatName(profile.full_name);
     const { error } = await supabase.from("messages").insert({ 
       room_id: activeRoom, 
       user_id: profile.id, 
-      body: body.trim() 
+      body: body.trim(),
+      sender_name: senderName
     });
     if (error) {
       alert(`Message failed: ${error.message}`);
@@ -833,11 +815,11 @@ function Messages({ profile, members }) {
               {messages.length === 0 && <div style={{ textAlign: "center", padding: 40 }}><p style={S.muted}>No messages yet. Start the conversation.</p></div>}
               {messages.map(msg => {
                 const isOwn = msg.user_id === profile.id;
-                const senderName = msg.profiles?.username ? `@${msg.profiles.username}` : formatName(msg.profiles?.full_name);
+                const senderName = msg.sender_name || "Member";
                 return (
                   <div key={msg.id} style={{ display: "flex", flexDirection: isOwn ? "row-reverse" : "row", alignItems: "flex-start", gap: 10 }}>
                     <div style={{ width: 32, height: 32, borderRadius: "50%", background: isOwn ? "rgba(255,102,0,0.3)" : "rgba(255,255,255,0.05)", display: "flex", alignItems: "center", justifyContent: "center", color: isOwn ? "#FF6600" : "#666", fontSize: 12, fontWeight: 600, flexShrink: 0 }}>
-                      {(msg.profiles?.username || msg.profiles?.full_name || "?")[0].toUpperCase()}
+                      {(msg.sender_name || "?")[0].toUpperCase()}
                     </div>
                     <div style={{ maxWidth: "70%" }}>
                       <div style={{ fontSize: 11, color: "#555", marginBottom: 4, textAlign: isOwn ? "right" : "left" }}>
