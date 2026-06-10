@@ -76,7 +76,7 @@ const GLOBAL_CSS = `
 // ─── Styles ───────────────────────────────────────────────────────────────────
 const S = {
   app: { minHeight: "100vh", background: "#111111", color: "#fff", fontFamily: "'Lato', sans-serif", fontSize: 15 },
-  nav: { position: "fixed", top: 0, left: 0, right: 0, height: 60, background: "rgba(10,10,10,0.98)", borderBottom: "1px solid rgba(255,102,0,0.2)", display: "flex", alignItems: "center", justifyContent: "space-between", padding: "0 16px", zIndex: 100 },
+  nav: { position: "fixed", top: 0, left: 0, right: 0, height: 80, background: "rgba(10,10,10,0.98)", borderBottom: "1px solid rgba(255,102,0,0.2)", display: "flex", alignItems: "center", justifyContent: "space-between", padding: "0 16px", zIndex: 100 },
   navLogo: { fontFamily: "'Cinzel', serif", fontSize: 16, fontWeight: 600, color: "#fff", letterSpacing: "0.08em" },
   navLogoSub: { color: "#FF6600", fontSize: 9, display: "block", letterSpacing: "0.35em", marginTop: -2 },
   navRight: { display: "flex", alignItems: "center", gap: 16 },
@@ -211,7 +211,7 @@ function PendingScreen({ profile, onSignOut }) {
   return (
     <div style={{ minHeight: "100vh", background: "#0a0a0a", display: "flex", alignItems: "center", justifyContent: "center", padding: 24 }}>
       <div style={{ maxWidth: 480, width: "100%", textAlign: "center" }}>
-        <img src="https://esix10.com/wp-content/uploads/2026/06/esix10logo.png" alt="ESix10" style={{ height: 56, width: "auto", objectFit: "contain", marginBottom: 8 }} />
+        <img src="https://esix10.com/wp-content/uploads/2026/06/esix10logo.png" alt="ESix10" style={{ height: 112, width: "auto", objectFit: "contain", marginBottom: 8 }} />
         <span style={{ color: "#FF6600", fontSize: 10, display: "block", letterSpacing: "0.35em", textTransform: "uppercase", marginBottom: 32 }}>Community</span>
         <div style={{ ...S.card, textAlign: "left" }}>
           <div style={{ textAlign: "center", marginBottom: 24 }}>
@@ -277,7 +277,7 @@ function AuthScreen({ onAuth }) {
     <div style={{ minHeight: "100vh", background: "#0a0a0a", display: "flex", alignItems: "center", justifyContent: "center", padding: 24 }}>
       <div style={{ width: "100%", maxWidth: 420 }}>
         <div style={{ textAlign: "center", marginBottom: 40 }}>
-          <img src="https://esix10.com/wp-content/uploads/2026/06/esix10logo.png" alt="ESix10" style={{ height: 60, width: "auto", objectFit: "contain", marginBottom: 8 }} />
+          <img src="https://esix10.com/wp-content/uploads/2026/06/esix10logo.png" alt="ESix10" style={{ height: 120, width: "auto", objectFit: "contain", marginBottom: 8 }} />
           <span style={{ color: "#FF6600", fontSize: 10, display: "block", letterSpacing: "0.35em", textTransform: "uppercase" }}>Community</span>
           <div style={{ width: 40, height: 2, background: "#FF6600", margin: "16px auto" }} />
           <p style={S.grey}>Prepared. Equipped. Unshaken.</p>
@@ -367,8 +367,8 @@ function GroupSelect({ user, onSelect }) {
           {GROUPS.map(g => (
             <div key={g.id} style={S.groupCard(selected === g.id)} onClick={() => setSelected(g.id)}>
               <div style={{ fontSize: 32, marginBottom: 12, color: "#FF6600" }}>{g.icon}</div>
-              <h3 style={{ fontFamily: "'Cinzel', serif", fontSize: 18, fontWeight: 400, color: "#fff", marginBottom: 6 }}>{g.label}</h3>
-              <p style={{ fontSize: 12, color: "#FF6600", fontStyle: "italic", marginTop: 4 }}>{g.subtitle}</p>
+              <h3 style={{ fontFamily: "'Cinzel', serif", fontSize: 20, fontWeight: 400, color: "#fff", marginBottom: 8 }}>{g.label}</h3>
+              <p style={{ fontSize: 13, color: "#FF6600", letterSpacing: "0.1em", textTransform: "uppercase", fontWeight: 700 }}>{g.subtitle}</p>
             </div>
           ))}
         </div>
@@ -435,9 +435,14 @@ function Feed({ profile, activeGroup, isNewMember }) {
   }
 
   const groupName = GROUPS.find(g => g.id === postTarget)?.label || "Your Group";
+  const groupSubtitle = GROUPS.find(g => g.id === profile.group_id)?.subtitle || "";
 
   return (
     <div className="tab-content">
+      <div style={{ marginBottom: 20 }}>
+        <h2 style={{ fontFamily: "'Cinzel', serif", fontSize: 22, fontWeight: 400, color: "#fff", marginBottom: 4 }}>{GROUPS.find(g => g.id === profile.group_id)?.label}</h2>
+        <p style={{ color: "#FF6600", fontSize: 12, letterSpacing: "0.15em", textTransform: "uppercase", fontWeight: 700 }}>{groupSubtitle}</p>
+      </div>
       {showWelcome && (
         <div style={{ background: "linear-gradient(135deg, rgba(255,102,0,0.15), rgba(192,154,47,0.1))", border: "1px solid rgba(255,102,0,0.3)", borderRadius: 6, padding: "20px 24px", marginBottom: 20, position: "relative" }}>
           <button onClick={() => setShowWelcome(false)} style={{ position: "absolute", top: 12, right: 16, background: "none", border: "none", color: "#666", cursor: "pointer", fontSize: 18 }}>x</button>
@@ -1309,10 +1314,10 @@ export default function App() {
       <style>{GLOBAL_CSS}</style>
 
       {/* NAV */}
-      <nav style={{ ...S.nav, height: isMobile ? 56 : 70, padding: isMobile ? "0 12px" : "0 32px" }}>
-        <img src="https://esix10.com/wp-content/uploads/2026/06/esix10logo.png" alt="ESix10" style={{ height: isMobile ? 36 : 44, width: "auto", objectFit: "contain" }} />
+      <nav style={{ ...S.nav, height: isMobile ? 80 : 96, padding: isMobile ? "0 12px" : "0 32px" }}>
+        <img src="https://esix10.com/wp-content/uploads/2026/06/esix10logo.png" alt="ESix10" style={{ height: isMobile ? 72 : 88, width: "auto", objectFit: "contain" }} />
         <div style={S.navRight}>
-          <span style={{ ...S.badge, fontSize: 10 }}>{myGroup?.icon} {isMobile ? "" : myGroup?.label}</span>
+          <span style={{ ...S.badge, fontSize: 10 }}>{myGroup?.icon} {myGroup?.label}</span>
           {isAdmin && !isMobile && <span style={{ ...S.badge, background: "rgba(255,102,0,0.3)", color: "#FF6600" }}>Admin</span>}
           <div style={{ width: 32, height: 32, borderRadius: "50%", background: "rgba(255,102,0,0.15)", display: "flex", alignItems: "center", justifyContent: "center", color: "#FF6600", fontFamily: "'Cinzel', serif", fontWeight: 600, cursor: "pointer", fontSize: 13 }} onClick={() => setTab("profile")}>
             {(profile.username || profile.full_name || "?")[0].toUpperCase()}
