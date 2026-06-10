@@ -20,7 +20,7 @@ const supabase = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 const GROUPS = [
   { id: "brotherhood", label: "Brotherhood", subtitle: "Steadfast. Unmovable.", icon: "⚔", color: "#FF6600" },
   { id: "sisterhood", label: "Sisterhood", subtitle: "Fierce. Faithful.", icon: "✦", color: "#FF6600" },
-  { id: "family", label: "Family", subtitle: "Rooted. United. Unshaken.", icon: "◈", color: "#FF6600" },
+  { id: "family", label: "Family", subtitle: "Rooted. Together. Unbreakable.", icon: "◈", color: "#FF6600" },
 ];
 
 const ADMIN_EMAIL = "michael@esix10.com";
@@ -75,7 +75,7 @@ const GLOBAL_CSS = `
 
 // ─── Styles ───────────────────────────────────────────────────────────────────
 const S = {
-  app: { minHeight: "100vh", background: "#0a0a0a", color: "#fff", fontFamily: "'Lato', sans-serif", fontSize: 15 },
+  app: { minHeight: "100vh", background: "#111111", color: "#fff", fontFamily: "'Lato', sans-serif", fontSize: 15 },
   nav: { position: "fixed", top: 0, left: 0, right: 0, height: 60, background: "rgba(10,10,10,0.98)", borderBottom: "1px solid rgba(255,102,0,0.2)", display: "flex", alignItems: "center", justifyContent: "space-between", padding: "0 16px", zIndex: 100 },
   navLogo: { fontFamily: "'Cinzel', serif", fontSize: 16, fontWeight: 600, color: "#fff", letterSpacing: "0.08em" },
   navLogoSub: { color: "#FF6600", fontSize: 9, display: "block", letterSpacing: "0.35em", marginTop: -2 },
@@ -86,7 +86,7 @@ const S = {
   btnSm: { background: "#FF6600", color: "#fff", border: "none", borderRadius: 3, padding: "8px 16px", fontFamily: "'Lato', sans-serif", fontSize: 11, letterSpacing: "0.12em", textTransform: "uppercase", cursor: "pointer" },
   btnDanger: { background: "transparent", color: "#ff4444", border: "1px solid #ff4444", borderRadius: 3, padding: "6px 12px", fontSize: 11, cursor: "pointer" },
   page: { paddingTop: 90, maxWidth: 1100, margin: "0 auto", padding: "90px 24px 60px" },
-  card: { background: "rgba(26,26,26,0.8)", border: "1px solid rgba(255,255,255,0.06)", borderRadius: 6, padding: 28 },
+  card: { background: "rgba(30,30,30,0.95)", border: "1px solid rgba(255,255,255,0.1)", borderRadius: 6, padding: 28 },
   input: { width: "100%", background: "rgba(255,255,255,0.05)", border: "1px solid rgba(255,255,255,0.1)", borderRadius: 4, padding: "12px 16px", color: "#fff", fontFamily: "'Lato', sans-serif", fontSize: 15, outline: "none", boxSizing: "border-box" },
   label: { fontSize: 10, letterSpacing: "0.2em", textTransform: "uppercase", color: "#FF6600", marginBottom: 6, display: "block" },
   divider: { width: 50, height: 2, background: "#FF6600", margin: "16px 0" },
@@ -94,8 +94,8 @@ const S = {
   h1: { fontFamily: "'Cinzel', serif", fontSize: 36, fontWeight: 400, color: "#fff", marginBottom: 8 },
   h2: { fontFamily: "'Cinzel', serif", fontSize: 26, fontWeight: 400, color: "#fff", marginBottom: 8 },
   h3: { fontFamily: "'Cinzel', serif", fontSize: 20, fontWeight: 400, color: "#fff", marginBottom: 8 },
-  muted: { color: "#666", fontSize: 13 },
-  grey: { color: "#AAAAAA" },
+  muted: { color: "#888", fontSize: 13 },
+  grey: { color: "#CCCCCC" },
   orange: { color: "#FF6600" },
   error: { color: "#ff6b6b", fontSize: 13, marginTop: 6 },
   success: { color: "#51cf66", fontSize: 13, marginTop: 6 },
@@ -103,10 +103,10 @@ const S = {
   flexBetween: { display: "flex", alignItems: "center", justifyContent: "space-between" },
   grid2: { display: "grid", gridTemplateColumns: "1fr 1fr", gap: 16 },
   grid3: { display: "grid", gridTemplateColumns: "repeat(3,1fr)", gap: 16 },
-  post: { background: "rgba(26,26,26,0.8)", border: "1px solid rgba(255,255,255,0.06)", borderRadius: 6, padding: 20, marginBottom: 12 },
+  post: { background: "rgba(32,32,32,0.95)", border: "1px solid rgba(255,255,255,0.1)", borderRadius: 6, padding: 20, marginBottom: 12 },
   postAuthor: { fontFamily: "'Cinzel', serif", fontSize: 14, fontWeight: 600, color: "#fff" },
   postTime: { fontSize: 11, color: "#555", marginLeft: 8 },
-  postBody: { color: "#AAAAAA", fontSize: 15, lineHeight: 1.7, marginTop: 10 },
+  postBody: { color: "#CCCCCC", fontSize: 15, lineHeight: 1.7, marginTop: 10 },
   tab: (active) => ({ padding: "10px 20px", background: active ? "#FF6600" : "transparent", color: active ? "#fff" : "#888", border: active ? "none" : "1px solid rgba(255,255,255,0.1)", borderRadius: 3, cursor: "pointer", fontFamily: "'Lato',sans-serif", fontSize: 11, letterSpacing: "0.12em", textTransform: "uppercase" }),
   groupCard: (selected) => ({ border: selected ? "2px solid #FF6600" : "1px solid rgba(255,255,255,0.08)", borderRadius: 6, padding: "24px 20px", cursor: "pointer", background: selected ? "rgba(255,102,0,0.08)" : "rgba(26,26,26,0.6)", textAlign: "center", transition: "all 0.2s" }),
 };
@@ -211,7 +211,7 @@ function PendingScreen({ profile, onSignOut }) {
   return (
     <div style={{ minHeight: "100vh", background: "#0a0a0a", display: "flex", alignItems: "center", justifyContent: "center", padding: 24 }}>
       <div style={{ maxWidth: 480, width: "100%", textAlign: "center" }}>
-        <span style={{ fontFamily: "'Cinzel', serif", fontSize: 28, fontWeight: 600, color: "#fff" }}>ESix10</span>
+        <img src="https://esix10.com/wp-content/uploads/2026/06/esix10logo.png" alt="ESix10" style={{ height: 56, width: "auto", objectFit: "contain", marginBottom: 8 }} />
         <span style={{ color: "#FF6600", fontSize: 10, display: "block", letterSpacing: "0.35em", textTransform: "uppercase", marginBottom: 32 }}>Community</span>
         <div style={{ ...S.card, textAlign: "left" }}>
           <div style={{ textAlign: "center", marginBottom: 24 }}>
@@ -277,7 +277,7 @@ function AuthScreen({ onAuth }) {
     <div style={{ minHeight: "100vh", background: "#0a0a0a", display: "flex", alignItems: "center", justifyContent: "center", padding: 24 }}>
       <div style={{ width: "100%", maxWidth: 420 }}>
         <div style={{ textAlign: "center", marginBottom: 40 }}>
-          <span style={{ fontFamily: "'Cinzel', serif", fontSize: 28, fontWeight: 600, color: "#fff", letterSpacing: "0.08em" }}>ESix10</span>
+          <img src="https://esix10.com/wp-content/uploads/2026/06/esix10logo.png" alt="ESix10" style={{ height: 60, width: "auto", objectFit: "contain", marginBottom: 8 }} />
           <span style={{ color: "#FF6600", fontSize: 10, display: "block", letterSpacing: "0.35em", textTransform: "uppercase" }}>Community</span>
           <div style={{ width: 40, height: 2, background: "#FF6600", margin: "16px auto" }} />
           <p style={S.grey}>Prepared. Equipped. Unshaken.</p>
@@ -368,7 +368,7 @@ function GroupSelect({ user, onSelect }) {
             <div key={g.id} style={S.groupCard(selected === g.id)} onClick={() => setSelected(g.id)}>
               <div style={{ fontSize: 32, marginBottom: 12, color: "#FF6600" }}>{g.icon}</div>
               <h3 style={{ fontFamily: "'Cinzel', serif", fontSize: 18, fontWeight: 400, color: "#fff", marginBottom: 6 }}>{g.label}</h3>
-              <p style={{ fontSize: 12, color: "#888", fontStyle: "italic" }}>{g.subtitle}</p>
+              <p style={{ fontSize: 12, color: "#FF6600", fontStyle: "italic", marginTop: 4 }}>{g.subtitle}</p>
             </div>
           ))}
         </div>
@@ -1310,7 +1310,7 @@ export default function App() {
 
       {/* NAV */}
       <nav style={{ ...S.nav, height: isMobile ? 56 : 70, padding: isMobile ? "0 12px" : "0 32px" }}>
-        <span style={{ ...S.navLogo, fontSize: isMobile ? 16 : 20 }}>ESix10<span style={S.navLogoSub}>Community</span></span>
+        <img src="https://esix10.com/wp-content/uploads/2026/06/esix10logo.png" alt="ESix10" style={{ height: isMobile ? 36 : 44, width: "auto", objectFit: "contain" }} />
         <div style={S.navRight}>
           <span style={{ ...S.badge, fontSize: 10 }}>{myGroup?.icon} {isMobile ? "" : myGroup?.label}</span>
           {isAdmin && !isMobile && <span style={{ ...S.badge, background: "rgba(255,102,0,0.3)", color: "#FF6600" }}>Admin</span>}
