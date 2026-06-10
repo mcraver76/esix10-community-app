@@ -737,7 +737,7 @@ function Messages({ profile, members }) {
       .from("messages")
       .select("*, profiles(full_name, username, group_id)")
       .eq("room_id", activeRoom)
-      .order("created_at", { ascending: false })
+      .order("created_at", { ascending: true })
       .limit(50);
     setMessages(data || []);
   }
@@ -755,7 +755,7 @@ function Messages({ profile, members }) {
       console.error("Message error:", error);
     } else {
       setBody("");
-      loadMessages();
+      setTimeout(() => loadMessages(), 300);
     }
     setPosting(false);
   }
@@ -807,8 +807,7 @@ function Messages({ profile, members }) {
               <span style={{ fontSize: 20 }}>{currentRoom?.icon}</span>
               <span style={{ fontFamily: "'Cinzel', serif", fontSize: 16, color: "#fff" }}>{currentRoom?.label}</span>
             </div>
-            <div style={{ flex: 1, overflowY: "auto", padding: "16px 20px", display: "flex", flexDirection: "column-reverse", gap: 8 }}>
-              <div ref={bottomRef} />
+            <div style={{ flex: 1, overflowY: "auto", padding: "16px 20px", display: "flex", flexDirection: "column", gap: 8 }}>
               {messages.length === 0 && <div style={{ textAlign: "center", padding: 40 }}><p style={S.muted}>No messages yet. Start the conversation.</p></div>}
               {messages.map(msg => {
                 const isOwn = msg.user_id === profile.id;
@@ -832,6 +831,7 @@ function Messages({ profile, members }) {
                   </div>
                 );
               })}
+              <div ref={bottomRef} />
             </div>
             <div style={{ padding: "12px 20px", borderTop: "1px solid rgba(255,255,255,0.05)", display: "flex", gap: 10 }}>
               <input style={{ ...S.input, flex: 1 }} placeholder="Type a message..." value={body} onChange={e => setBody(e.target.value)} onKeyDown={e => { if (e.key === "Enter" && !e.shiftKey) { e.preventDefault(); send(); }}} />
