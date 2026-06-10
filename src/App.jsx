@@ -457,12 +457,17 @@ function Events({ profile }) {
 
 function Members({ profile }) {
   const [members, setMembers] = useState([]);
-  const [filter, setFilter] = useState("all");
+  const [filter, setFilter] = useState(profile.role === "admin" ? "all" : profile.group_id);
 
   useEffect(() => { loadMembers(); }, []);
 
   async function loadMembers() {
-    const { data } = await supabase.from("profiles").select("*").order("created_at", { ascending: false });
+    let q = supabase.from("profiles").select("*").order("created_at", { ascending: false });
+    // Non-admins only see their own group
+    if (profile.role !== "admin") {
+      q = q.eq("group_id", profile.group_id);
+    }
+    const { data } = await q;
     setMembers(data || []);
   }
 
@@ -471,19 +476,27 @@ function Members({ profile }) {
     loadMembers();
   }
 
-  const filtered = filter === "all" ? members : members.filter(m => m.group_id === filter);
+  const filtered = profile.role === "admin" && filter !== "all" 
+    ? members.filter(m => m.group_id === filter) 
+    : members;
+
+  const myGroup = GROUPS.find(g => g.id === profile.group_id);
 
   return (
     <div>
       <div style={S.flexBetween}>
-        <h2 style={{ ...S.h2, margin: 0 }}>Members ({filtered.length})</h2>
-        <div style={S.flex}>
-          {["all", ...GROUPS.map(g => g.id)].map(f => (
-            <button key={f} style={S.tab(filter === f)} onClick={() => setFilter(f)}>
-              {f === "all" ? "All" : GROUPS.find(g => g.id === f)?.label}
-            </button>
-          ))}
-        </div>
+        <h2 style={{ ...S.h2, margin: 0 }}>
+          {profile.role === "admin" ? `Members (${filtered.length})` : `${myGroup?.label} (${filtered.length})`}
+        </h2>
+        {profile.role === "admin" && (
+          <div style={S.flex}>
+            {["all", ...GROUPS.map(g => g.id)].map(f => (
+              <button key={f} style={S.tab(filter === f)} onClick={() => setFilter(f)}>
+                {f === "all" ? "All" : GROUPS.find(g => g.id === f)?.label}
+              </button>
+            ))}
+          </div>
+        )}
       </div>
       <div style={{ marginTop: 20, display: "grid", gap: 8 }}>
         {filtered.map(m => (
@@ -674,7 +687,7 @@ export default function App() {
             <p style={{ ...S.eyebrow, marginBottom: 12 }}>Navigation</p>
             {[
               { id: "events", label: "Events", icon: "📅" },
-              ...(isAdmin ? [{ id: "members", label: "Members", icon: "👥" }] : []),
+              { id: "members", label: "Members", icon: "👥" },
               { id: "profile", label: "My Profile", icon: "👤" },
             ].map(item => (
               <div key={item.id}
@@ -694,7 +707,7 @@ export default function App() {
         <div style={{ flex: 1, padding: "32px 32px 60px", maxWidth: 800 }}>
           {tab === "feed" && <Feed profile={profile} activeGroup={feedGroup} />}
           {tab === "events" && <Events profile={profile} />}
-          {tab === "members" && isAdmin && <Members profile={profile} />}
+          {tab === "members" && <Members profile={profile} />}
           {tab === "profile" && <Profile profile={profile} onUpdate={setProfile} onSignOut={signOut} />}
         </div>
       </div>
