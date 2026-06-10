@@ -984,6 +984,8 @@ export default function App() {
     setUser(null); setProfile(null);
   }
 
+  const isMobile = useMobile();
+
   if (loading) return (
     <div style={{ minHeight: "100vh", background: "#0a0a0a", display: "flex", alignItems: "center", justifyContent: "center" }}>
       <div style={{ textAlign: "center" }}>
@@ -1000,7 +1002,6 @@ export default function App() {
 
   const myGroup = GROUPS.find(g => g.id === profile.group_id);
   const isAdmin = profile?.role === "admin";
-  const isMobile = useMobile();
 
   const NAV_ITEMS = [
     { id: "feed", label: "Feed", icon: "📋" },
