@@ -435,13 +435,13 @@ function Feed({ profile, activeGroup, isNewMember }) {
   }
 
   const groupName = GROUPS.find(g => g.id === postTarget)?.label || "Your Group";
-  const groupSubtitle = GROUPS.find(g => g.id === profile.group_id)?.subtitle || "";
+  const activeGroupData = GROUPS.find(g => g.id === (activeGroup === "all" ? profile.group_id : activeGroup));
 
   return (
     <div className="tab-content">
       <div style={{ marginBottom: 20 }}>
-        <h2 style={{ fontFamily: "'Cinzel', serif", fontSize: 22, fontWeight: 400, color: "#fff", marginBottom: 4 }}>{GROUPS.find(g => g.id === profile.group_id)?.label}</h2>
-        <p style={{ color: "#FF6600", fontSize: 12, letterSpacing: "0.15em", textTransform: "uppercase", fontWeight: 700 }}>{groupSubtitle}</p>
+        <h2 style={{ fontFamily: "'Cinzel', serif", fontSize: 22, fontWeight: 400, color: "#fff", marginBottom: 4 }}>{activeGroupData?.label || "Community"}</h2>
+        <p style={{ color: "#FF6600", fontSize: 12, letterSpacing: "0.15em", textTransform: "uppercase", fontWeight: 700 }}>{activeGroupData?.subtitle || ""}</p>
       </div>
       {showWelcome && (
         <div style={{ background: "linear-gradient(135deg, rgba(255,102,0,0.15), rgba(192,154,47,0.1))", border: "1px solid rgba(255,102,0,0.3)", borderRadius: 6, padding: "20px 24px", marginBottom: 20, position: "relative" }}>
