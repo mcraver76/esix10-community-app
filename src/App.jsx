@@ -175,6 +175,76 @@ create policy "delete own messages" on messages for delete using (auth.uid() = u
 
 -- Enable realtime
 alter publication supabase_realtime add table posts;
+
+-- The Forge tables
+create table if not exists forge_walks (
+  id uuid default gen_random_uuid() primary key,
+  user_id uuid references profiles(id) on delete cascade,
+  date date not null default current_date,
+  distance_miles numeric(4,2),
+  duration_minutes int,
+  notes text,
+  created_at timestamp default now()
+);
+alter table forge_walks enable row level security;
+create policy "view walks" on forge_walks for select using (true);
+create policy "insert walks" on forge_walks for insert with check (auth.uid() = user_id);
+create policy "delete walks" on forge_walks for delete using (auth.uid() = user_id);
+
+create table if not exists forge_challenges (
+  id uuid default gen_random_uuid() primary key,
+  title text not null,
+  description text,
+  category text default 'Scripture',
+  scheduled_date date not null,
+  created_by uuid references profiles(id),
+  created_at timestamp default now()
+);
+alter table forge_challenges enable row level security;
+create policy "view challenges" on forge_challenges for select using (true);
+create policy "manage challenges" on forge_challenges for all using ((select role from profiles where id = auth.uid()) = 'admin');
+
+create table if not exists forge_challenge_completions (
+  id uuid default gen_random_uuid() primary key,
+  user_id uuid references profiles(id) on delete cascade,
+  challenge_id uuid references forge_challenges(id) on delete cascade,
+  note text,
+  created_at timestamp default now(),
+  unique(user_id, challenge_id)
+);
+alter table forge_challenge_completions enable row level security;
+create policy "view completions" on forge_challenge_completions for select using (true);
+create policy "insert completions" on forge_challenge_completions for insert with check (auth.uid() = user_id);
+create policy "delete completions" on forge_challenge_completions for delete using (auth.uid() = user_id);
+
+create table if not exists forge_wods (
+  id uuid default gen_random_uuid() primary key,
+  title text not null,
+  warmup text,
+  main_work text,
+  cooldown text,
+  coaching_notes text,
+  estimated_minutes int,
+  difficulty int default 3,
+  scheduled_date date not null,
+  created_by uuid references profiles(id),
+  created_at timestamp default now()
+);
+alter table forge_wods enable row level security;
+create policy "view wods" on forge_wods for select using (true);
+create policy "manage wods" on forge_wods for all using ((select role from profiles where id = auth.uid()) = 'admin');
+
+create table if not exists forge_wod_completions (
+  id uuid default gen_random_uuid() primary key,
+  user_id uuid references profiles(id) on delete cascade,
+  wod_id uuid references forge_wods(id) on delete cascade,
+  result text,
+  created_at timestamp default now(),
+  unique(user_id, wod_id)
+);
+alter table forge_wod_completions enable row level security;
+create policy "view wod completions" on forge_wod_completions for select using (true);
+create policy "insert wod completions" on forge_wod_completions for insert with check (auth.uid() = user_id);
 alter publication supabase_realtime add table messages;`;
 
 // ─── Components ───────────────────────────────────────────────────────────────
@@ -1144,6 +1214,499 @@ function Devotion({ profile }) {
   );
 }
 
+
+// ─── The Forge ────────────────────────────────────────────────────────────────
+const FORGE_CSS = `
+.forge-tab-bar { display: flex; gap: 4px; margin-bottom: 24px; background: rgba(255,255,255,0.03); border-radius: 6px; padding: 4px; }
+.forge-tab { flex: 1; padding: 10px 8px; border: none; border-radius: 4px; cursor: pointer; font-family: 'Lato', sans-serif; font-size: 11px; letter-spacing: 0.1em; text-transform: uppercase; transition: all 0.2s; }
+.forge-tab.active { background: #FF6600; color: #fff; }
+.forge-tab.inactive { background: transparent; color: #666; }
+.forge-tab.inactive:hover { color: #FF6600; }
+.streak-badge { display: inline-flex; align-items: center; gap: 6px; background: linear-gradient(135deg, rgba(255,102,0,0.2), rgba(192,154,47,0.15)); border: 1px solid rgba(255,102,0,0.3); border-radius: 20px; padding: 6px 16px; }
+.complete-btn { width: 100%; padding: 16px; border: 2px solid #FF6600; border-radius: 6px; background: transparent; color: #FF6600; font-family: 'Lato', sans-serif; font-size: 13px; letter-spacing: 0.15em; text-transform: uppercase; cursor: pointer; transition: all 0.2s; }
+.complete-btn:hover, .complete-btn.done { background: #FF6600; color: #fff; }
+.beta-banner { background: linear-gradient(135deg, rgba(255,102,0,0.1), rgba(192,154,47,0.08)); border: 1px solid rgba(255,102,0,0.2); border-radius: 6px; padding: 12px 20px; margin-bottom: 20px; display: flex; align-items: center; gap: 10px; }
+`;
+
+const CHALLENGE_CATEGORIES = ['Scripture', 'Physical', 'Mental', 'Preparedness', 'Leadership'];
+const CATEGORY_ICONS = { Scripture: '✝️', Physical: '💪', Mental: '🧠', Preparedness: '◈', Leadership: '⚔️' };
+
+function ForgeWalk({ profile }) {
+  const [todayWalk, setTodayWalk] = useState(null);
+  const [streak, setStreak] = useState(0);
+  const [totalToday, setTotalToday] = useState(0);
+  const [form, setForm] = useState({ distance_miles: '', duration_minutes: '', notes: '' });
+  const [logging, setLogging] = useState(false);
+  const today = new Date().toISOString().split('T')[0];
+
+  useEffect(() => { loadWalkData(); }, []);
+
+  async function loadWalkData() {
+    const { data: walks } = await supabase.from('forge_walks').select('*').eq('user_id', profile.id).order('date', { ascending: false }).limit(60);
+    if (!walks) return;
+    const todayEntry = walks.find(w => w.date === today);
+    setTodayWalk(todayEntry || null);
+    let s = 0;
+    let checkDate = new Date();
+    for (let i = 0; i < 60; i++) {
+      const d = checkDate.toISOString().split('T')[0];
+      if (walks.find(w => w.date === d)) { s++; checkDate.setDate(checkDate.getDate() - 1); }
+      else break;
+    }
+    setStreak(s);
+    const { count } = await supabase.from('forge_walks').select('*', { count: 'exact', head: true }).eq('date', today);
+    setTotalToday(count || 0);
+  }
+
+  async function logWalk() {
+    setLogging(true);
+    await supabase.from('forge_walks').insert({ user_id: profile.id, date: today, distance_miles: form.distance_miles ? parseFloat(form.distance_miles) : null, duration_minutes: form.duration_minutes ? parseInt(form.duration_minutes) : null, notes: form.notes || null });
+    setLogging(false); loadWalkData();
+  }
+
+  return (
+    <div>
+      <div style={{ display: 'flex', gap: 16, marginBottom: 24, flexWrap: 'wrap' }}>
+        <div className="streak-badge">
+          <span style={{ fontSize: 20 }}>🔥</span>
+          <div><div style={{ fontFamily: "'Cinzel', serif", fontSize: 22, color: '#FF6600', lineHeight: 1 }}>{streak}</div><div style={{ fontSize: 10, color: '#888', letterSpacing: '0.1em', textTransform: 'uppercase' }}>Day Streak</div></div>
+        </div>
+        <div style={{ background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.08)', borderRadius: 20, padding: '6px 16px', display: 'flex', alignItems: 'center', gap: 8 }}>
+          <span style={{ fontSize: 16 }}>🚶</span>
+          <div><div style={{ fontFamily: "'Cinzel', serif", fontSize: 22, color: '#fff', lineHeight: 1 }}>{totalToday}</div><div style={{ fontSize: 10, color: '#888', letterSpacing: '0.1em', textTransform: 'uppercase' }}>Walked Today</div></div>
+        </div>
+      </div>
+      {todayWalk ? (
+        <div style={{ ...S.card, borderTop: '3px solid #51cf66', textAlign: 'center', padding: 32 }}>
+          <div style={{ fontSize: 40, marginBottom: 12 }}>✅</div>
+          <h3 style={{ fontFamily: "'Cinzel', serif", fontSize: 20, color: '#fff', marginBottom: 8 }}>You walked today.</h3>
+          <p style={{ color: '#888', fontSize: 14 }}>{todayWalk.distance_miles && `${todayWalk.distance_miles} miles`}{todayWalk.distance_miles && todayWalk.duration_minutes && ' · '}{todayWalk.duration_minutes && `${todayWalk.duration_minutes} minutes`}</p>
+          {todayWalk.notes && <p style={{ color: '#AAAAAA', fontSize: 14, marginTop: 8, fontStyle: 'italic' }}>"{todayWalk.notes}"</p>}
+          <p style={{ color: '#FF6600', fontSize: 12, marginTop: 16, letterSpacing: '0.1em' }}>🔥 {streak} day streak — keep it going tomorrow</p>
+        </div>
+      ) : (
+        <div style={S.card}>
+          <span style={S.eyebrow}>Daily Walk for Sanity</span>
+          <h3 style={{ fontFamily: "'Cinzel', serif", fontSize: 20, color: '#fff', marginBottom: 8 }}>Did you walk today?</h3>
+          <p style={{ color: '#888', fontSize: 14, marginBottom: 24, lineHeight: 1.7 }}>One walk. Every day. Not for performance — for your mind, your body, and your soul.</p>
+          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12, marginBottom: 16 }}>
+            <div><label style={S.label}>Distance (miles)</label><input style={S.input} type="number" step="0.1" placeholder="1.5" value={form.distance_miles} onChange={e => setForm({...form, distance_miles: e.target.value})} /></div>
+            <div><label style={S.label}>Duration (minutes)</label><input style={S.input} type="number" placeholder="30" value={form.duration_minutes} onChange={e => setForm({...form, duration_minutes: e.target.value})} /></div>
+          </div>
+          <div style={{ marginBottom: 20 }}>
+            <label style={S.label}>Notes (optional)</label>
+            <input style={S.input} placeholder="Where did you walk? How did you feel?" value={form.notes} onChange={e => setForm({...form, notes: e.target.value})} />
+          </div>
+          <button style={{ ...S.btn, width: '100%', padding: 16 }} onClick={logWalk} disabled={logging}>{logging ? 'Logging...' : '✓ I Walked Today'}</button>
+        </div>
+      )}
+    </div>
+  );
+}
+
+function ForgeChallenge({ profile }) {
+  const [challenge, setChallenge] = useState(null);
+  const [completed, setCompleted] = useState(false);
+  const [note, setNote] = useState('');
+  const [completionCount, setCompletionCount] = useState(0);
+  const [completions, setCompletions] = useState([]);
+  const [submitting, setSubmitting] = useState(false);
+  const [showForm, setShowForm] = useState(false);
+  const [form, setForm] = useState({ title: '', description: '', category: 'Scripture', scheduled_date: '' });
+  const [queue, setQueue] = useState([]);
+  const [showQueue, setShowQueue] = useState(false);
+  const [generating, setGenerating] = useState(false);
+  const today = new Date().toISOString().split('T')[0];
+
+  useEffect(() => { loadChallenge(); }, []);
+
+  async function loadChallenge() {
+    const { data } = await supabase.from('forge_challenges').select('*').eq('scheduled_date', today).single();
+    setChallenge(data || null);
+    if (data) {
+      const { count } = await supabase.from('forge_challenge_completions').select('*', { count: 'exact', head: true }).eq('challenge_id', data.id);
+      setCompletionCount(count || 0);
+      const { data: myCompletion } = await supabase.from('forge_challenge_completions').select('*').eq('challenge_id', data.id).eq('user_id', profile.id).single();
+      setCompleted(!!myCompletion);
+      const { data: allCompletions } = await supabase.from('forge_challenge_completions').select('*, profiles(full_name, username)').eq('challenge_id', data.id).order('created_at', { ascending: false }).limit(10);
+      setCompletions(allCompletions || []);
+    }
+    if (profile.role === 'admin') {
+      const { data: upcoming } = await supabase.from('forge_challenges').select('*').gte('scheduled_date', today).order('scheduled_date', { ascending: true }).limit(14);
+      setQueue(upcoming || []);
+    }
+  }
+
+  async function complete() {
+    if (completed || !challenge) return;
+    setSubmitting(true);
+    await supabase.from('forge_challenge_completions').insert({ user_id: profile.id, challenge_id: challenge.id, note: note.trim() || null });
+    setCompleted(true); setSubmitting(false); setNote(''); loadChallenge();
+  }
+
+  async function createChallenge() {
+    if (!form.title || !form.scheduled_date) return;
+    await supabase.from('forge_challenges').insert({ ...form, created_by: profile.id });
+    setShowForm(false); setForm({ title: '', description: '', category: 'Scripture', scheduled_date: '' }); loadChallenge();
+  }
+
+  async function deleteChallenge(id) {
+    await supabase.from('forge_challenges').delete().eq('id', id);
+    loadChallenge();
+  }
+
+  async function generateChallenges() {
+    setGenerating(true);
+    try {
+      const response = await fetch('https://api.anthropic.com/v1/messages', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          model: 'claude-sonnet-4-20250514',
+          max_tokens: 2000,
+          messages: [{ role: 'user', content: 'Generate 7 daily challenges for ESix10 Initiative — a faith-based community built on Ephesians 6:10. Mix categories: Scripture (priority), Physical, Mental, Preparedness, Leadership. Each challenge doable in one day, direct faith-forward voice. Return ONLY JSON array, no markdown: [{"title":"","description":"","category":"Scripture|Physical|Mental|Preparedness|Leadership"}]' }]
+        })
+      });
+      const data = await response.json();
+      const text = data.content[0].text.replace(/```json|```/g, '').trim();
+      const challenges = JSON.parse(text);
+      const insertData = challenges.map((c, i) => {
+        const d = new Date(); d.setDate(d.getDate() + i + 1);
+        return { ...c, scheduled_date: d.toISOString().split('T')[0], created_by: profile.id };
+      });
+      await supabase.from('forge_challenges').insert(insertData);
+      loadChallenge();
+    } catch(e) { console.error('Generate error:', e); }
+    setGenerating(false);
+  }
+
+  return (
+    <div>
+      <div style={S.flexBetween}>
+        <div><span style={S.eyebrow}>Daily Challenge</span><h2 style={{ ...S.h2, margin: 0 }}>Today</h2></div>
+        {profile.role === 'admin' && (
+          <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap' }}>
+            <button style={{ ...S.btnSm, background: 'rgba(255,102,0,0.15)', color: '#FF6600', border: '1px solid rgba(255,102,0,0.3)' }} onClick={() => setShowQueue(!showQueue)}>📅 {queue.length}</button>
+            <button style={S.btnSm} onClick={generateChallenges} disabled={generating}>{generating ? '⏳' : '✨ AI Week'}</button>
+            <button style={S.btnSm} onClick={() => setShowForm(!showForm)}>+ Add</button>
+          </div>
+        )}
+      </div>
+      {showForm && profile.role === 'admin' && (
+        <div style={{ ...S.card, marginTop: 16 }}>
+          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12, marginBottom: 12 }}>
+            <div style={{ gridColumn: '1/-1' }}><label style={S.label}>Title</label><input style={S.input} placeholder="Challenge title" value={form.title} onChange={e => setForm({...form, title: e.target.value})} /></div>
+            <div><label style={S.label}>Category</label><select style={S.input} value={form.category} onChange={e => setForm({...form, category: e.target.value})}>{CHALLENGE_CATEGORIES.map(c => <option key={c}>{c}</option>)}</select></div>
+            <div><label style={S.label}>Date</label><input style={S.input} type="date" value={form.scheduled_date} onChange={e => setForm({...form, scheduled_date: e.target.value})} /></div>
+            <div style={{ gridColumn: '1/-1' }}><label style={S.label}>Description</label><textarea style={{ ...S.input, minHeight: 80 }} value={form.description} onChange={e => setForm({...form, description: e.target.value})} /></div>
+          </div>
+          <button style={S.btn} onClick={createChallenge}>Schedule</button>
+        </div>
+      )}
+      {showQueue && queue.length > 0 && (
+        <div style={{ ...S.card, marginTop: 12 }}>
+          <span style={S.eyebrow}>Queue</span>
+          {queue.map(q => (
+            <div key={q.id} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '8px 0', borderBottom: '1px solid rgba(255,255,255,0.05)' }}>
+              <span style={{ color: '#fff', fontSize: 13 }}>{CATEGORY_ICONS[q.category]} {q.title} <span style={{ color: '#555', fontSize: 11 }}>{q.scheduled_date}</span></span>
+              <button style={S.btnDanger} onClick={() => deleteChallenge(q.id)}>✕</button>
+            </div>
+          ))}
+        </div>
+      )}
+      <div style={{ marginTop: 20 }}>
+        {!challenge ? (
+          <div style={{ ...S.card, textAlign: 'center', padding: 48 }}>
+            <span style={{ fontSize: 40, display: 'block', marginBottom: 16 }}>⚡</span>
+            <h3 style={{ fontFamily: "'Cinzel', serif", fontSize: 18, color: '#fff', marginBottom: 8 }}>No challenge posted today.</h3>
+            <p style={S.muted}>{profile.role === 'admin' ? 'Use AI Generate to schedule a week.' : 'Check back soon.'}</p>
+          </div>
+        ) : (
+          <div style={{ ...S.card, borderTop: `3px solid ${completed ? '#51cf66' : '#FF6600'}` }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 16 }}>
+              <span style={{ fontSize: 24 }}>{CATEGORY_ICONS[challenge.category]}</span>
+              <span style={{ background: 'rgba(255,102,0,0.1)', border: '1px solid rgba(255,102,0,0.2)', borderRadius: 20, padding: '4px 12px', fontSize: 11, color: '#FF6600', letterSpacing: '0.1em', textTransform: 'uppercase' }}>{challenge.category}</span>
+            </div>
+            <h3 style={{ fontFamily: "'Cinzel', serif", fontSize: 22, color: '#fff', marginBottom: 12 }}>{challenge.title}</h3>
+            {challenge.description && <p style={{ color: '#CCCCCC', fontSize: 15, lineHeight: 1.8, marginBottom: 20 }}>{challenge.description}</p>}
+            <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 20 }}>
+              <span style={{ fontSize: 18 }}>✅</span>
+              <span style={{ color: '#888', fontSize: 14 }}><strong style={{ color: '#fff' }}>{completionCount}</strong> completed today</span>
+            </div>
+            {!completed ? (
+              <div>
+                <div style={{ marginBottom: 12 }}><label style={S.label}>Note (optional)</label><input style={S.input} placeholder="How did it go?" value={note} onChange={e => setNote(e.target.value)} /></div>
+                <button className={`complete-btn`} onClick={complete} disabled={submitting}>{submitting ? 'Marking...' : '✓ Mark Complete'}</button>
+              </div>
+            ) : (
+              <div style={{ background: 'rgba(81,207,102,0.08)', border: '1px solid rgba(81,207,102,0.2)', borderRadius: 6, padding: '16px 20px', textAlign: 'center' }}>
+                <span style={{ color: '#51cf66', fontFamily: "'Cinzel', serif", fontSize: 16 }}>Challenge Complete ✓</span>
+              </div>
+            )}
+            {completions.length > 0 && (
+              <div style={{ marginTop: 20, borderTop: '1px solid rgba(255,255,255,0.05)', paddingTop: 16 }}>
+                <span style={S.eyebrow}>Who Completed This</span>
+                <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
+                  {completions.map(c => <div key={c.id} style={{ background: 'rgba(255,102,0,0.08)', border: '1px solid rgba(255,102,0,0.15)', borderRadius: 20, padding: '4px 12px', fontSize: 12, color: '#FF6600' }}>{c.profiles?.username ? `@${c.profiles.username}` : formatName(c.profiles?.full_name)}</div>)}
+                </div>
+              </div>
+            )}
+          </div>
+        )}
+      </div>
+    </div>
+  );
+}
+
+function ForgeWOD({ profile }) {
+  const [wod, setWod] = useState(null);
+  const [completed, setCompleted] = useState(false);
+  const [result, setResult] = useState('');
+  const [completionCount, setCompletionCount] = useState(0);
+  const [submitting, setSubmitting] = useState(false);
+  const [showForm, setShowForm] = useState(false);
+  const [form, setForm] = useState({ title: '', warmup: '', main_work: '', cooldown: '', coaching_notes: '', estimated_minutes: '', difficulty: 3, scheduled_date: '' });
+  const [queue, setQueue] = useState([]);
+  const [showQueue, setShowQueue] = useState(false);
+  const [generating, setGenerating] = useState(false);
+  const today = new Date().toISOString().split('T')[0];
+
+  useEffect(() => { loadWOD(); }, []);
+
+  async function loadWOD() {
+    const { data } = await supabase.from('forge_wods').select('*').eq('scheduled_date', today).single();
+    setWod(data || null);
+    if (data) {
+      const { count } = await supabase.from('forge_wod_completions').select('*', { count: 'exact', head: true }).eq('wod_id', data.id);
+      setCompletionCount(count || 0);
+      const { data: myComp } = await supabase.from('forge_wod_completions').select('*').eq('wod_id', data.id).eq('user_id', profile.id).single();
+      setCompleted(!!myComp);
+    }
+    if (profile.role === 'admin') {
+      const { data: upcoming } = await supabase.from('forge_wods').select('*').gte('scheduled_date', today).order('scheduled_date', { ascending: true }).limit(14);
+      setQueue(upcoming || []);
+    }
+  }
+
+  async function completeWOD() {
+    if (completed || !wod) return;
+    setSubmitting(true);
+    await supabase.from('forge_wod_completions').insert({ user_id: profile.id, wod_id: wod.id, result: result.trim() || null });
+    setCompleted(true); setSubmitting(false); loadWOD();
+  }
+
+  async function createWOD() {
+    if (!form.title || !form.scheduled_date) return;
+    await supabase.from('forge_wods').insert({ ...form, estimated_minutes: form.estimated_minutes ? parseInt(form.estimated_minutes) : null, difficulty: parseInt(form.difficulty), created_by: profile.id });
+    setShowForm(false); setForm({ title: '', warmup: '', main_work: '', cooldown: '', coaching_notes: '', estimated_minutes: '', difficulty: 3, scheduled_date: '' }); loadWOD();
+  }
+
+  async function generateWODs() {
+    setGenerating(true);
+    try {
+      const response = await fetch('https://api.anthropic.com/v1/messages', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          model: 'claude-sonnet-4-20250514',
+          max_tokens: 3000,
+          messages: [{ role: 'user', content: 'Generate 7 WODs for ESix10 — faith-based community focused on physical readiness. Bodyweight only or minimal equipment. Direct no-nonsense voice. Return ONLY JSON array: [{"title":"","warmup":"","main_work":"","cooldown":"","coaching_notes":"","estimated_minutes":30,"difficulty":3}] difficulty 1-5, main_work include sets/reps clearly.' }]
+        })
+      });
+      const data = await response.json();
+      const text = data.content[0].text.replace(/```json|```/g, '').trim();
+      const wods = JSON.parse(text);
+      const insertData = wods.map((w, i) => {
+        const d = new Date(); d.setDate(d.getDate() + i + 1);
+        return { ...w, scheduled_date: d.toISOString().split('T')[0], created_by: profile.id };
+      });
+      await supabase.from('forge_wods').insert(insertData);
+      loadWOD();
+    } catch(e) { console.error(e); }
+    setGenerating(false);
+  }
+
+  const diffLabel = ['', 'Beginner', 'Easy', 'Moderate', 'Hard', 'Elite'];
+  const diffColor = ['', '#51cf66', '#94d82d', '#fcc419', '#ff922b', '#ff4444'];
+
+  return (
+    <div>
+      <div style={S.flexBetween}>
+        <div><span style={S.eyebrow}>Workout of the Day</span><h2 style={{ ...S.h2, margin: 0 }}>Today</h2></div>
+        {profile.role === 'admin' && (
+          <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap' }}>
+            <button style={{ ...S.btnSm, background: 'rgba(255,102,0,0.15)', color: '#FF6600', border: '1px solid rgba(255,102,0,0.3)' }} onClick={() => setShowQueue(!showQueue)}>📅 {queue.length}</button>
+            <button style={S.btnSm} onClick={generateWODs} disabled={generating}>{generating ? '⏳' : '✨ AI Week'}</button>
+            <button style={S.btnSm} onClick={() => setShowForm(!showForm)}>+ Add</button>
+          </div>
+        )}
+      </div>
+      {showForm && profile.role === 'admin' && (
+        <div style={{ ...S.card, marginTop: 16 }}>
+          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12, marginBottom: 12 }}>
+            <div style={{ gridColumn: '1/-1' }}><label style={S.label}>Title</label><input style={S.input} value={form.title} onChange={e => setForm({...form, title: e.target.value})} /></div>
+            <div><label style={S.label}>Date</label><input style={S.input} type="date" value={form.scheduled_date} onChange={e => setForm({...form, scheduled_date: e.target.value})} /></div>
+            <div><label style={S.label}>Minutes</label><input style={S.input} type="number" placeholder="30" value={form.estimated_minutes} onChange={e => setForm({...form, estimated_minutes: e.target.value})} /></div>
+            <div><label style={S.label}>Difficulty (1-5)</label><input style={S.input} type="number" min="1" max="5" value={form.difficulty} onChange={e => setForm({...form, difficulty: e.target.value})} /></div>
+            <div style={{ gridColumn: '1/-1' }}><label style={S.label}>Warm Up</label><textarea style={{ ...S.input, minHeight: 60 }} value={form.warmup} onChange={e => setForm({...form, warmup: e.target.value})} /></div>
+            <div style={{ gridColumn: '1/-1' }}><label style={S.label}>Main Work</label><textarea style={{ ...S.input, minHeight: 100 }} value={form.main_work} onChange={e => setForm({...form, main_work: e.target.value})} /></div>
+            <div style={{ gridColumn: '1/-1' }}><label style={S.label}>Cool Down</label><textarea style={{ ...S.input, minHeight: 60 }} value={form.cooldown} onChange={e => setForm({...form, cooldown: e.target.value})} /></div>
+            <div style={{ gridColumn: '1/-1' }}><label style={S.label}>Coaching Notes</label><textarea style={{ ...S.input, minHeight: 60 }} value={form.coaching_notes} onChange={e => setForm({...form, coaching_notes: e.target.value})} /></div>
+          </div>
+          <button style={S.btn} onClick={createWOD}>Schedule WOD</button>
+        </div>
+      )}
+      {showQueue && queue.length > 0 && (
+        <div style={{ ...S.card, marginTop: 12 }}>
+          <span style={S.eyebrow}>Queue</span>
+          {queue.map(q => (
+            <div key={q.id} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '8px 0', borderBottom: '1px solid rgba(255,255,255,0.05)' }}>
+              <span style={{ color: '#fff', fontSize: 13 }}><span style={{ color: diffColor[q.difficulty] }}>●</span> {q.title} <span style={{ color: '#555', fontSize: 11 }}>{q.scheduled_date} · {q.estimated_minutes}min</span></span>
+              <button style={S.btnDanger} onClick={() => deleteWOD(q.id)}>✕</button>
+            </div>
+          ))}
+        </div>
+      )}
+      <div style={{ marginTop: 20 }}>
+        {!wod ? (
+          <div style={{ ...S.card, textAlign: 'center', padding: 48 }}>
+            <span style={{ fontSize: 40, display: 'block', marginBottom: 16 }}>🏋️</span>
+            <h3 style={{ fontFamily: "'Cinzel', serif", fontSize: 18, color: '#fff', marginBottom: 8 }}>No WOD today.</h3>
+            <p style={S.muted}>{profile.role === 'admin' ? 'Use AI Generate to schedule a week.' : 'Rest day. Check back tomorrow.'}</p>
+          </div>
+        ) : (
+          <div style={{ ...S.card, borderTop: `3px solid ${completed ? '#51cf66' : '#FF6600'}` }}>
+            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 16, flexWrap: 'wrap', gap: 8 }}>
+              <h3 style={{ fontFamily: "'Cinzel', serif", fontSize: 22, color: '#fff' }}>{wod.title}</h3>
+              <div style={S.flex}>
+                {wod.estimated_minutes && <span style={S.badge}>⏱ {wod.estimated_minutes}min</span>}
+                {wod.difficulty && <span style={{ ...S.badge, background: `${diffColor[wod.difficulty]}20`, color: diffColor[wod.difficulty] }}>{'●'.repeat(wod.difficulty)} {diffLabel[wod.difficulty]}</span>}
+              </div>
+            </div>
+            {wod.warmup && <div style={{ marginBottom: 16 }}><span style={S.eyebrow}>Warm Up</span><p style={{ color: '#AAAAAA', fontSize: 14, lineHeight: 1.8, whiteSpace: 'pre-line' }}>{wod.warmup}</p></div>}
+            {wod.main_work && <div style={{ background: 'rgba(255,102,0,0.05)', border: '1px solid rgba(255,102,0,0.15)', borderRadius: 4, padding: '16px 20px', marginBottom: 16 }}><span style={S.eyebrow}>Main Work</span><p style={{ color: '#fff', fontSize: 15, lineHeight: 2, whiteSpace: 'pre-line' }}>{wod.main_work}</p></div>}
+            {wod.cooldown && <div style={{ marginBottom: 16 }}><span style={S.eyebrow}>Cool Down</span><p style={{ color: '#AAAAAA', fontSize: 14, lineHeight: 1.8, whiteSpace: 'pre-line' }}>{wod.cooldown}</p></div>}
+            {wod.coaching_notes && <div style={{ background: 'rgba(192,154,47,0.06)', border: '1px solid rgba(192,154,47,0.15)', borderRadius: 4, padding: '12px 16px', marginBottom: 20 }}><span style={{ ...S.eyebrow, color: '#C09A2F' }}>Coaching Notes</span><p style={{ color: '#AAAAAA', fontSize: 13, lineHeight: 1.8 }}>{wod.coaching_notes}</p></div>}
+            <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 16 }}>
+              <span>✅</span><span style={{ color: '#888', fontSize: 14 }}><strong style={{ color: '#fff' }}>{completionCount}</strong> completed today</span>
+            </div>
+            {!completed ? (
+              <div>
+                <div style={{ marginBottom: 12 }}><label style={S.label}>Log Result (optional)</label><input style={S.input} placeholder="Time, rounds, notes" value={result} onChange={e => setResult(e.target.value)} /></div>
+                <button style={{ ...S.btn, width: '100%', padding: 16 }} onClick={completeWOD} disabled={submitting}>{submitting ? 'Logging...' : '✓ WOD Complete'}</button>
+              </div>
+            ) : (
+              <div style={{ background: 'rgba(81,207,102,0.08)', border: '1px solid rgba(81,207,102,0.2)', borderRadius: 6, padding: '16px 20px', textAlign: 'center' }}>
+                <span style={{ color: '#51cf66', fontFamily: "'Cinzel', serif", fontSize: 16 }}>WOD Complete ✓</span>
+              </div>
+            )}
+          </div>
+        )}
+      </div>
+    </div>
+  );
+}
+
+function ForgeLog({ profile }) {
+  const [entries, setEntries] = useState([]);
+  const [showForm, setShowForm] = useState(false);
+  const [form, setForm] = useState({ type: 'Strength', duration: '', notes: '', date: new Date().toISOString().split('T')[0] });
+  const [saving, setSaving] = useState(false);
+  const WORKOUT_TYPES = ['Strength', 'Cardio', 'HIIT', 'Walk/Run', 'Mobility', 'Sports', 'Other'];
+
+  useEffect(() => { loadLog(); }, []);
+
+  async function loadLog() {
+    const { data } = await supabase.from('forge_walks').select('*').eq('user_id', profile.id).order('date', { ascending: false }).limit(30);
+    setEntries(data || []);
+  }
+
+  async function saveEntry() {
+    setSaving(true);
+    await supabase.from('forge_walks').insert({ user_id: profile.id, date: form.date, duration_minutes: form.duration ? parseInt(form.duration) : null, notes: `[${form.type}] ${form.notes}`.trim() });
+    setShowForm(false); setForm({ type: 'Strength', duration: '', notes: '', date: new Date().toISOString().split('T')[0] });
+    setSaving(false); loadLog();
+  }
+
+  const grouped = entries.reduce((acc, e) => { if (!acc[e.date]) acc[e.date] = []; acc[e.date].push(e); return acc; }, {});
+
+  return (
+    <div>
+      <div style={S.flexBetween}>
+        <div><span style={S.eyebrow}>The Forge</span><h2 style={{ ...S.h2, margin: 0 }}>My Log</h2></div>
+        <button style={S.btn} onClick={() => setShowForm(!showForm)}>{showForm ? 'Cancel' : '+ Log Activity'}</button>
+      </div>
+      {showForm && (
+        <div style={{ ...S.card, marginTop: 16 }}>
+          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12, marginBottom: 12 }}>
+            <div><label style={S.label}>Type</label><select style={S.input} value={form.type} onChange={e => setForm({...form, type: e.target.value})}>{WORKOUT_TYPES.map(t => <option key={t}>{t}</option>)}</select></div>
+            <div><label style={S.label}>Date</label><input style={S.input} type="date" value={form.date} onChange={e => setForm({...form, date: e.target.value})} /></div>
+            <div><label style={S.label}>Duration (min)</label><input style={S.input} type="number" placeholder="45" value={form.duration} onChange={e => setForm({...form, duration: e.target.value})} /></div>
+            <div style={{ gridColumn: '1/-1' }}><label style={S.label}>Notes</label><input style={S.input} placeholder="What did you do?" value={form.notes} onChange={e => setForm({...form, notes: e.target.value})} /></div>
+          </div>
+          <button style={S.btn} onClick={saveEntry} disabled={saving}>{saving ? 'Saving...' : 'Save'}</button>
+        </div>
+      )}
+      <div style={{ marginTop: 20 }}>
+        {Object.keys(grouped).length === 0 && <div style={{ textAlign: 'center', padding: 60 }}><span style={{ fontSize: 40, display: 'block', marginBottom: 16 }}>📓</span><h3 style={{ fontFamily: "'Cinzel', serif", fontSize: 18, color: '#fff', marginBottom: 8 }}>No activity logged yet.</h3><p style={S.muted}>Start logging your walks and workouts.</p></div>}
+        {Object.keys(grouped).map(date => (
+          <div key={date} style={{ marginBottom: 16 }}>
+            <div style={{ fontSize: 11, color: '#555', letterSpacing: '0.15em', textTransform: 'uppercase', marginBottom: 8 }}>
+              {new Date(date + 'T12:00:00').toLocaleDateString('en-US', { weekday: 'long', month: 'long', day: 'numeric' })}
+            </div>
+            {grouped[date].map(e => (
+              <div key={e.id} style={{ ...S.post, padding: '14px 18px', marginBottom: 6 }}>
+                <div style={S.flex}>
+                  <span style={{ fontSize: 18 }}>{e.notes?.includes('[Walk') ? '🚶' : '💪'}</span>
+                  <div>
+                    <div style={{ color: '#fff', fontSize: 14 }}>{e.notes || 'Activity'}</div>
+                    <div style={S.muted}>{e.distance_miles && `${e.distance_miles} mi`}{e.distance_miles && e.duration_minutes && ' · '}{e.duration_minutes && `${e.duration_minutes} min`}</div>
+                  </div>
+                </div>
+              </div>
+            ))}
+          </div>
+        ))}
+      </div>
+    </div>
+  );
+}
+
+function TheForge({ profile }) {
+  const [subTab, setSubTab] = useState('walk');
+  const FORGE_TABS = [
+    { id: 'walk', label: 'Walk', icon: '🚶' },
+    { id: 'challenge', label: 'Challenge', icon: '⚡' },
+    { id: 'wod', label: 'WOD', icon: '🏋️' },
+    { id: 'log', label: 'My Log', icon: '📓' },
+  ];
+  return (
+    <div>
+      <style>{FORGE_CSS}</style>
+      <div className="beta-banner">
+        <span style={{ fontSize: 20 }}>🔥</span>
+        <div>
+          <span style={{ fontFamily: "'Cinzel', serif", fontSize: 15, color: '#fff' }}>The Forge</span>
+          <span style={{ color: '#FF6600', fontSize: 11, marginLeft: 10, letterSpacing: '0.1em', textTransform: 'uppercase' }}>Beta — Full Access Free</span>
+        </div>
+      </div>
+      <div className="forge-tab-bar">
+        {FORGE_TABS.map(t => (
+          <button key={t.id} className={`forge-tab ${subTab === t.id ? 'active' : 'inactive'}`} onClick={() => setSubTab(t.id)}>
+            <span style={{ fontSize: 16, display: 'block', marginBottom: 2 }}>{t.icon}</span>
+            {t.label}
+          </button>
+        ))}
+      </div>
+      {subTab === 'walk' && <ForgeWalk profile={profile} />}
+      {subTab === 'challenge' && <ForgeChallenge profile={profile} />}
+      {subTab === 'wod' && <ForgeWOD profile={profile} />}
+      {subTab === 'log' && <ForgeLog profile={profile} />}
+    </div>
+  );
+}
+
+
 function Profile({ profile, onUpdate, onSignOut }) {
   const [form, setForm] = useState({ full_name: profile.full_name || "", username: profile.username || "", city: profile.city || "", state: profile.state || "", bio: profile.bio || "", group_id: profile.group_id || "" });
   const [saving, setSaving] = useState(false);
@@ -1211,6 +1774,7 @@ export default function App() {
   const [feedGroup, setFeedGroup] = useState("all");
   const [showSetup, setShowSetup] = useState(false);
   const [allMembers, setAllMembers] = useState([]);
+  const [showMore, setShowMore] = useState(false);
 
   useEffect(() => {
     if (profile?.id) {
@@ -1297,10 +1861,17 @@ export default function App() {
 
   const NAV_ITEMS = [
     { id: "feed", label: "Feed", icon: "📋" },
+    { id: "forge", label: "Forge", icon: "🔥" },
     { id: "prayer", label: "Prayer", icon: "🙏" },
-    { id: "devotion", label: "Devotion", icon: "📖" },
     { id: "messages", label: "Chat", icon: "💬" },
+    { id: "more", label: "More", icon: "☰" },
+  ];
+
+  const MORE_ITEMS = [
+    { id: "devotion", label: "Daily Devotion", icon: "📖" },
+    { id: "events", label: "Events", icon: "📅" },
     { id: "members", label: "Members", icon: "👥" },
+    { id: "profile", label: "My Profile", icon: "👤" },
   ];
 
   const CONTENT = (
@@ -1320,6 +1891,7 @@ export default function App() {
           <Feed profile={profile} activeGroup={feedGroup} />
         </div>
       )}
+      {tab === "forge" && <TheForge profile={profile} />}
       {tab === "prayer" && <PrayerRequests profile={profile} />}
       {tab === "devotion" && <Devotion profile={profile} />}
       {tab === "events" && <Events profile={profile} />}
@@ -1349,11 +1921,28 @@ export default function App() {
       {isMobile ? (
         <div style={{ paddingTop: 96 }}>
           {CONTENT}
+          {/* MORE OVERLAY */}
+          {tab === "more" && (
+            <div style={{ position: "fixed", inset: 0, background: "rgba(10,10,10,0.97)", zIndex: 200, display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", gap: 8 }}>
+              <div style={{ fontFamily: "'Cinzel', serif", fontSize: 11, letterSpacing: "0.3em", color: "#FF6600", textTransform: "uppercase", marginBottom: 24 }}>More</div>
+              {MORE_ITEMS.map(item => (
+                <div key={item.id} onClick={() => setTab(item.id)}
+                  style={{ width: 280, padding: "16px 24px", background: "rgba(255,102,0,0.05)", border: "1px solid rgba(255,102,0,0.15)", borderRadius: 6, cursor: "pointer", display: "flex", alignItems: "center", gap: 16 }}>
+                  <span style={{ fontSize: 24 }}>{item.icon}</span>
+                  <span style={{ fontFamily: "'Cinzel', serif", fontSize: 18, color: "#fff" }}>{item.label}</span>
+                </div>
+              ))}
+              <div style={{ marginTop: 24 }}>
+                <div onClick={() => setTab("feed")} style={{ color: "#555", fontSize: 13, cursor: "pointer", textAlign: "center" }}>← Back</div>
+              </div>
+            </div>
+          )}
+
           {/* BOTTOM TAB BAR */}
           <div style={{ position: "fixed", bottom: 0, left: 0, right: 0, height: 60, background: "rgba(10,10,10,0.98)", borderTop: "1px solid rgba(255,102,0,0.15)", display: "flex", zIndex: 100 }}>
             {NAV_ITEMS.map(item => (
               <div key={item.id} onClick={() => setTab(item.id)}
-                style={{ flex: 1, display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", gap: 2, cursor: "pointer", color: tab === item.id ? "#FF6600" : "#555", fontSize: 9, letterSpacing: "0.05em", textTransform: "uppercase" }}>
+                style={{ flex: 1, display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", gap: 2, cursor: "pointer", color: (tab === item.id || (item.id === "more" && MORE_ITEMS.some(m => m.id === tab))) ? "#FF6600" : "#555", fontSize: 9, letterSpacing: "0.05em", textTransform: "uppercase" }}>
                 <span style={{ fontSize: 18 }}>{item.icon}</span>
                 <span>{item.label}</span>
               </div>
@@ -1375,7 +1964,7 @@ export default function App() {
             </div>
             <div style={{ marginBottom: 24 }}>
               <p style={{ ...S.eyebrow, marginBottom: 12 }}>Navigation</p>
-              {NAV_ITEMS.filter(i => i.id !== "feed").concat([{ id: "events", label: "Events", icon: "📅" }, { id: "profile", label: "My Profile", icon: "👤" }]).map(item => (
+              {[{ id: "forge", label: "The Forge 🔥", icon: "🔥" }, { id: "prayer", label: "Prayer", icon: "🙏" }, { id: "devotion", label: "Devotion", icon: "📖" }, { id: "messages", label: "Chat", icon: "💬" }, { id: "events", label: "Events", icon: "📅" }, { id: "members", label: "Members", icon: "👥" }, { id: "profile", label: "My Profile", icon: "👤" }].map(item => (
                 <div key={item.id} onClick={() => setTab(item.id)}
                   style={{ padding: "10px 12px", borderRadius: 4, cursor: "pointer", marginBottom: 2, background: tab === item.id ? "rgba(255,102,0,0.1)" : "transparent", color: tab === item.id ? "#FF6600" : "#888", fontSize: 13, display: "flex", alignItems: "center", gap: 8 }}>
                   <span>{item.icon}</span> {item.label}
