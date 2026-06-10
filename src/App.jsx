@@ -895,6 +895,14 @@ export default function App() {
   const [allMembers, setAllMembers] = useState([]);
 
   useEffect(() => {
+    if (profile?.id) {
+      let q = supabase.from("profiles").select("*").eq("status", "approved");
+      if (profile.role !== "admin") q = q.eq("group_id", profile.group_id);
+      q.then(({ data }) => setAllMembers(data || []));
+    }
+  }, [profile?.id]);
+
+  useEffect(() => {
     supabase.auth.getSession().then(({ data }) => {
       if (data.session?.user) loadProfile(data.session.user);
       else setLoading(false);
@@ -959,18 +967,6 @@ export default function App() {
 
   const myGroup = GROUPS.find(g => g.id === profile.group_id);
   const isAdmin = profile?.role === "admin";
-
-  useEffect(() => {
-    if (profile?.id) loadAllMembers();
-  }, [profile?.id]);
-
-  async function loadAllMembers() {
-    if (!profile) return;
-    let q = supabase.from("profiles").select("*").eq("status", "approved");
-    if (profile.role !== "admin") q = q.eq("group_id", profile.group_id);
-    const { data } = await q;
-    setAllMembers(data || []);
-  }
 
   return (
     <div style={S.app}>
