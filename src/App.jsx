@@ -1018,7 +1018,7 @@ function Members({ profile }) {
   const pending = members.filter(m => m.status === "pending");
 
   let filtered = profile.role === "admin" && filter !== "all"
-    ? members.filter(m => m.group_id === filter)
+    ? members.filter(m => m.group_id === filter || (m.group_ids && m.group_ids.includes(filter)))
     : members;
 
   if (stateFilter) {
