@@ -658,8 +658,18 @@ function Feed({ profile, activeGroup, isNewMember }) {
   async function loadPosts() {
     setLoading(true);
     let q = supabase.from("posts").select("*, profiles(full_name, username, group_id, role)").order("created_at", { ascending: false }).limit(50);
-    if (profile.role !== "admin") q = q.eq("group_id", profile.group_id);
-    else if (activeGroup !== "all") q = q.eq("group_id", activeGroup);
+    if (profile.role !== "admin") {
+      if (activeGroup !== "all" && activeGroup !== profile.group_id) {
+        // Specific group selected
+        q = q.eq("group_id", activeGroup);
+      } else {
+        // Show all groups the member belongs to
+        const memberGroups = profile.group_ids && profile.group_ids.length > 0 ? profile.group_ids : [profile.group_id];
+        q = q.in("group_id", memberGroups);
+      }
+    } else if (activeGroup !== "all") {
+      q = q.eq("group_id", activeGroup);
+    }
     const { data } = await q;
     setPosts(data || []);
     const reactionMap = {};
