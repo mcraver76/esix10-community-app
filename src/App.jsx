@@ -713,6 +713,13 @@ function Feed({ profile, activeGroup, isNewMember }) {
     loadPosts();
   }
 
+  async function sendKudos(toUserId) {
+    await supabase.from("kudos").insert({ from_user_id: profile.id, to_user_id: toUserId });
+    // Show brief confirmation
+    const btn = document.getElementById(`kudos_${toUserId}`);
+    if (btn) { btn.textContent = "👊 Sent!"; btn.style.color = "#FF6600"; setTimeout(() => { btn.textContent = "👊"; btn.style.color = "#555"; }, 2000); }
+  }
+
   async function flagPost(id) {
     const reason = window.prompt("Why are you flagging this post? (optional)");
     if (reason === null) return; // cancelled
@@ -810,9 +817,14 @@ function Feed({ profile, activeGroup, isNewMember }) {
                 <div style={S.flex}>
                   <span style={{ ...S.badge, fontSize: 10 }}>{GROUPS.find(g => g.id === post.group_id)?.label}</span>
                   {profile.id !== post.user_id && (
-                    <button onClick={() => flagPost(post.id)} style={{ background: "none", border: "none", cursor: "pointer", color: "#555", fontSize: 11, padding: "4px 8px", borderRadius: 4 }} title="Flag this post">
-                      🚩
-                    </button>
+                    <>
+                      <button id={`kudos_${post.user_id}`} onClick={() => sendKudos(post.user_id)} style={{ background: "none", border: "none", cursor: "pointer", color: "#555", fontSize: 13, padding: "4px 8px", borderRadius: 4 }} title="Send anonymous kudos">
+                        👊
+                      </button>
+                      <button onClick={() => flagPost(post.id)} style={{ background: "none", border: "none", cursor: "pointer", color: "#555", fontSize: 11, padding: "4px 8px", borderRadius: 4 }} title="Flag this post">
+                        🚩
+                      </button>
+                    </>
                   )}
                   {(profile.role === "admin" || profile.id === post.user_id) && (
                     <button style={S.btnDanger} onClick={() => deletePost(post.id)}>Delete</button>
@@ -952,6 +964,12 @@ function Members({ profile }) {
     }
     const { data } = await q;
     setMembers(data || []);
+  }
+
+  async function sendKudosMember(toUserId) {
+    await supabase.from("kudos").insert({ from_user_id: profile.id, to_user_id: toUserId });
+    const btn = document.getElementById(`kudos_${toUserId}`);
+    if (btn) { btn.textContent = "👊 Sent!"; setTimeout(() => { btn.textContent = "👊 Kudos"; }, 2000); }
   }
 
   async function removeMember(id) {
@@ -3150,6 +3168,25 @@ function WelcomeModal({ profile, onClose }) {
   );
 }
 
+
+// ─── Kudos ────────────────────────────────────────────────────────────────────
+function KudosCount({ userId }) {
+  const [count, setCount] = React.useState(0);
+  React.useEffect(() => {
+    supabase.from("kudos").select("*", { count: "exact", head: true }).eq("to_user_id", userId).then(({ count }) => setCount(count || 0));
+  }, [userId]);
+  if (count === 0) return null;
+  return (
+    <div style={{ display: "flex", alignItems: "center", gap: 10, background: "rgba(255,102,0,0.06)", border: "1px solid rgba(255,102,0,0.15)", borderRadius: 10, padding: "10px 16px", marginBottom: 16, marginTop: 8 }}>
+      <span style={{ fontSize: 24 }}>👊</span>
+      <div>
+        <div style={{ fontFamily: "'Cinzel', serif", fontSize: 16, color: "#fff" }}>{count} {count === 1 ? "Kudos" : "Kudos"} received</div>
+        <div style={{ color: "#888", fontSize: 12 }}>Anonymous encouragement from your community</div>
+      </div>
+    </div>
+  );
+}
+
 function Profile({ profile, onUpdate, onSignOut }) {
   const [form, setForm] = useState({ full_name: profile.full_name || "", username: profile.username || "", city: profile.city || "", state: profile.state || "", bio: profile.bio || "", group_id: profile.group_id || "", group_ids: profile.group_ids || [profile.group_id].filter(Boolean) });
   const [saving, setSaving] = useState(false);
@@ -3187,6 +3224,7 @@ function Profile({ profile, onUpdate, onSignOut }) {
     <div style={{ maxWidth: 600 }}>
       <h2 style={S.h2}>Your Profile</h2>
       <div style={S.divider} />
+      <KudosCount userId={profile.id} />
       {(() => {
         const xp = getXP(profile);
         const lvl = getLevel(xp);
