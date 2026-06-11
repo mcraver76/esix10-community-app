@@ -677,6 +677,121 @@ function ActivityTicker({ profile }) {
   );
 }
 
+
+// ─── Personal Feed Header ─────────────────────────────────────────────────────
+function PersonalHeader({ profile }) {
+  const [localCount, setLocalCount] = useState(0);
+  const [lastVisitSummary, setLastVisitSummary] = useState(null);
+  const [kudosCount, setKudosCount] = useState(0);
+  const [walkStreak, setWalkStreak] = useState(0);
+
+  useEffect(() => { loadPersonalData(); }, []);
+
+  async function loadPersonalData() {
+    // Local member count
+    if (profile.state) {
+      const { count } = await supabase.from("profiles").select("*", { count: "exact", head: true }).eq("state", profile.state).eq("status", "approved");
+      setLocalCount(count || 0);
+    }
+
+    // Kudos count
+    const { count: kCount } = await supabase.from("kudos").select("*", { count: "exact", head: true }).eq("to_user_id", profile.id);
+    setKudosCount(kCount || 0);
+
+    // Walk streak
+    const { data: walks } = await supabase.from("forge_walks").select("date").eq("user_id", profile.id).order("date", { ascending: false }).limit(30);
+    if (walks) {
+      let streak = 0;
+      let checkDate = new Date();
+      for (let i = 0; i < 30; i++) {
+        const d = new Date(checkDate.getTime() - checkDate.getTimezoneOffset() * 60000).toISOString().split("T")[0];
+        if (walks.find(w => w.date === d)) { streak++; checkDate.setDate(checkDate.getDate() - 1); }
+        else break;
+      }
+      setWalkStreak(streak);
+    }
+
+    // Since last visit
+    const lastVisit = localStorage.getItem(`esix10_lastvisit_${profile.id}`);
+    if (lastVisit) {
+      const { count: newPosts } = await supabase.from("posts").select("*", { count: "exact", head: true }).gt("created_at", lastVisit).in("group_id", profile.group_ids || [profile.group_id]);
+      const { count: newPrayers } = await supabase.from("prayers").select("*", { count: "exact", head: true }).gt("created_at", lastVisit).eq("group_id", profile.group_id);
+      if (newPosts > 0 || newPrayers > 0) {
+        setLastVisitSummary({ posts: newPosts || 0, prayers: newPrayers || 0 });
+      }
+    }
+    localStorage.setItem(`esix10_lastvisit_${profile.id}`, new Date().toISOString());
+  }
+
+  const hour = new Date().getHours();
+  const greeting = hour < 12 ? "Good morning" : hour < 17 ? "Good afternoon" : "Good evening";
+  const firstName = profile.full_name?.split(" ")[0] || profile.username || "Warrior";
+  const xp = getXP(profile);
+  const level = getLevel(xp);
+
+  return (
+    <div style={{ marginBottom: 20, animation: "fadeIn 0.4s ease" }}>
+      {/* Greeting */}
+      <div style={{ marginBottom: 16 }}>
+        <h2 style={{ fontFamily: "'Cinzel', serif", fontSize: 22, fontWeight: 400, color: "#fff", marginBottom: 2 }}>
+          {greeting}, {firstName}.
+        </h2>
+        <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+          <span className="level-badge" style={{ background: `${level.color}20`, color: level.color, border: `1px solid ${level.color}40`, fontSize: 11 }}>
+            {level.icon} {level.name}
+          </span>
+          {profile.state && localCount > 0 && (
+            <span style={{ color: "#555", fontSize: 12 }}>📍 {localCount} members in {profile.state}</span>
+          )}
+        </div>
+      </div>
+
+      {/* Since last visit */}
+      {lastVisitSummary && (lastVisitSummary.posts > 0 || lastVisitSummary.prayers > 0) && (
+        <div style={{ background: "linear-gradient(135deg, rgba(255,102,0,0.08), rgba(192,154,47,0.06))", border: "1px solid rgba(255,102,0,0.2)", borderRadius: 10, padding: "10px 16px", marginBottom: 12, display: "flex", alignItems: "center", gap: 10 }}>
+          <span style={{ fontSize: 16 }}>👁</span>
+          <p style={{ color: "#CCCCCC", fontSize: 13 }}>
+            Since your last visit:
+            {lastVisitSummary.posts > 0 && <span style={{ color: "#FF6600" }}> {lastVisitSummary.posts} new post{lastVisitSummary.posts !== 1 ? "s" : ""}</span>}
+            {lastVisitSummary.posts > 0 && lastVisitSummary.prayers > 0 && <span style={{ color: "#555" }}> · </span>}
+            {lastVisitSummary.prayers > 0 && <span style={{ color: "#FF6600" }}> {lastVisitSummary.prayers} prayer request{lastVisitSummary.prayers !== 1 ? "s" : ""}</span>}
+          </p>
+        </div>
+      )}
+
+      {/* Personal stats strip */}
+      <div style={{ display: "flex", gap: 8, overflowX: "auto", paddingBottom: 4, WebkitOverflowScrolling: "touch" }}>
+        {walkStreak > 0 && (
+          <div style={{ background: "rgba(255,102,0,0.06)", border: "1px solid rgba(255,102,0,0.15)", borderRadius: 10, padding: "10px 16px", flexShrink: 0, textAlign: "center", minWidth: 80 }}>
+            <div style={{ fontSize: 20, marginBottom: 2 }}>🔥</div>
+            <div style={{ fontFamily: "'Cinzel', serif", fontSize: 18, color: "#FF6600", lineHeight: 1 }}>{walkStreak}</div>
+            <div style={{ color: "#555", fontSize: 10, letterSpacing: "0.08em", textTransform: "uppercase", marginTop: 2 }}>Streak</div>
+          </div>
+        )}
+        {kudosCount > 0 && (
+          <div style={{ background: "rgba(255,102,0,0.06)", border: "1px solid rgba(255,102,0,0.15)", borderRadius: 10, padding: "10px 16px", flexShrink: 0, textAlign: "center", minWidth: 80 }}>
+            <div style={{ fontSize: 20, marginBottom: 2 }}>👊</div>
+            <div style={{ fontFamily: "'Cinzel', serif", fontSize: 18, color: "#FF6600", lineHeight: 1 }}>{kudosCount}</div>
+            <div style={{ color: "#555", fontSize: 10, letterSpacing: "0.08em", textTransform: "uppercase", marginTop: 2 }}>Kudos</div>
+          </div>
+        )}
+        <div style={{ background: "rgba(255,102,0,0.06)", border: "1px solid rgba(255,102,0,0.15)", borderRadius: 10, padding: "10px 16px", flexShrink: 0, textAlign: "center", minWidth: 80 }}>
+          <div style={{ fontSize: 20, marginBottom: 2 }}>{level.icon}</div>
+          <div style={{ fontFamily: "'Cinzel', serif", fontSize: 14, color: level.color, lineHeight: 1 }}>{level.name}</div>
+          <div style={{ color: "#555", fontSize: 10, letterSpacing: "0.08em", textTransform: "uppercase", marginTop: 2 }}>{xp} XP</div>
+        </div>
+        {profile.state && localCount > 1 && (
+          <div style={{ background: "rgba(255,102,0,0.06)", border: "1px solid rgba(255,102,0,0.15)", borderRadius: 10, padding: "10px 16px", flexShrink: 0, textAlign: "center", minWidth: 80 }}>
+            <div style={{ fontSize: 20, marginBottom: 2 }}>📍</div>
+            <div style={{ fontFamily: "'Cinzel', serif", fontSize: 18, color: "#FF6600", lineHeight: 1 }}>{localCount}</div>
+            <div style={{ color: "#555", fontSize: 10, letterSpacing: "0.08em", textTransform: "uppercase", marginTop: 2 }}>{profile.state}</div>
+          </div>
+        )}
+      </div>
+    </div>
+  );
+}
+
 function Feed({ profile, activeGroup, isNewMember }) {
   const [posts, setPosts] = useState([]);
   const [body, setBody] = useState("");
@@ -789,10 +904,7 @@ function Feed({ profile, activeGroup, isNewMember }) {
 
   return (
     <div className="tab-content">
-      <div style={{ marginBottom: 20 }}>
-        <h2 style={{ fontFamily: "'Cinzel', serif", fontSize: 22, fontWeight: 400, color: "#fff", marginBottom: 4 }}>{activeGroupData?.label || "My Feed"}</h2>
-        <p style={{ color: "#FF6600", fontSize: 12, letterSpacing: "0.15em", textTransform: "uppercase", fontWeight: 700 }}>{activeGroupData?.subtitle || "All Groups"}</p>
-      </div>
+      <PersonalHeader profile={profile} />
       <ActivityTicker profile={profile} />
       {showWelcome && (
         <div style={{ background: "linear-gradient(135deg, rgba(255,102,0,0.15), rgba(192,154,47,0.1))", border: "1px solid rgba(255,102,0,0.3)", borderRadius: 6, padding: "20px 24px", marginBottom: 20, position: "relative" }}>
@@ -3780,6 +3892,7 @@ export default function App() {
   const MORE_ITEMS = [
     { id: "media", label: "Media", icon: "📺" },
     { id: "privategroups", label: "Private Groups", icon: "🔒" },
+    { id: "local", label: "Local Chapter", icon: "📍" },
     { id: "social", label: "Social Media", icon: "📱" },
     { id: "devotion", label: "Daily Devotion", icon: "📖" },
     { id: "events", label: "Events", icon: "📅" },
@@ -3814,6 +3927,7 @@ export default function App() {
       {tab === "messages" && <Messages profile={profile} members={allMembers} onRead={() => setUnreadCount(0)} />}
       {tab === "members" && <Members profile={profile} />}
       {tab === "media" && <Media profile={profile} />}
+      {tab === "local" && <LocalChapter profile={profile} />}
       {tab === "social" && <SocialFeed profile={profile} />}
       {tab === "share" && <div style={{ textAlign: "center", padding: 60 }}><div style={{ fontSize: 48, marginBottom: 16 }}>📤</div><button style={S.btn} onClick={() => setShowShare(true)}>Open Share Screen</button></div>}
       {tab === "privategroups" && <PrivateGroups profile={profile} allMembers={allMembers} />}
@@ -3940,7 +4054,7 @@ export default function App() {
             </div>
             <div style={{ marginBottom: 24 }}>
               <p style={{ ...S.eyebrow, marginBottom: 12 }}>Navigation</p>
-              {[{ id: "forge", label: "The Forge 🔥", icon: "🔥" }, { id: "media", label: "Media", icon: "📺" }, { id: "privategroups", label: "Private Groups", icon: "🔒" }, { id: "prayer", label: "Prayer", icon: "🙏" }, { id: "social", label: "Social", icon: "📱" }, { id: "share", label: "Share ESix10", icon: "📤" }, { id: "devotion", label: "Devotion", icon: "📖" }, { id: "messages", label: unreadCount > 0 ? `Chat (${unreadCount})` : "Chat", icon: "💬" }, { id: "events", label: "Events", icon: "📅" }, { id: "members", label: "Members", icon: "👥" }, { id: "faith", label: "Statement of Faith", icon: "✝️" }, { id: "salvation", label: "Do You Know Him?", icon: "🙏" }, { id: "profile", label: "My Profile", icon: "👤" }].map(item => (
+              {[{ id: "forge", label: "The Forge 🔥", icon: "🔥" }, { id: "media", label: "Media", icon: "📺" }, { id: "privategroups", label: "Private Groups", icon: "🔒" }, { id: "prayer", label: "Prayer", icon: "🙏" }, { id: "local", label: "Local", icon: "📍" }, { id: "social", label: "Social", icon: "📱" }, { id: "share", label: "Share ESix10", icon: "📤" }, { id: "devotion", label: "Devotion", icon: "📖" }, { id: "messages", label: unreadCount > 0 ? `Chat (${unreadCount})` : "Chat", icon: "💬" }, { id: "events", label: "Events", icon: "📅" }, { id: "members", label: "Members", icon: "👥" }, { id: "faith", label: "Statement of Faith", icon: "✝️" }, { id: "salvation", label: "Do You Know Him?", icon: "🙏" }, { id: "profile", label: "My Profile", icon: "👤" }].map(item => (
                 <div key={item.id} onClick={() => { if (item.id === "share") { setShowShare(true); } else { setTab(item.id); } }}
                   style={{ padding: "10px 12px", borderRadius: 4, cursor: "pointer", marginBottom: 2, background: tab === item.id ? "rgba(255,102,0,0.1)" : "transparent", color: tab === item.id ? "#FF6600" : "#888", fontSize: 13, display: "flex", alignItems: "center", gap: 8 }}>
                   <span>{item.icon}</span> {item.label}
