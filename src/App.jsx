@@ -3830,17 +3830,22 @@ export default function App() {
           {CONTENT}
           {/* MORE OVERLAY */}
           {tab === "more" && (
-            <div style={{ position: "fixed", inset: 0, background: "rgba(10,10,10,0.97)", zIndex: 200, display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", gap: 8 }}>
-              <div style={{ fontFamily: "'Cinzel', serif", fontSize: 11, letterSpacing: "0.3em", color: "#FF6600", textTransform: "uppercase", marginBottom: 24 }}>More</div>
-              {MORE_ITEMS.map(item => (
-                <div key={item.id} onClick={() => { if (item.id === "share") { setShowShare(true); } else { setTab(item.id); } }}
-                  style={{ width: 280, padding: "16px 24px", background: "rgba(255,102,0,0.05)", border: "1px solid rgba(255,102,0,0.15)", borderRadius: 6, cursor: "pointer", display: "flex", alignItems: "center", gap: 16 }}>
-                  <span style={{ fontSize: 24 }}>{item.icon}</span>
-                  <span style={{ fontFamily: "'Cinzel', serif", fontSize: 18, color: "#fff" }}>{item.label}</span>
-                </div>
-              ))}
-              <div style={{ marginTop: 24 }}>
-                <div onClick={() => setTab("feed")} style={{ color: "#555", fontSize: 13, cursor: "pointer", textAlign: "center" }}>← Back</div>
+            <div style={{ position: "fixed", inset: 0, background: "rgba(10,10,10,0.97)", zIndex: 200, display: "flex", flexDirection: "column", overflowY: "auto", paddingBottom: 90 }}>
+              <div style={{ padding: "24px 20px 16px", textAlign: "center" }}>
+                <div style={{ fontFamily: "'Cinzel', serif", fontSize: 11, letterSpacing: "0.3em", color: "#FF6600", textTransform: "uppercase" }}>More</div>
+              </div>
+              <div style={{ display: "flex", flexDirection: "column", gap: 8, padding: "0 20px" }}>
+                {MORE_ITEMS.map(item => (
+                  <div key={item.id} onClick={() => { if (item.id === "share") { setShowShare(true); } else { setTab(item.id); } }}
+                    style={{ padding: "16px 20px", background: "rgba(255,102,0,0.05)", border: "1px solid rgba(255,102,0,0.15)", borderRadius: 10, cursor: "pointer", display: "flex", alignItems: "center", gap: 16 }}>
+                    <span style={{ fontSize: 28 }}>{item.icon}</span>
+                    <span style={{ fontFamily: "'Cinzel', serif", fontSize: 16, color: "#fff" }}>{item.label}</span>
+                    <span style={{ marginLeft: "auto", color: "#555", fontSize: 18 }}>›</span>
+                  </div>
+                ))}
+              </div>
+              <div style={{ padding: "24px 20px", textAlign: "center" }}>
+                <div onClick={() => setTab("feed")} style={{ color: "#555", fontSize: 13, cursor: "pointer" }}>← Back to Feed</div>
               </div>
             </div>
           )}
