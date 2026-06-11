@@ -1301,8 +1301,79 @@ function Messages({ profile, members }) {
 
   const ROOM_LIST = (
     <div style={{ width: isMobileChat ? "100%" : 220, borderRight: isMobileChat ? "none" : "1px solid rgba(255,255,255,0.05)", flexShrink: 0, overflowY: "auto", height: isMobileChat ? "calc(100vh - 200px)" : "auto" }}>
-      <div style={{ padding: "16px 12px" }}>
-        <p style={{ ...S.eyebrow, marginBottom: 12 }}>Group Chats</p>
+      <div style={{ padding: "16px 12px 8px" }}>
+        <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 12 }}>
+          <p style={{ ...S.eyebrow, margin: 0 }}>Chats</p>
+          <div style={{ display: "flex", gap: 4 }}>
+            <button onClick={() => { setShowNewDM(!showNewDM); setShowNewGroup(false); }} style={{ background: showNewDM ? "rgba(255,102,0,0.2)" : "rgba(255,255,255,0.05)", border: "1px solid rgba(255,102,0,0.2)", borderRadius: 6, padding: "4px 8px", color: "#FF6600", cursor: "pointer", fontSize: 11 }}>✏️ DM</button>
+            <button onClick={() => { setShowNewGroup(!showNewGroup); setShowNewDM(false); }} style={{ background: showNewGroup ? "rgba(192,154,47,0.2)" : "rgba(255,255,255,0.05)", border: "1px solid rgba(192,154,47,0.2)", borderRadius: 6, padding: "4px 8px", color: "#C09A2F", cursor: "pointer", fontSize: 11 }}>👥 Group</button>
+          </div>
+        </div>
+
+        {showNewDM && (
+          <div style={{ marginBottom: 12 }}>
+            <input style={{ ...S.input, fontSize: 12, padding: "8px 12px", marginBottom: 4 }} placeholder="Search members..." value={dmSearch} onChange={e => setDmSearch(e.target.value)} />
+            {dmSearch.length > 1 && (
+              <div style={{ background: "rgba(10,10,10,0.98)", border: "1px solid rgba(255,255,255,0.08)", borderRadius: 6, maxHeight: 180, overflowY: "auto" }}>
+                {allMembers.filter(m => m.id !== profile.id && m.status === "approved" && ((m.full_name||"").toLowerCase().includes(dmSearch.toLowerCase()) || (m.username||"").toLowerCase().includes(dmSearch.toLowerCase()))).slice(0, 8).map(m => (
+                  <div key={m.id} onClick={() => { const roomId = [profile.id, m.id].sort().join("_"); isMobileChat ? selectRoomMobile(roomId) : selectRoom(roomId); setShowNewDM(false); setDmSearch(""); }}
+                    style={{ display: "flex", alignItems: "center", gap: 8, padding: "8px 12px", cursor: "pointer", borderBottom: "1px solid rgba(255,255,255,0.04)" }}
+                    onMouseOver={e => e.currentTarget.style.background = "rgba(255,102,0,0.08)"}
+                    onMouseOut={e => e.currentTarget.style.background = "transparent"}>
+                    <Avatar profile={m} size={28} />
+                    <div>
+                      <div style={{ color: "#fff", fontSize: 12 }}>{m.username ? `@${m.username}` : formatName(m.full_name)}</div>
+                      <div style={{ color: "#555", fontSize: 10 }}>{GROUPS.find(g => g.id === m.group_id)?.label}</div>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
+        )}
+
+        {showNewGroup && (
+          <div style={{ marginBottom: 12, background: "rgba(192,154,47,0.05)", border: "1px solid rgba(192,154,47,0.15)", borderRadius: 6, padding: 10 }}>
+            <input style={{ ...S.input, fontSize: 12, padding: "8px 12px", marginBottom: 6 }} placeholder="Group name..." value={newGroupName} onChange={e => setNewGroupName(e.target.value)} />
+            <input style={{ ...S.input, fontSize: 12, padding: "8px 12px", marginBottom: 6 }} placeholder="Add members..." value={groupMemberSearch} onChange={e => setGroupMemberSearch(e.target.value)} />
+            {groupMemberSearch.length > 1 && (
+              <div style={{ background: "rgba(10,10,10,0.98)", border: "1px solid rgba(255,255,255,0.08)", borderRadius: 6, maxHeight: 150, overflowY: "auto", marginBottom: 6 }}>
+                {allMembers.filter(m => m.id !== profile.id && m.status === "approved" && !newGroupMembers.find(x => x.id === m.id) && ((m.full_name||"").toLowerCase().includes(groupMemberSearch.toLowerCase()) || (m.username||"").toLowerCase().includes(groupMemberSearch.toLowerCase()))).slice(0, 5).map(m => (
+                  <div key={m.id} onClick={() => { setNewGroupMembers([...newGroupMembers, m]); setGroupMemberSearch(""); }}
+                    style={{ display: "flex", alignItems: "center", gap: 8, padding: "6px 10px", cursor: "pointer" }}
+                    onMouseOver={e => e.currentTarget.style.background = "rgba(255,102,0,0.08)"}
+                    onMouseOut={e => e.currentTarget.style.background = "transparent"}>
+                    <Avatar profile={m} size={24} />
+                    <span style={{ color: "#fff", fontSize: 12 }}>{m.username ? `@${m.username}` : formatName(m.full_name)}</span>
+                  </div>
+                ))}
+              </div>
+            )}
+            {newGroupMembers.length > 0 && (
+              <div style={{ display: "flex", gap: 4, flexWrap: "wrap", marginBottom: 6 }}>
+                {newGroupMembers.map(m => (
+                  <span key={m.id} style={{ background: "rgba(255,102,0,0.1)", border: "1px solid rgba(255,102,0,0.2)", borderRadius: 20, padding: "2px 8px", fontSize: 10, color: "#FF6600", cursor: "pointer" }} onClick={() => setNewGroupMembers(newGroupMembers.filter(x => x.id !== m.id))}>
+                    {m.username ? `@${m.username}` : formatName(m.full_name)} ✕
+                  </span>
+                ))}
+              </div>
+            )}
+            <button style={{ ...S.btn, width: "100%", padding: "8px", fontSize: 11, opacity: !newGroupName.trim() || newGroupMembers.length === 0 ? 0.4 : 1 }}
+              disabled={!newGroupName.trim() || newGroupMembers.length === 0 || creatingGroup}
+              onClick={async () => {
+                setCreatingGroup(true);
+                const roomId = `group_custom_${Date.now()}`;
+                const senderName = profile.username ? `@${profile.username}` : formatName(profile.full_name);
+                await supabase.from("messages").insert({ room_id: roomId, user_id: profile.id, body: `📢 "${newGroupName}" — Members: ${newGroupMembers.map(m => m.username ? `@${m.username}` : formatName(m.full_name)).join(", ")}`, sender_name: senderName });
+                isMobileChat ? selectRoomMobile(roomId) : selectRoom(roomId);
+                setShowNewGroup(false); setNewGroupName(""); setNewGroupMembers([]); setCreatingGroup(false);
+              }}>
+              {creatingGroup ? "Creating..." : `Create (${newGroupMembers.length + 1})`}
+            </button>
+          </div>
+        )}
+
+        <p style={{ ...S.eyebrow, marginBottom: 8 }}>Group Chats</p>
         {GROUP_ROOMS.map(room => (
           <div key={room.id} onClick={() => isMobileChat ? selectRoomMobile(room.id) : selectRoom(room.id)}
             style={{ padding: "12px 16px", borderRadius: 4, cursor: "pointer", marginBottom: 4, background: activeRoom === room.id ? "rgba(255,102,0,0.1)" : "rgba(255,255,255,0.02)", color: activeRoom === room.id ? "#FF6600" : "#CCCCCC", fontSize: 14, display: "flex", alignItems: "center", gap: 12, border: "1px solid rgba(255,255,255,0.04)" }}>
