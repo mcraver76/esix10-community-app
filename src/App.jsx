@@ -711,6 +711,7 @@ function Feed({ profile, activeGroup, isNewMember }) {
   }
 
   async function deletePost(id) {
+    if (!window.confirm("Delete this post?")) return;
     await supabase.from("posts").delete().eq("id", id);
     loadPosts();
   }
@@ -1332,6 +1333,7 @@ function Messages({ profile, members }) {
   }
 
   async function deleteMessage(id) {
+    if (!window.confirm("Delete this message?")) return;
     await supabase.from("messages").delete().eq("id", id);
     loadMessages();
   }
