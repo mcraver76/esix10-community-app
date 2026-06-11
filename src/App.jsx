@@ -1428,7 +1428,6 @@ function Messages({ profile, members, onRead }) {
   function selectRoom(roomId) {
     setActiveRoom(roomId);
     localStorage.setItem(`esix10_room_${profile.id}`, roomId);
-    if (window.innerWidth <= 768) setShowRoomList(false);
     // Mark as read
     const lastRead = JSON.parse(localStorage.getItem(`esix10_lastread_${profile.id}`) || "{}");
     lastRead[roomId] = new Date().toISOString();
@@ -1511,7 +1510,7 @@ function Messages({ profile, members, onRead }) {
 
   const currentRoom = [...GROUP_ROOMS, ...dmRooms, ...customRooms].find(r => r.id === activeRoom);
   const isMobileChat = useMobile();
-  const [showRoomList, setShowRoomList] = useState(!activeRoom);
+  const [showRoomList, setShowRoomList] = useState(true);
 
   function selectRoomMobile(roomId) {
     selectRoom(roomId);
@@ -1650,7 +1649,10 @@ function Messages({ profile, members, onRead }) {
     <div style={{ flex: 1, display: "flex", flexDirection: "column", height: isMobileChat ? "calc(100vh - 200px)" : "auto" }}>
       <div style={{ padding: "12px 16px", borderBottom: "1px solid rgba(255,255,255,0.05)", display: "flex", alignItems: "center", gap: 12 }}>
         {isMobileChat && (
-          <button onClick={() => setShowRoomList(true)} style={{ background: "none", border: "none", color: "#FF6600", fontSize: 20, cursor: "pointer", padding: "0 4px", lineHeight: 1 }}>‹</button>
+          <>
+            <button onClick={() => setShowRoomList(true)} style={{ background: "none", border: "none", color: "#FF6600", fontSize: 20, cursor: "pointer", padding: "0 4px", lineHeight: 1 }}>‹</button>
+            <button onClick={() => loadMessages()} style={{ background: "none", border: "none", color: "#555", fontSize: 16, cursor: "pointer", padding: "0 4px", lineHeight: 1 }} title="Refresh">↻</button>
+          </>
         )}
         <span style={{ fontSize: 20 }}>{currentRoom?.icon}</span>
         <span style={{ fontFamily: "'Cinzel', serif", fontSize: 15, color: "#fff" }}>{currentRoom?.label}</span>
