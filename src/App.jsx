@@ -532,6 +532,13 @@ function GroupSelect({ user, onSelect }) {
     setLoading(true);
     const primaryGroup = selected.includes("brotherhood") ? "brotherhood" : selected.includes("sisterhood") ? "sisterhood" : "family";
     await supabase.from("profiles").upsert({ id: user.id, group_id: primaryGroup, group_ids: selected });
+    // Notify admin of new member
+    const { data: p } = await supabase.from("profiles").select("full_name, email").eq("id", user.id).maybeSingle();
+    fetch("https://bffcrhjdibxqfmdreksi.supabase.co/functions/v1/notify", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ full_name: p?.full_name || user.email, email: p?.email || user.email, group_id: primaryGroup })
+    }).catch(() => {});
     onSelect(primaryGroup, selected);
     setLoading(false);
   }
