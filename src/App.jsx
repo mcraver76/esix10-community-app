@@ -2117,7 +2117,7 @@ export default function App() {
 
       {/* NAV */}
       <nav style={{ ...S.nav, height: isMobile ? 80 : 80, padding: isMobile ? "0 12px" : "0 32px" }}>
-        <img src="https://esix10.com/wp-content/uploads/2026/06/esix10logo.png" alt="ESix10" style={{ height: isMobile ? 86 : 106, width: "auto", objectFit: "contain" }} />
+        <img src="https://esix10.com/wp-content/uploads/2026/06/esix10logo.png" alt="ESix10" style={{ height: isMobile ? 60 : 88, width: "auto", objectFit: "contain" }} />
         <div style={S.navRight}>
           <span style={{ ...S.badge, fontSize: 10 }}>{myGroup?.icon} {myGroup?.label}</span>
           {isAdmin && !isMobile && <span style={{ ...S.badge, background: "rgba(255,102,0,0.3)", color: "#FF6600" }}>Admin</span>}
@@ -2159,7 +2159,7 @@ export default function App() {
           </div>
         </div>
       ) : (
-        <div style={{ display: "flex", paddingTop: 70 }}>
+        <div style={{ display: "flex", paddingTop: 80 }}>
           {/* SIDEBAR */}
           <div style={{ width: 200, minHeight: "calc(100vh - 70px)", borderRight: "1px solid rgba(255,255,255,0.04)", padding: "24px 12px", position: "sticky", top: 70, flexShrink: 0, background: "rgba(13,17,23,0.5)" }}>
             <div style={{ marginBottom: 24 }}>
