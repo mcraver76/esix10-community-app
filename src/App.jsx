@@ -581,12 +581,9 @@ function GroupSelect({ user, onSelect }) {
     // Notify admin of new member
     const { data: p } = await supabase.from("profiles").select("full_name, email").eq("id", user.id).maybeSingle();
     try {
-      const notifyRes = await fetch("https://bffcrhjdibxqfmdreksi.supabase.co/functions/v1/notify", {
-        method: "POST",
-        headers: { "Content-Type": "application/json", "apikey": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImJmZmNyaGpkaWJ4cWZtZHJla3NpIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODEwNjkwMzgsImV4cCI6MjA5NjY0NTAzOH0.yZ7IunHcwTlMKu0uDvKnBnBLBpdDCsPLVWTygmaveEo" },
-        body: JSON.stringify({ full_name: p?.full_name || user.email, email: p?.email || user.email, group_id: primaryGroup })
+      await supabase.functions.invoke("notify", {
+        body: { full_name: p?.full_name || user.email, email: p?.email || user.email, group_id: primaryGroup }
       });
-      console.log("Notify status:", notifyRes.status);
     } catch(e) { console.log("Notify error:", e); }
     onSelect(primaryGroup, selected);
     setLoading(false);
@@ -3695,10 +3692,8 @@ export default function App() {
         setProfile(newProfile);
         // Send admin notification for new non-admin signups
         if (!isAdmin) {
-          fetch("https://bffcrhjdibxqfmdreksi.supabase.co/functions/v1/notify", {
-            method: "POST",
-            headers: { "Content-Type": "application/json", "apikey": SUPABASE_ANON_KEY },
-            body: JSON.stringify({ full_name: fullName, email: u.email, group_id: "pending" })
+          supabase.functions.invoke("notify", {
+            body: { full_name: fullName, email: u.email, group_id: "pending" }
           }).catch(() => {});
         }
       } else if (error) {
