@@ -3472,12 +3472,12 @@ export default function App() {
   ];
 
   const CONTENT = (
-    <div style={{ flex: 1, padding: isMobile ? "20px 16px 88px" : "32px 32px 60px", maxWidth: isMobile ? "100%" : 800, overflow: "hidden" }}>
+    <div style={{ flex: 1, padding: isMobile ? "20px 16px 88px" : "32px 32px 60px", maxWidth: isMobile ? "100%" : 800, overflow: "hidden", boxSizing: "border-box" }}>
       {tab === "feed" && (
         <div>
           {isMobile && (
-            <div style={{ display: "flex", gap: 8, marginBottom: 16, overflowX: "auto", paddingBottom: 4 }}>
-              {[{ id: "all", label: "All" }, ...(profile.role === "admin" ? GROUPS : GROUPS.filter(g => g.id === profile.group_id))].map(g => (
+            <div style={{ display: "flex", gap: 8, marginBottom: 16, overflowX: "auto", paddingBottom: 4, WebkitOverflowScrolling: "touch" }}>
+              {[{ id: "all", label: "All" }, ...(profile.role === "admin" ? GROUPS : GROUPS.filter(g => (profile.group_ids && profile.group_ids.length > 0 ? profile.group_ids : [profile.group_id]).includes(g.id)))].map(g => (
                 <button key={g.id} onClick={() => setFeedGroup(g.id)}
                   style={{ ...S.tab(feedGroup === g.id), padding: "8px 14px", fontSize: 11, whiteSpace: "nowrap", flexShrink: 0, border: "none", cursor: "pointer" }}>
                   {g.label || "All"}
