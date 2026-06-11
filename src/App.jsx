@@ -56,6 +56,55 @@ const displayName = (profile) => {
   return formatName(profile?.full_name);
 };
 
+// Preset ESix10 avatars
+const PRESET_AVATARS = [
+  { id: "shield", emoji: "🛡️", label: "Shield" },
+  { id: "sword", emoji: "⚔️", label: "Sword" },
+  { id: "cross", emoji: "✝️", label: "Cross" },
+  { id: "fire", emoji: "🔥", label: "Fire" },
+  { id: "lion", emoji: "🦁", label: "Lion" },
+  { id: "eagle", emoji: "🦅", label: "Eagle" },
+  { id: "mountain", emoji: "⛰️", label: "Mountain" },
+  { id: "anchor", emoji: "⚓", label: "Anchor" },
+  { id: "star", emoji: "⭐", label: "Star" },
+  { id: "fist", emoji: "✊", label: "Fist" },
+  { id: "pray", emoji: "🙏", label: "Prayer" },
+  { id: "crown", emoji: "👑", label: "Crown" },
+];
+
+// Avatar display component
+function Avatar({ profile, size = 38, onClick }) {
+  const style = {
+    width: size, height: size, borderRadius: "50%",
+    display: "flex", alignItems: "center", justifyContent: "center",
+    flexShrink: 0, cursor: onClick ? "pointer" : "default",
+    overflow: "hidden", border: "1px solid rgba(255,102,0,0.2)"
+  };
+
+  if (profile?.avatar_url && profile.avatar_url.startsWith("http")) {
+    return (
+      <div style={style} onClick={onClick}>
+        <img src={profile.avatar_url} alt="avatar" style={{ width: "100%", height: "100%", objectFit: "cover" }} />
+      </div>
+    );
+  }
+
+  const preset = PRESET_AVATARS.find(a => a.id === profile?.avatar_url);
+  if (preset) {
+    return (
+      <div style={{ ...style, background: "linear-gradient(135deg, rgba(255,102,0,0.2), rgba(192,154,47,0.15))" }} onClick={onClick}>
+        <span style={{ fontSize: size * 0.5 }}>{preset.emoji}</span>
+      </div>
+    );
+  }
+
+  return (
+    <div style={{ ...style, background: "linear-gradient(135deg, rgba(255,102,0,0.3), rgba(192,154,47,0.2))", color: "#FF6600", fontFamily: "'Cinzel', serif", fontSize: size * 0.4, fontWeight: 600 }} onClick={onClick}>
+      {(profile?.username || profile?.full_name || "?")[0].toUpperCase()}
+    </div>
+  );
+}
+
 
 
 // ─── Global CSS ───────────────────────────────────────────────────────────────
@@ -844,9 +893,7 @@ function Members({ profile }) {
               <div key={m.id} style={{ ...S.card, padding: "16px 20px", marginBottom: 8, borderLeft: "3px solid #FF6600" }}>
                 <div style={S.flexBetween}>
                   <div style={S.flex}>
-                    <div style={{ width: 48, height: 48, borderRadius: "50%", background: "rgba(255,102,0,0.15)", display: "flex", alignItems: "center", justifyContent: "center", color: "#FF6600", fontFamily: "'Cinzel', serif", fontWeight: 600 }}>
-                      {(m.full_name || m.email || "?")[0].toUpperCase()}
-                    </div>
+                    <Avatar profile={m} size={48} />
                     <div>
                       <div style={{ color: "#fff", fontFamily: "'Cinzel', serif", fontSize: 15 }}>{formatName(m.full_name)}</div>
                       <div style={S.muted}>{profile.role === "admin" ? m.email : ""}</div>
@@ -1959,14 +2006,33 @@ function Profile({ profile, onUpdate, onSignOut }) {
   const [form, setForm] = useState({ full_name: profile.full_name || "", username: profile.username || "", city: profile.city || "", state: profile.state || "", bio: profile.bio || "", group_id: profile.group_id || "" });
   const [saving, setSaving] = useState(false);
   const [msg, setMsg] = useState("");
+  const [avatarMode, setAvatarMode] = useState("preset"); // "preset" or "upload"
+  const [uploading, setUploading] = useState(false);
+  const [currentAvatar, setCurrentAvatar] = useState(profile.avatar_url || "");
+  const fileRef = React.useRef();
 
   async function save() {
     setSaving(true);
-    await supabase.from("profiles").update(form).eq("id", profile.id);
+    await supabase.from("profiles").update({ ...form, avatar_url: currentAvatar }).eq("id", profile.id);
     setMsg("Profile saved.");
-    onUpdate({ ...profile, ...form });
+    onUpdate({ ...profile, ...form, avatar_url: currentAvatar });
     setSaving(false);
     setTimeout(() => setMsg(""), 3000);
+  }
+
+  async function uploadPhoto(e) {
+    const file = e.target.files[0];
+    if (!file) return;
+    if (file.size > 2 * 1024 * 1024) { alert("Photo must be under 2MB"); return; }
+    setUploading(true);
+    const ext = file.name.split('.').pop();
+    const path = `${profile.id}/avatar.${ext}`;
+    const { error } = await supabase.storage.from("avatars").upload(path, file, { upsert: true });
+    if (!error) {
+      const { data } = supabase.storage.from("avatars").getPublicUrl(path);
+      setCurrentAvatar(data.publicUrl + "?t=" + Date.now());
+    }
+    setUploading(false);
   }
 
   return (
@@ -1974,6 +2040,47 @@ function Profile({ profile, onUpdate, onSignOut }) {
       <h2 style={S.h2}>Your Profile</h2>
       <div style={S.divider} />
       <div style={{ ...S.card, marginTop: 20 }}>
+
+        {/* AVATAR SECTION */}
+        <div style={{ marginBottom: 24 }}>
+          <label style={S.label}>Profile Avatar</label>
+          <div style={{ display: "flex", alignItems: "center", gap: 20, marginBottom: 16 }}>
+            <Avatar profile={{ ...profile, avatar_url: currentAvatar }} size={72} />
+            <div>
+              <p style={{ color: "#888", fontSize: 13, marginBottom: 8 }}>Choose a preset icon or upload a photo</p>
+              <div style={{ display: "flex", gap: 8 }}>
+                <button style={{ ...S.tab(avatarMode === "preset"), padding: "6px 14px", fontSize: 11 }} onClick={() => setAvatarMode("preset")}>Choose Icon</button>
+                <button style={{ ...S.tab(avatarMode === "upload"), padding: "6px 14px", fontSize: 11 }} onClick={() => setAvatarMode("upload")}>Upload Photo</button>
+                {currentAvatar && <button style={{ ...S.btnDanger, padding: "6px 12px", fontSize: 11 }} onClick={() => setCurrentAvatar("")}>Remove</button>}
+              </div>
+            </div>
+          </div>
+
+          {avatarMode === "preset" && (
+            <div style={{ display: "grid", gridTemplateColumns: "repeat(6, 1fr)", gap: 8 }}>
+              {PRESET_AVATARS.map(a => (
+                <div key={a.id} onClick={() => setCurrentAvatar(a.id)}
+                  style={{ aspectRatio: "1", borderRadius: 8, display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", cursor: "pointer", background: currentAvatar === a.id ? "rgba(255,102,0,0.15)" : "rgba(255,255,255,0.03)", border: currentAvatar === a.id ? "2px solid #FF6600" : "1px solid rgba(255,255,255,0.08)", gap: 4 }}>
+                  <span style={{ fontSize: 22 }}>{a.emoji}</span>
+                  <span style={{ fontSize: 9, color: "#666", letterSpacing: "0.05em" }}>{a.label}</span>
+                </div>
+              ))}
+            </div>
+          )}
+
+          {avatarMode === "upload" && (
+            <div>
+              <input ref={fileRef} type="file" accept="image/*" style={{ display: "none" }} onChange={uploadPhoto} />
+              <button style={{ ...S.btn, marginBottom: 8 }} onClick={() => fileRef.current.click()} disabled={uploading}>
+                {uploading ? "Uploading..." : "Choose Photo"}
+              </button>
+              <p style={{ color: "#555", fontSize: 12 }}>JPG or PNG. Max 2MB. Square photos work best.</p>
+            </div>
+          )}
+        </div>
+
+        <div style={{ height: 1, background: "rgba(255,255,255,0.05)", marginBottom: 20 }} />
+
         <div style={{ marginBottom: 16 }}>
           <label style={S.label}>Full Name</label>
           <input style={S.input} value={form.full_name} onChange={e => setForm({ ...form, full_name: e.target.value })} />
@@ -2164,9 +2271,7 @@ export default function App() {
         <div style={S.navRight}>
           <span style={{ ...S.badge, fontSize: 10 }}>{myGroup?.icon} {myGroup?.label}</span>
           {isAdmin && !isMobile && <span style={{ ...S.badge, background: "rgba(255,102,0,0.3)", color: "#FF6600" }}>Admin</span>}
-          <div style={{ width: 32, height: 32, borderRadius: "50%", background: "rgba(255,102,0,0.15)", display: "flex", alignItems: "center", justifyContent: "center", color: "#FF6600", fontFamily: "'Cinzel', serif", fontWeight: 600, cursor: "pointer", fontSize: 13 }} onClick={() => setTab("profile")}>
-            {(profile.username || profile.full_name || "?")[0].toUpperCase()}
-          </div>
+          <Avatar profile={profile} size={36} onClick={() => setTab("profile")} />
         </div>
       </nav>
 
