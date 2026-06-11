@@ -741,13 +741,13 @@ function Feed({ profile, activeGroup, isNewMember }) {
   }
 
   const groupName = GROUPS.find(g => g.id === postTarget)?.label || "Your Group";
-  const activeGroupData = GROUPS.find(g => g.id === (activeGroup === "all" ? profile.group_id : activeGroup));
+  const activeGroupData = activeGroup && activeGroup !== "all" ? GROUPS.find(g => g.id === activeGroup) : null;
 
   return (
     <div className="tab-content">
       <div style={{ marginBottom: 20 }}>
-        <h2 style={{ fontFamily: "'Cinzel', serif", fontSize: 22, fontWeight: 400, color: "#fff", marginBottom: 4 }}>{activeGroupData?.label || "Community"}</h2>
-        <p style={{ color: "#FF6600", fontSize: 12, letterSpacing: "0.15em", textTransform: "uppercase", fontWeight: 700 }}>{activeGroupData?.subtitle || ""}</p>
+        <h2 style={{ fontFamily: "'Cinzel', serif", fontSize: 22, fontWeight: 400, color: "#fff", marginBottom: 4 }}>{activeGroupData?.label || "My Feed"}</h2>
+        <p style={{ color: "#FF6600", fontSize: 12, letterSpacing: "0.15em", textTransform: "uppercase", fontWeight: 700 }}>{activeGroupData?.subtitle || "All Groups"}</p>
       </div>
       <ActivityTicker profile={profile} />
       {showWelcome && (
