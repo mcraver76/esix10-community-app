@@ -1140,7 +1140,7 @@ function Members({ profile }) {
                     </div>
                   </div>
                   <div style={S.flex}>
-                    <span style={S.badge}>{GROUPS.find(g => g.id === m.group_id)?.label || "No Group"}</span>
+                    <span style={S.badge}>{(m.group_ids && m.group_ids.length > 1 ? m.group_ids : [m.group_id]).map(id => GROUPS.find(g => g.id === id)?.label).filter(Boolean).join(" · ") || "No Group"}</span>
                     <button style={{ ...S.btnSm, background: "#51cf66" }} onClick={() => approve(m.id)}>✓ Approve</button>
                     <button style={S.btnDanger} onClick={() => deny(m.id)}>✕ Deny</button>
                   </div>
@@ -1162,7 +1162,7 @@ function Members({ profile }) {
               <div style={{ flex: 1, minWidth: 0 }}>
                 <div style={{ display: "flex", alignItems: "center", gap: 8, flexWrap: "wrap", marginBottom: 4 }}>
                   <span style={{ color: "#fff", fontFamily: "'Cinzel', serif", fontSize: 14 }}>{formatName(m.full_name)}</span>
-                  <span style={{ ...S.badge, fontSize: 10 }}>{GROUPS.find(g => g.id === m.group_id)?.label || "No Group"}</span>
+                  <span style={{ ...S.badge, fontSize: 10 }}>{(m.group_ids && m.group_ids.length > 1 ? m.group_ids : [m.group_id]).map(id => GROUPS.find(g => g.id === id)?.label).filter(Boolean).join(" · ") || "No Group"}</span>
                   {m.role === "admin" && <span style={{ ...S.badge, background: "rgba(255,102,0,0.3)", color: "#FF6600", fontSize: 10 }}>Admin</span>}
                 </div>
                 {profile.role === "admin" && <div style={{ ...S.muted, fontSize: 12 }}>{m.email}</div>}
