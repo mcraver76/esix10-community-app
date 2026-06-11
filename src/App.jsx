@@ -169,6 +169,7 @@ create table if not exists profiles (
   full_name text,
   username text unique,
   group_id text,
+  group_ids text[] default '{}',
   role text default 'member',
   status text default 'pending',
   city text,
@@ -475,14 +476,28 @@ function AuthScreen({ onAuth }) {
 }
 
 function GroupSelect({ user, onSelect }) {
-  const [selected, setSelected] = useState(null);
+  const [selected, setSelected] = useState([]);
   const [loading, setLoading] = useState(false);
 
+  function toggleGroup(id) {
+    // Brotherhood and Sisterhood are mutually exclusive
+    if (id === "brotherhood" && selected.includes("sisterhood")) {
+      setSelected(prev => [...prev.filter(g => g !== "sisterhood"), id]);
+      return;
+    }
+    if (id === "sisterhood" && selected.includes("brotherhood")) {
+      setSelected(prev => [...prev.filter(g => g !== "brotherhood"), id]);
+      return;
+    }
+    setSelected(prev => prev.includes(id) ? prev.filter(g => g !== id) : [...prev, id]);
+  }
+
   async function confirm() {
-    if (!selected) return;
+    if (selected.length === 0) return;
     setLoading(true);
-    await supabase.from("profiles").upsert({ id: user.id, group_id: selected });
-    onSelect(selected);
+    const primaryGroup = selected.includes("brotherhood") ? "brotherhood" : selected.includes("sisterhood") ? "sisterhood" : "family";
+    await supabase.from("profiles").upsert({ id: user.id, group_id: primaryGroup, group_ids: selected });
+    onSelect(primaryGroup, selected);
     setLoading(false);
   }
 
@@ -493,20 +508,22 @@ function GroupSelect({ user, onSelect }) {
           <span style={S.eyebrow}>Welcome to ESix10</span>
           <h1 style={{ ...S.h1, fontSize: 32 }}>Choose Your Community</h1>
           <div style={{ ...S.divider, margin: "16px auto" }} />
-          <p style={S.grey}>Select the group that fits where you are right now. You can always change this later.</p>
+          <p style={S.grey}>Select all groups that apply. Brotherhood and Sisterhood are separate — but Family is open to all.</p>
         </div>
         <div style={S.grid3}>
           {GROUPS.map(g => (
-            <div key={g.id} style={S.groupCard(selected === g.id)} onClick={() => setSelected(g.id)}>
+            <div key={g.id} style={S.groupCard(selected.includes(g.id))} onClick={() => toggleGroup(g.id)}>
               <div style={{ fontSize: 32, marginBottom: 12, color: "#FF6600" }}>{g.icon}</div>
+              {selected.includes(g.id) && <div style={{ position: "absolute", top: 12, right: 12, background: "#FF6600", borderRadius: "50%", width: 20, height: 20, display: "flex", alignItems: "center", justifyContent: "center", color: "#fff", fontSize: 12 }}>✓</div>}
               <h3 style={{ fontFamily: "'Cinzel', serif", fontSize: 20, fontWeight: 400, color: "#fff", marginBottom: 8 }}>{g.label}</h3>
               <p style={{ fontSize: 13, color: "#FF6600", letterSpacing: "0.1em", textTransform: "uppercase", fontWeight: 700 }}>{g.subtitle}</p>
             </div>
           ))}
         </div>
-        <div style={{ textAlign: "center", marginTop: 32 }}>
-          <button style={{ ...S.btn, padding: "14px 48px", opacity: selected ? 1 : 0.4 }} onClick={confirm} disabled={!selected || loading}>
-            {loading ? "Joining..." : "Join the Community"}
+        <p style={{ textAlign: "center", color: "#555", fontSize: 12, marginTop: 16 }}>Brotherhood and Sisterhood cannot be selected together</p>
+        <div style={{ textAlign: "center", marginTop: 24 }}>
+          <button style={{ ...S.btn, padding: "14px 48px", opacity: selected.length > 0 ? 1 : 0.4 }} onClick={confirm} disabled={selected.length === 0 || loading}>
+            {loading ? "Joining..." : `Join ${selected.length > 0 ? selected.length + " group" + (selected.length > 1 ? "s" : "") : "the Community"}`}
           </button>
         </div>
       </div>
@@ -1429,7 +1446,7 @@ function ForgeChallenge({ profile }) {
     if (data) {
       const { count } = await supabase.from('forge_challenge_completions').select('*', { count: 'exact', head: true }).eq('challenge_id', data.id);
       setCompletionCount(count || 0);
-      const { data: myCompletion } = await supabase.from('forge_challenge_completions').select('*').eq('challenge_id', data.id).eq('user_id', profile.id).single();
+      const { data: myCompletion } = await supabase.from('forge_challenge_completions').select('*').eq('challenge_id', data.id).eq('user_id', profile.id).maybeSingle();
       setCompleted(!!myCompletion);
       const { data: allCompletions } = await supabase.from('forge_challenge_completions').select('*, profiles(full_name, username)').eq('challenge_id', data.id).order('created_at', { ascending: false }).limit(10);
       setCompletions(allCompletions || []);
@@ -1582,7 +1599,7 @@ function ForgeWOD({ profile }) {
     if (data) {
       const { count } = await supabase.from('forge_wod_completions').select('*', { count: 'exact', head: true }).eq('wod_id', data.id);
       setCompletionCount(count || 0);
-      const { data: myComp } = await supabase.from('forge_wod_completions').select('*').eq('wod_id', data.id).eq('user_id', profile.id).single();
+      const { data: myComp } = await supabase.from('forge_wod_completions').select('*').eq('wod_id', data.id).eq('user_id', profile.id).maybeSingle();
       setCompleted(!!myComp);
     }
     if (profile.role === 'admin') {
@@ -2002,6 +2019,76 @@ function PlanOfSalvation({ onBack, profile }) {
   );
 }
 
+
+// ─── Welcome Modal ────────────────────────────────────────────────────────────
+function WelcomeModal({ profile, onClose }) {
+  const group = GROUPS.find(g => g.id === profile.group_id);
+  const groupMessages = {
+    brotherhood: {
+      headline: "Brother, you're in.",
+      body: "You just joined a community of men who refuse to drift. Men who train together, pray together, and hold each other to a standard that doesn't move. This is the Brotherhood.",
+      scripture: "Therefore, my beloved brothers, be steadfast, immovable, always abounding in the work of the Lord.",
+      ref: "1 Corinthians 15:58"
+    },
+    sisterhood: {
+      headline: "Sister, you're home.",
+      body: "You just joined a community of women who refuse to quit. Women who are fierce enough to fight for their families and faithful enough to trust God with what they cannot control. This is the Sisterhood.",
+      scripture: "She is clothed with strength and dignity, and she laughs without fear of the future.",
+      ref: "Proverbs 31:25"
+    },
+    family: {
+      headline: "Welcome, family.",
+      body: "You just joined a community built around the most important institution on earth — the home. Together we study, grow, and build something that lasts. Boys and girls are watching. Give them something worth seeing.",
+      scripture: "As for me and my house, we will serve the Lord.",
+      ref: "Joshua 24:15"
+    }
+  };
+
+  const msg = groupMessages[profile.group_id] || {
+    headline: "Welcome to ESix10.",
+    body: "You have joined a community built on faith, discipline, and readiness. Prepared. Equipped. Unshaken.",
+    scripture: "Finally, be strong in the Lord and in his mighty power.",
+    ref: "Ephesians 6:10"
+  };
+
+  return (
+    <div style={{ position: "fixed", inset: 0, background: "rgba(0,0,0,0.92)", zIndex: 500, display: "flex", alignItems: "center", justifyContent: "center", padding: 24 }}>
+      <div style={{ maxWidth: 480, width: "100%", textAlign: "center" }} className="fade-up">
+        <img src="https://esix10.com/wp-content/uploads/2026/06/esix10logo.png" alt="ESix10" style={{ height: 80, width: "auto", objectFit: "contain", marginBottom: 16 }} />
+        
+        <div style={{ marginBottom: 24 }}>
+          <span style={{ ...S.eyebrow, display: "block", marginBottom: 8 }}>{group?.label} — {group?.subtitle}</span>
+          <h2 style={{ fontFamily: "'Cinzel', serif", fontSize: 28, fontWeight: 400, color: "#fff", marginBottom: 16 }}>{msg.headline}</h2>
+          <p style={{ color: "#CCCCCC", fontSize: 15, lineHeight: 1.9, marginBottom: 24 }}>{msg.body}</p>
+        </div>
+
+        <div style={{ background: "rgba(255,102,0,0.08)", border: "1px solid rgba(255,102,0,0.2)", borderRadius: 10, padding: "20px 24px", marginBottom: 32 }}>
+          <p style={{ fontFamily: "'Cinzel', serif", fontSize: 14, fontStyle: "italic", color: "#fff", lineHeight: 1.8, marginBottom: 8 }}>"{msg.scripture}"</p>
+          <p style={{ color: "#FF6600", fontSize: 12, letterSpacing: "0.1em" }}>— {msg.ref}</p>
+        </div>
+
+        <div style={{ marginBottom: 24 }}>
+          <p style={{ color: "#888", fontSize: 13, lineHeight: 1.8 }}>
+            Here's where to start:<br/>
+            <span style={{ color: "#FF6600" }}>📋 Feed</span> — introduce yourself to the community<br/>
+            <span style={{ color: "#FF6600" }}>🙏 Prayer</span> — share what's on your heart<br/>
+            <span style={{ color: "#FF6600" }}>🔥 The Forge</span> — log your first walk today<br/>
+            <span style={{ color: "#FF6600" }}>👤 Profile</span> — set your avatar and bio
+          </p>
+        </div>
+
+        <button style={{ ...S.btn, width: "100%", padding: 16, fontSize: 13, letterSpacing: "0.2em" }} onClick={onClose}>
+          Enter the Community
+        </button>
+
+        <p style={{ color: "#444", fontSize: 11, marginTop: 16, letterSpacing: "0.05em" }}>
+          Ephesians 6:10 — Prepared. Equipped. Unshaken.
+        </p>
+      </div>
+    </div>
+  );
+}
+
 function Profile({ profile, onUpdate, onSignOut }) {
   const [form, setForm] = useState({ full_name: profile.full_name || "", username: profile.username || "", city: profile.city || "", state: profile.state || "", bio: profile.bio || "", group_id: profile.group_id || "" });
   const [saving, setSaving] = useState(false);
@@ -2101,10 +2188,29 @@ function Profile({ profile, onUpdate, onSignOut }) {
           </div>
         </div>
         <div style={{ marginBottom: 16 }}>
-          <label style={S.label}>Your Group</label>
-          <select style={S.input} value={form.group_id} onChange={e => setForm({ ...form, group_id: e.target.value })}>
-            {GROUPS.map(g => <option key={g.id} value={g.id}>{g.label} — {g.subtitle}</option>)}
-          </select>
+          <label style={S.label}>Your Groups</label>
+          <div style={{ display: "flex", gap: 8, flexWrap: "wrap", marginTop: 4 }}>
+            {GROUPS.map(g => {
+              const currentGroups = form.group_ids || [form.group_id];
+              const isSelected = currentGroups.includes(g.id);
+              return (
+                <div key={g.id} onClick={() => {
+                  let newGroups = currentGroups.includes(g.id) 
+                    ? currentGroups.filter(x => x !== g.id)
+                    : [...currentGroups, g.id];
+                  if (newGroups.length === 0) newGroups = [g.id];
+                  const primary = newGroups.includes("brotherhood") ? "brotherhood" : newGroups.includes("sisterhood") ? "sisterhood" : "family";
+                  setForm({ ...form, group_id: primary, group_ids: newGroups });
+                }}
+                style={{ background: isSelected ? "rgba(255,102,0,0.15)" : "rgba(255,255,255,0.03)", border: isSelected ? "2px solid #FF6600" : "1px solid rgba(255,255,255,0.08)", borderRadius: 8, padding: "10px 16px", cursor: "pointer", display: "flex", alignItems: "center", gap: 8 }}>
+                  <span style={{ fontSize: 16 }}>{g.icon}</span>
+                  <span style={{ color: isSelected ? "#FF6600" : "#888", fontSize: 13 }}>{g.label}</span>
+                  {isSelected && <span style={{ color: "#FF6600", fontSize: 12 }}>✓</span>}
+                </div>
+              );
+            })}
+          </div>
+          <p style={{ color: "#555", fontSize: 11, marginTop: 8 }}>Brotherhood and Sisterhood cannot be selected together.</p>
         </div>
         <div style={{ marginBottom: 20 }}>
           <label style={S.label}>Bio</label>
@@ -2129,6 +2235,7 @@ export default function App() {
   const [feedGroup, setFeedGroup] = useState("all");
   const [showSetup, setShowSetup] = useState(false);
   const [allMembers, setAllMembers] = useState([]);
+  const [showWelcome, setShowWelcome] = useState(false);
   const [showMore, setShowMore] = useState(false);
 
   useEffect(() => {
@@ -2162,7 +2269,6 @@ export default function App() {
     try {
       const { data, error } = await supabase.from("profiles").select("*").eq("id", u.id).single();
       if (error && error.code === "PGRST116") {
-        // Profile doesn't exist yet — create it as pending
         const isAdmin = u.email === ADMIN_EMAIL;
         await supabase.from("profiles").insert({ 
           id: u.id, 
@@ -2176,13 +2282,18 @@ export default function App() {
       } else if (error) {
         setShowSetup(true);
       } else {
-        // Auto-approve and set admin role for admin email
         if (u.email === ADMIN_EMAIL && (data.role !== "admin" || data.status !== "approved")) {
           await supabase.from("profiles").update({ role: "admin", status: "approved" }).eq("id", u.id);
           data.role = "admin";
           data.status = "approved";
         }
         setProfile(data);
+        // Show welcome modal on first login
+        const welcomeKey = `esix10_welcomed_${u.id}`;
+        if (!localStorage.getItem(welcomeKey) && data.status === "approved" && data.group_id) {
+          setShowWelcome(true);
+          localStorage.setItem(welcomeKey, "true");
+        }
       }
     } catch(e) {
       setShowSetup(true);
@@ -2208,8 +2319,9 @@ export default function App() {
 
   if (!user) return <AuthScreen onAuth={(u) => loadProfile(u)} />;
   if (showSetup) return <SetupModal onClose={() => { setShowSetup(false); loadProfile(user); }} />;
-  if (!profile?.group_id) return <GroupSelect user={user} onSelect={(g) => { setProfile({ ...profile, group_id: g }); setFeedGroup(g); }} />;
+  if (!profile?.group_id) return <GroupSelect user={user} onSelect={(g, groups) => { setProfile({ ...profile, group_id: g, group_ids: groups }); setFeedGroup(g); }} />;
   if (profile?.status === "pending") return <PendingScreen profile={profile} onSignOut={signOut} />;
+  if (showWelcome && profile?.group_id) return <WelcomeModal profile={profile} onClose={() => setShowWelcome(false)} />;
 
   const myGroup = GROUPS.find(g => g.id === profile.group_id);
   const isAdmin = profile?.role === "admin";
@@ -2269,7 +2381,11 @@ export default function App() {
       <nav style={{ ...S.nav, height: isMobile ? 80 : 80, padding: isMobile ? "0 12px" : "0 32px" }}>
         <img src="https://esix10.com/wp-content/uploads/2026/06/esix10logo.png" alt="ESix10" style={{ height: isMobile ? 60 : 88, width: "auto", objectFit: "contain" }} />
         <div style={S.navRight}>
-          <span style={{ ...S.badge, fontSize: 10 }}>{myGroup?.icon} {myGroup?.label}</span>
+          <span style={{ ...S.badge, fontSize: 10 }}>
+            {(profile.group_ids && profile.group_ids.length > 1) 
+              ? profile.group_ids.map(id => GROUPS.find(g => g.id === id)?.icon).join(" ")
+              : `${myGroup?.icon} ${myGroup?.label}`}
+          </span>
           {isAdmin && !isMobile && <span style={{ ...S.badge, background: "rgba(255,102,0,0.3)", color: "#FF6600" }}>Admin</span>}
           <Avatar profile={profile} size={36} onClick={() => setTab("profile")} />
         </div>
