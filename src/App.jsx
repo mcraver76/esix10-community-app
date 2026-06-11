@@ -2039,7 +2039,11 @@ const CF_FUNCTION_URL = 'https://bffcrhjdibxqfmdreksi.supabase.co/functions/v1/c
 async function callCloudflare(action, data = {}) {
   const response = await fetch(CF_FUNCTION_URL, {
     method: 'POST',
-    headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${SUPABASE_ANON_KEY}` },
+    headers: { 
+      'Content-Type': 'application/json',
+      'apikey': SUPABASE_ANON_KEY,
+      'Authorization': `Bearer ${SUPABASE_ANON_KEY}`
+    },
     body: JSON.stringify({ action, data })
   });
   return response.json();
