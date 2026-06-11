@@ -1781,7 +1781,8 @@ function ForgeWOD({ profile }) {
   useEffect(() => { loadWOD(); }, []);
 
   async function loadWOD() {
-    const { data } = await supabase.from('forge_wods').select('*').eq('scheduled_date', today).maybeSingle();
+    const { data: wodList } = await supabase.from('forge_wods').select('*').eq('scheduled_date', today).order('created_at', { ascending: true }).limit(1);
+    const data = wodList?.[0] || null;
     setWod(data || null);
     if (data) {
       const { count } = await supabase.from('forge_wod_completions').select('*', { count: 'exact', head: true }).eq('wod_id', data.id);
