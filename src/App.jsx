@@ -510,6 +510,17 @@ function Feed({ profile, activeGroup, isNewMember }) {
     loadPosts();
   }
 
+  async function flagPost(id) {
+    const reason = window.prompt("Why are you flagging this post? (optional)");
+    if (reason === null) return; // cancelled
+    await supabase.from("post_flags").insert({
+      post_id: id,
+      flagged_by: profile.id,
+      reason: reason || "No reason provided"
+    });
+    alert("Post flagged. Our team will review it shortly. Thank you.");
+  }
+
   async function addReaction(postId, emoji) {
     const current = postReactions[postId] || {};
     const updated = { ...current, [emoji]: (current[emoji] || 0) + 1 };
@@ -582,6 +593,11 @@ function Feed({ profile, activeGroup, isNewMember }) {
                 </div>
                 <div style={S.flex}>
                   <span style={{ ...S.badge, fontSize: 10 }}>{GROUPS.find(g => g.id === post.group_id)?.label}</span>
+                  {profile.id !== post.user_id && (
+                    <button onClick={() => flagPost(post.id)} style={{ background: "none", border: "none", cursor: "pointer", color: "#555", fontSize: 11, padding: "4px 8px", borderRadius: 4 }} title="Flag this post">
+                      🚩
+                    </button>
+                  )}
                   {(profile.role === "admin" || profile.id === post.user_id) && (
                     <button style={S.btnDanger} onClick={() => deletePost(post.id)}>Delete</button>
                   )}
@@ -736,6 +752,33 @@ function Members({ profile }) {
   async function deny(id) {
     await supabase.from("profiles").update({ status: "denied" }).eq("id", id);
     loadMembers();
+  }
+
+  const [flags, setFlags] = useState([]);
+  const [showFlags, setShowFlags] = useState(false);
+
+  useEffect(() => {
+    if (profile.role === "admin") loadFlags();
+  }, []);
+
+  async function loadFlags() {
+    const { data } = await supabase
+      .from("post_flags")
+      .select("*, posts(body, user_id, group_id), profiles!post_flags_flagged_by_fkey(username, full_name)")
+      .eq("reviewed", false)
+      .order("created_at", { ascending: false });
+    setFlags(data || []);
+  }
+
+  async function dismissFlag(flagId) {
+    await supabase.from("post_flags").update({ reviewed: true }).eq("id", flagId);
+    loadFlags();
+  }
+
+  async function removeFlaggedPost(flagId, postId) {
+    await supabase.from("posts").delete().eq("id", postId);
+    await supabase.from("post_flags").update({ reviewed: true }).eq("id", flagId);
+    loadFlags();
   }
 
   const pending = members.filter(m => m.status === "pending");
