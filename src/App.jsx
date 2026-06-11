@@ -70,24 +70,24 @@ const GLOBAL_CSS = `
 .reaction-btn:hover { transform: scale(1.2); transition: transform 0.15s; }
 .post-card:hover { border-color: rgba(255,102,0,0.2) !important; transition: border-color 0.2s; }
 .online-dot { width:8px; height:8px; border-radius:50%; background:#51cf66; display:inline-block; animation: pulse 2s infinite; }
-.verse-banner { background: linear-gradient(135deg, rgba(255,102,0,0.08) 0%, rgba(192,154,47,0.08) 100%); border: 1px solid rgba(255,102,0,0.2); border-radius:6px; padding:16px 20px; margin-bottom:20px; }
+.verse-banner { background: linear-gradient(135deg, rgba(255,102,0,0.08) 0%, rgba(192,154,47,0.08) 100%); border: 1px solid rgba(255,102,0,0.2); border-radius:10px; padding:18px 20px; margin-bottom:20px; }
 `;
 
 // ─── Styles ───────────────────────────────────────────────────────────────────
 const S = {
-  app: { minHeight: "100vh", background: "#111111", color: "#fff", fontFamily: "'Lato', sans-serif", fontSize: 15 },
-  nav: { position: "fixed", top: 0, left: 0, right: 0, height: 80, background: "rgba(10,10,10,0.98)", borderBottom: "1px solid rgba(255,102,0,0.2)", display: "flex", alignItems: "center", justifyContent: "space-between", padding: "0 16px", zIndex: 100 },
+  app: { minHeight: "100vh", background: "#0d1117", color: "#fff", fontFamily: "'Lato', sans-serif", fontSize: 15 },
+  nav: { position: "fixed", top: 0, left: 0, right: 0, height: 80, background: "rgba(13,17,23,0.99)", borderBottom: "1px solid rgba(255,102,0,0.2)", display: "flex", alignItems: "center", justifyContent: "space-between", padding: "0 16px", zIndex: 100 },
   navLogo: { fontFamily: "'Cinzel', serif", fontSize: 16, fontWeight: 600, color: "#fff", letterSpacing: "0.08em" },
   navLogoSub: { color: "#FF6600", fontSize: 9, display: "block", letterSpacing: "0.35em", marginTop: -2 },
   navRight: { display: "flex", alignItems: "center", gap: 16 },
   badge: { background: "rgba(255,102,0,0.15)", color: "#FF6600", padding: "4px 12px", borderRadius: 20, fontSize: 12, fontWeight: 600, letterSpacing: "0.1em", textTransform: "uppercase" },
-  btn: { background: "#FF6600", color: "#fff", border: "none", borderRadius: 3, padding: "10px 24px", fontFamily: "'Lato', sans-serif", fontSize: 12, letterSpacing: "0.15em", textTransform: "uppercase", cursor: "pointer", transition: "background 0.2s" },
-  btnGhost: { background: "transparent", color: "#AAAAAA", border: "1px solid rgba(255,255,255,0.15)", borderRadius: 3, padding: "10px 24px", fontFamily: "'Lato', sans-serif", fontSize: 12, letterSpacing: "0.15em", textTransform: "uppercase", cursor: "pointer" },
-  btnSm: { background: "#FF6600", color: "#fff", border: "none", borderRadius: 3, padding: "8px 16px", fontFamily: "'Lato', sans-serif", fontSize: 11, letterSpacing: "0.12em", textTransform: "uppercase", cursor: "pointer" },
+  btn: { background: "#FF6600", color: "#fff", border: "none", borderRadius: 8, padding: "10px 24px", fontFamily: "'Lato', sans-serif", fontSize: 12, letterSpacing: "0.15em", textTransform: "uppercase", cursor: "pointer", transition: "background 0.2s" },
+  btnGhost: { background: "transparent", color: "#AAAAAA", border: "1px solid rgba(255,255,255,0.15)", borderRadius: 8, padding: "10px 24px", fontFamily: "'Lato', sans-serif", fontSize: 12, letterSpacing: "0.15em", textTransform: "uppercase", cursor: "pointer" },
+  btnSm: { background: "#FF6600", color: "#fff", border: "none", borderRadius: 6, padding: "8px 16px", fontFamily: "'Lato', sans-serif", fontSize: 11, letterSpacing: "0.12em", textTransform: "uppercase", cursor: "pointer" },
   btnDanger: { background: "transparent", color: "#ff4444", border: "1px solid #ff4444", borderRadius: 3, padding: "6px 12px", fontSize: 11, cursor: "pointer" },
   page: { paddingTop: 90, maxWidth: 1100, margin: "0 auto", padding: "90px 24px 60px" },
-  card: { background: "rgba(30,30,30,0.95)", border: "1px solid rgba(255,255,255,0.1)", borderRadius: 6, padding: 28 },
-  input: { width: "100%", background: "rgba(255,255,255,0.05)", border: "1px solid rgba(255,255,255,0.1)", borderRadius: 4, padding: "12px 16px", color: "#fff", fontFamily: "'Lato', sans-serif", fontSize: 15, outline: "none", boxSizing: "border-box" },
+  card: { background: "rgba(22,27,34,0.98)", border: "1px solid rgba(255,255,255,0.08)", borderRadius: 10, padding: 24 },
+  input: { width: "100%", background: "rgba(255,255,255,0.04)", border: "1px solid rgba(255,255,255,0.08)", borderRadius: 8, padding: "12px 16px", color: "#fff", fontFamily: "'Lato', sans-serif", fontSize: 15, outline: "none", boxSizing: "border-box" },
   label: { fontSize: 10, letterSpacing: "0.2em", textTransform: "uppercase", color: "#FF6600", marginBottom: 6, display: "block" },
   divider: { width: 50, height: 2, background: "#FF6600", margin: "16px 0" },
   eyebrow: { fontSize: 10, letterSpacing: "0.2em", textTransform: "uppercase", color: "#FF6600", display: "block", marginBottom: 10 },
@@ -103,7 +103,7 @@ const S = {
   flexBetween: { display: "flex", alignItems: "center", justifyContent: "space-between" },
   grid2: { display: "grid", gridTemplateColumns: "1fr 1fr", gap: 16 },
   grid3: { display: "grid", gridTemplateColumns: "repeat(3,1fr)", gap: 16 },
-  post: { background: "rgba(32,32,32,0.95)", border: "1px solid rgba(255,255,255,0.1)", borderRadius: 6, padding: 20, marginBottom: 12 },
+  post: { background: "rgba(22,27,34,0.98)", border: "1px solid rgba(255,255,255,0.07)", borderRadius: 10, padding: 20, marginBottom: 12 },
   postAuthor: { fontFamily: "'Cinzel', serif", fontSize: 14, fontWeight: 600, color: "#fff" },
   postTime: { fontSize: 11, color: "#555", marginLeft: 8 },
   postBody: { color: "#CCCCCC", fontSize: 15, lineHeight: 1.7, marginTop: 10 },
@@ -315,6 +315,7 @@ function AuthScreen({ onAuth }) {
   const [name, setName] = useState("");
   const [username, setUsername] = useState("");
   const [agreed, setAgreed] = useState(false);
+  const [ageConfirmed, setAgeConfirmed] = useState(false);
   const [showTerms, setShowTerms] = useState(false);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
@@ -328,6 +329,7 @@ function AuthScreen({ onAuth }) {
         if (error) throw error;
         onAuth(data.user);
       } else {
+        if (!ageConfirmed) { setError("You must confirm you are 18 or older to join."); setLoading(false); return; }
         if (!agreed) { setError("You must agree to the Community Standards to join."); setLoading(false); return; }
         const { data, error } = await supabase.auth.signUp({ email, password, options: { data: { full_name: name } } });
         if (error) throw error;
@@ -368,7 +370,13 @@ function AuthScreen({ onAuth }) {
                 <input style={S.input} placeholder="Choose a username (e.g. warrior_dad)" value={username} onChange={e => setUsername(e.target.value)} />
                 <p style={{ color: "#555", fontSize: 11, marginTop: 4 }}>Letters, numbers, and underscores only. Shown publicly.</p>
               </div>
-              <div style={{ marginBottom: 16, background: "rgba(255,102,0,0.04)", border: "1px solid rgba(255,102,0,0.15)", borderRadius: 4, padding: 16 }}>
+              <div style={{ marginBottom: 16, background: "rgba(255,255,255,0.03)", border: "1px solid rgba(255,255,255,0.08)", borderRadius: 8, padding: 16 }}>
+                <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
+                  <input type="checkbox" checked={ageConfirmed} onChange={e => setAgeConfirmed(e.target.checked)} style={{ accentColor: "#FF6600", width: 18, height: 18, flexShrink: 0 }} />
+                  <p style={{ color: "#AAAAAA", fontSize: 13, lineHeight: 1.7 }}>I confirm that I am <strong style={{ color: "#fff" }}>18 years of age or older</strong>.</p>
+                </div>
+              </div>
+              <div style={{ marginBottom: 16, background: "rgba(255,102,0,0.04)", border: "1px solid rgba(255,102,0,0.15)", borderRadius: 8, padding: 16 }}>
                 <div style={{ display: "flex", alignItems: "flex-start", gap: 12 }}>
                   <input type="checkbox" checked={agreed} onChange={e => setAgreed(e.target.checked)} style={{ marginTop: 3, accentColor: "#FF6600", width: 16, height: 16, flexShrink: 0 }} />
                   <div>
@@ -401,6 +409,11 @@ function AuthScreen({ onAuth }) {
             <label style={S.label}>Password</label>
             <input style={S.input} type="password" placeholder="••••••••" value={password} onChange={e => setPassword(e.target.value)} onKeyDown={e => e.key === "Enter" && handleSubmit()} />
           </div>
+          {mode === "signup" && (
+            <div style={{ marginBottom: 16, textAlign: "center" }}>
+<span style={{ color: "#555", fontSize: 12 }}>By joining you agree to our </span><span style={{ color: "#FF6600", fontSize: 12 }}>Statement of Faith</span>
+            </div>
+          )}
           {error && <p style={S.error}>{error}</p>}
           {msg && <p style={S.success}>{msg}</p>}
           <button style={{ ...S.btn, width: "100%", padding: "14px 24px" }} onClick={handleSubmit} disabled={loading}>
@@ -558,7 +571,7 @@ function Feed({ profile, activeGroup, isNewMember }) {
             <div key={post.id} className="post-card" style={{ ...S.post, marginBottom: 12 }}>
               <div style={S.flexBetween}>
                 <div style={S.flex}>
-                  <div style={{ width: 38, height: 38, borderRadius: "50%", background: "linear-gradient(135deg, rgba(255,102,0,0.3), rgba(192,154,47,0.2))", display: "flex", alignItems: "center", justifyContent: "center", color: "#FF6600", fontFamily: "'Cinzel', serif", fontSize: 15, fontWeight: 600, border: "1px solid rgba(255,102,0,0.2)" }}>
+                  <div style={{ width: 44, height: 44, borderRadius: "50%", background: "linear-gradient(135deg, rgba(255,102,0,0.3), rgba(192,154,47,0.2))", display: "flex", alignItems: "center", justifyContent: "center", color: "#FF6600", fontFamily: "'Cinzel', serif", fontSize: 17, fontWeight: 600, border: "1px solid rgba(255,102,0,0.2)" }}>
                     {(post.profiles?.username || post.profiles?.full_name || "?")[0].toUpperCase()}
                   </div>
                   <div>
@@ -788,7 +801,7 @@ function Members({ profile }) {
               <div key={m.id} style={{ ...S.card, padding: "16px 20px", marginBottom: 8, borderLeft: "3px solid #FF6600" }}>
                 <div style={S.flexBetween}>
                   <div style={S.flex}>
-                    <div style={{ width: 40, height: 40, borderRadius: "50%", background: "rgba(255,102,0,0.15)", display: "flex", alignItems: "center", justifyContent: "center", color: "#FF6600", fontFamily: "'Cinzel', serif", fontWeight: 600 }}>
+                    <div style={{ width: 48, height: 48, borderRadius: "50%", background: "rgba(255,102,0,0.15)", display: "flex", alignItems: "center", justifyContent: "center", color: "#FF6600", fontFamily: "'Cinzel', serif", fontWeight: 600 }}>
                       {(m.full_name || m.email || "?")[0].toUpperCase()}
                     </div>
                     <div>
@@ -814,7 +827,7 @@ function Members({ profile }) {
         {approved.map(m => (
           <div key={m.id} style={{ ...S.card, padding: "16px" }}>
             <div style={{ display: "flex", alignItems: "flex-start", gap: 12 }}>
-              <div style={{ width: 40, height: 40, borderRadius: "50%", background: "rgba(255,102,0,0.15)", display: "flex", alignItems: "center", justifyContent: "center", color: "#FF6600", fontFamily: "'Cinzel', serif", fontWeight: 600, flexShrink: 0 }}>
+              <div style={{ width: 48, height: 48, borderRadius: "50%", background: "rgba(255,102,0,0.15)", display: "flex", alignItems: "center", justifyContent: "center", color: "#FF6600", fontFamily: "'Cinzel', serif", fontWeight: 600, flexShrink: 0 }}>
                 {(m.full_name || m.email || "?")[0].toUpperCase()}
               </div>
               <div style={{ flex: 1, minWidth: 0 }}>
@@ -1218,7 +1231,7 @@ function Devotion({ profile }) {
 // ─── The Forge ────────────────────────────────────────────────────────────────
 const FORGE_CSS = `
 .forge-tab-bar { display: flex; gap: 4px; margin-bottom: 24px; background: rgba(255,255,255,0.03); border-radius: 6px; padding: 4px; }
-.forge-tab { flex: 1; padding: 10px 8px; border: none; border-radius: 4px; cursor: pointer; font-family: 'Lato', sans-serif; font-size: 11px; letter-spacing: 0.1em; text-transform: uppercase; transition: all 0.2s; }
+.forge-tab { flex: 1; padding: 12px 8px; border: none; border-radius: 6px; cursor: pointer; font-family: 'Lato', sans-serif; font-size: 11px; letter-spacing: 0.1em; text-transform: uppercase; transition: all 0.2s; }
 .forge-tab.active { background: #FF6600; color: #fff; }
 .forge-tab.inactive { background: transparent; color: #666; }
 .forge-tab.inactive:hover { color: #FF6600; }
@@ -1508,8 +1521,8 @@ function ForgeWOD({ profile }) {
         method: 'POST',
         headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${SUPABASE_ANON_KEY}` },
         body: JSON.stringify({
-          prompt: 'Generate 7 WODs for ESix10 — faith-based community focused on physical readiness. Bodyweight only or minimal equipment. Direct no-nonsense voice. Return ONLY JSON array: [{"title":"","warmup":"","main_work":"","cooldown":"","coaching_notes":"","estimated_minutes":30,"difficulty":3}] difficulty 1-5, main_work include sets/reps clearly.',
-          max_tokens: 3000
+          prompt: 'Generate 7 bodyweight WODs for a faith-based fitness community. Return ONLY a JSON array, no markdown: [{"title":"","warmup":"","main_work":"","cooldown":"","coaching_notes":"","estimated_minutes":30,"difficulty":3}]. difficulty 1-5. Keep each field concise.',
+          max_tokens: 2000
         })
       });
       const data = await response.json();
@@ -1693,7 +1706,7 @@ function TheForge({ profile }) {
       <div className="forge-tab-bar">
         {FORGE_TABS.map(t => (
           <button key={t.id} className={`forge-tab ${subTab === t.id ? 'active' : 'inactive'}`} onClick={() => setSubTab(t.id)}>
-            <span style={{ fontSize: 16, display: 'block', marginBottom: 2 }}>{t.icon}</span>
+            <span style={{ fontSize: 22, display: 'block', marginBottom: 3 }}>{t.icon}</span>
             {t.label}
           </button>
         ))}
@@ -1706,6 +1719,198 @@ function TheForge({ profile }) {
   );
 }
 
+
+
+// ─── Statement of Faith ───────────────────────────────────────────────────────
+function StatementOfFaith({ onBack }) {
+  return (
+    <div className="tab-content">
+      <div style={{ display: "flex", alignItems: "center", gap: 12, marginBottom: 24 }}>
+        {onBack && <button onClick={onBack} style={{ background: "none", border: "none", color: "#FF6600", cursor: "pointer", fontSize: 20, padding: 0 }}>←</button>}
+        <div>
+          <span style={S.eyebrow}>ESix10 Initiative</span>
+          <h2 style={{ ...S.h2, margin: 0 }}>Statement of Faith</h2>
+        </div>
+      </div>
+
+      {[
+        { title: "Scripture", icon: "📖", body: "We believe the Bible is the inspired, authoritative Word of God — the final standard for faith, conduct, and truth. We build on it. We do not negotiate it." },
+        { title: "God", icon: "✝️", body: "We believe in one God, eternally existing in three persons — Father, Son, and Holy Spirit. Creator of all things. Sovereign over all things." },
+        { title: "Jesus Christ", icon: "✝️", body: "We believe Jesus Christ is the Son of God — fully God and fully man. Born of a virgin. Lived without sin. Crucified for the sins of humanity. Raised from the dead on the third day. Ascended to the right hand of the Father. He is coming again." },
+        { title: "Salvation", icon: "🙏", body: "We believe salvation is by grace alone, through faith alone, in Christ alone. Not by works. Not by religion. Not by effort. By the finished work of Jesus Christ on the cross — received through repentant faith." },
+        { title: "The Holy Spirit", icon: "🔥", body: "We believe the Holy Spirit indwells every believer at the moment of salvation — guiding, convicting, empowering, and transforming. The armor of God is put on by men and women who walk in the Spirit." },
+        { title: "The Church", icon: "⚔️", body: "We believe in the local and universal church — the body of Christ, made up of all who have placed their faith in Him. ESix10 is not a church. We are a community that serves the church and strengthens the people in it." },
+        { title: "Marriage and Family", icon: "◈", body: "We believe God designed marriage as a covenant between one man and one woman. We believe the family is the foundational institution of society — and that healthy families produce healthy communities. ESix10 exists in part to strengthen both." },
+        { title: "Human Dignity", icon: "✦", body: "We believe every person is created in the image of God — male and female — and therefore carries inherent dignity and worth. We treat people accordingly." },
+      ].map((item, i) => (
+        <div key={i} style={{ ...S.card, marginBottom: 12 }}>
+          <div style={{ display: "flex", alignItems: "center", gap: 10, marginBottom: 10 }}>
+            <span style={{ fontSize: 20 }}>{item.icon}</span>
+            <h3 style={{ fontFamily: "'Cinzel', serif", fontSize: 16, fontWeight: 400, color: "#FF6600", margin: 0 }}>{item.title}</h3>
+          </div>
+          <p style={{ color: "#CCCCCC", fontSize: 14, lineHeight: 1.8 }}>{item.body}</p>
+        </div>
+      ))}
+
+      <div style={{ ...S.card, marginBottom: 12, borderTop: "3px solid #FF6600" }}>
+        <h3 style={{ fontFamily: "'Cinzel', serif", fontSize: 16, fontWeight: 400, color: "#FF6600", marginBottom: 10 }}>What We Don't Do</h3>
+        <p style={{ color: "#CCCCCC", fontSize: 14, lineHeight: 1.8 }}>We do not take denominational positions on secondary theological issues where Bible-believing Christians disagree. ESix10 is not a Baptist organization, a Pentecostal organization, or any other denominational organization. We are a community of believers who stand on the essentials and extend grace on everything else.</p>
+      </div>
+
+      <div style={{ ...S.card, marginBottom: 12, background: "linear-gradient(135deg, rgba(255,102,0,0.08), rgba(192,154,47,0.06))", border: "1px solid rgba(255,102,0,0.2)" }}>
+        <h3 style={{ fontFamily: "'Cinzel', serif", fontSize: 16, fontWeight: 400, color: "#fff", marginBottom: 10 }}>A Word on Welcome</h3>
+        <p style={{ color: "#CCCCCC", fontSize: 14, lineHeight: 1.8, marginBottom: 12 }}>ESix10 is a faith-based organization. We are clear about what we believe and we do not apologize for it. But we are equally clear about this — everyone is welcome here.</p>
+        <p style={{ color: "#CCCCCC", fontSize: 14, lineHeight: 1.8, marginBottom: 12 }}>You do not have to share our faith to walk through this door. You do not have to have it all figured out. You do not have to clean yourself up before you show up.</p>
+        <p style={{ color: "#CCCCCC", fontSize: 14, lineHeight: 1.8, marginBottom: 12 }}>We will not change our standard to make anyone comfortable. But we will never use our standard as a weapon against anyone either. That is not the way of Christ and it is not the way of ESix10.</p>
+        <p style={{ color: "#fff", fontFamily: "'Cinzel', serif", fontSize: 14, fontStyle: "italic" }}>You are welcome here. Exactly as you are. Right now.</p>
+      </div>
+
+      <div style={{ background: "rgba(255,102,0,0.06)", border: "1px solid rgba(255,102,0,0.15)", borderRadius: 10, padding: "16px 20px", textAlign: "center", marginBottom: 24 }}>
+        <p style={{ color: "#AAAAAA", fontSize: 14, fontStyle: "italic", lineHeight: 1.7 }}>"We love because He first loved us."</p>
+        <p style={{ color: "#FF6600", fontSize: 12, letterSpacing: "0.1em", marginTop: 6 }}>— 1 John 4:19</p>
+      </div>
+    </div>
+  );
+}
+
+// ─── Plan of Salvation ────────────────────────────────────────────────────────
+function PlanOfSalvation({ onBack, profile }) {
+  const [prayed, setPrayed] = useState(false);
+  const [showPrayer, setShowPrayer] = useState(false);
+  const [connecting, setConnecting] = useState(false);
+  const [connected, setConnected] = useState(false);
+  const [note, setNote] = useState("");
+
+  async function requestConnection() {
+    setConnecting(true);
+    await supabase.from("posts").insert({
+      user_id: profile.id,
+      group_id: profile.group_id,
+      body: `🙏 I just prayed to receive Christ and would like to connect with someone in my area. ${note ? `Note: ${note}` : ""}`.trim()
+    });
+    setConnected(true);
+    setConnecting(false);
+  }
+
+  return (
+    <div className="tab-content">
+      <div style={{ display: "flex", alignItems: "center", gap: 12, marginBottom: 24 }}>
+        {onBack && <button onClick={onBack} style={{ background: "none", border: "none", color: "#FF6600", cursor: "pointer", fontSize: 20, padding: 0 }}>←</button>}
+        <div>
+          <span style={S.eyebrow}>Do You Know Him?</span>
+          <h2 style={{ ...S.h2, margin: 0 }}>The Plan of Salvation</h2>
+        </div>
+      </div>
+
+      <div style={{ ...S.card, marginBottom: 12, borderTop: "3px solid #FF6600" }}>
+        <p style={{ color: "#CCCCCC", fontSize: 15, lineHeight: 1.9 }}>Everything ESix10 is built on — the discipline, the brotherhood, the readiness, the standard — it all flows from one thing. A relationship with Jesus Christ. Not a religion. Not a set of rules. A relationship.</p>
+      </div>
+
+      {[
+        {
+          step: "The Problem",
+          icon: "⚠️",
+          scripture: "For all have sinned and fall short of the glory of God.",
+          ref: "Romans 3:23",
+          body: "Every one of us was born separated from God. Not because God is distant — but because we are broken. The Bible calls it sin. It is the condition of every human heart.",
+          scripture2: "For the wages of sin is death.",
+          ref2: "Romans 6:23a"
+        },
+        {
+          step: "The Solution",
+          icon: "✝️",
+          scripture: "But God demonstrates his own love for us in this: While we were still sinners, Christ died for us.",
+          ref: "Romans 5:8",
+          body: "God did not leave us there. Jesus Christ — fully God, fully man — took the penalty for every sin you have ever committed or will ever commit. He died in your place. He was buried. And on the third day He rose from the dead.",
+          scripture2: "For the wages of sin is death, but the gift of God is eternal life in Christ Jesus our Lord.",
+          ref2: "Romans 6:23"
+        },
+        {
+          step: "Your Response",
+          icon: "🙏",
+          scripture: "If you declare with your mouth, 'Jesus is Lord,' and believe in your heart that God raised him from the dead, you will be saved.",
+          ref: "Romans 10:9",
+          body: "This gift has to be received. It is not automatic. The Bible is clear about how.",
+          scripture2: "For everyone who calls on the name of the Lord will be saved.",
+          ref2: "Romans 10:13"
+        },
+      ].map((item, i) => (
+        <div key={i} style={{ ...S.card, marginBottom: 12 }}>
+          <div style={{ display: "flex", alignItems: "center", gap: 10, marginBottom: 12 }}>
+            <span style={{ fontSize: 24 }}>{item.icon}</span>
+            <h3 style={{ fontFamily: "'Cinzel', serif", fontSize: 18, fontWeight: 400, color: "#fff", margin: 0 }}>{item.step}</h3>
+          </div>
+          <div style={{ background: "rgba(255,102,0,0.06)", border: "1px solid rgba(255,102,0,0.15)", borderRadius: 6, padding: "12px 16px", marginBottom: 12 }}>
+            <p style={{ color: "#fff", fontFamily: "'Cinzel', serif", fontSize: 14, fontStyle: "italic", lineHeight: 1.7, marginBottom: 4 }}>"{item.scripture}"</p>
+            <p style={{ color: "#FF6600", fontSize: 12, letterSpacing: "0.1em" }}>— {item.ref}</p>
+          </div>
+          <p style={{ color: "#CCCCCC", fontSize: 14, lineHeight: 1.8, marginBottom: item.scripture2 ? 12 : 0 }}>{item.body}</p>
+          {item.scripture2 && (
+            <div style={{ background: "rgba(255,102,0,0.06)", border: "1px solid rgba(255,102,0,0.15)", borderRadius: 6, padding: "12px 16px" }}>
+              <p style={{ color: "#fff", fontFamily: "'Cinzel', serif", fontSize: 14, fontStyle: "italic", lineHeight: 1.7, marginBottom: 4 }}>"{item.scripture2}"</p>
+              <p style={{ color: "#FF6600", fontSize: 12, letterSpacing: "0.1em" }}>— {item.ref2}</p>
+            </div>
+          )}
+        </div>
+      ))}
+
+      {/* Prayer Section */}
+      <div style={{ ...S.card, marginBottom: 12, borderTop: prayed ? "3px solid #51cf66" : "3px solid #FF6600" }}>
+        <h3 style={{ fontFamily: "'Cinzel', serif", fontSize: 18, fontWeight: 400, color: "#fff", marginBottom: 12 }}>A Simple Prayer</h3>
+        <p style={{ color: "#CCCCCC", fontSize: 14, lineHeight: 1.8, marginBottom: 16 }}>If you are ready to make that decision right now — you can. God is not waiting on a perfect moment. He is waiting on you.</p>
+
+        {!showPrayer ? (
+          <button style={{ ...S.btn, width: "100%", padding: 16 }} onClick={() => setShowPrayer(true)}>
+            I'm Ready — Show Me the Prayer
+          </button>
+        ) : (
+          <div>
+            <div style={{ background: "rgba(255,255,255,0.03)", border: "1px solid rgba(255,255,255,0.08)", borderRadius: 8, padding: 20, marginBottom: 20 }}>
+              <p style={{ color: "#fff", fontFamily: "'Cinzel', serif", fontSize: 14, fontStyle: "italic", lineHeight: 2.1 }}>
+                "God, I know I am a sinner. I know I cannot fix that on my own. I believe Jesus Christ died for my sins and rose from the dead. I am turning from my old life and placing my faith in Him. I receive the gift of salvation. Come into my life and make me new. Amen."
+              </p>
+            </div>
+            {!prayed ? (
+              <button style={{ ...S.btn, width: "100%", padding: 16, background: "#51cf66" }} onClick={() => setPrayed(true)}>
+                🙏 I Prayed This Prayer
+              </button>
+            ) : (
+              <div style={{ background: "rgba(81,207,102,0.08)", border: "1px solid rgba(81,207,102,0.2)", borderRadius: 8, padding: 20, textAlign: "center" }}>
+                <span style={{ fontSize: 32, display: "block", marginBottom: 8 }}>🎉</span>
+                <h3 style={{ fontFamily: "'Cinzel', serif", fontSize: 20, color: "#51cf66", marginBottom: 8 }}>Welcome to the Family.</h3>
+                <p style={{ color: "#CCCCCC", fontSize: 14, lineHeight: 1.8 }}>That decision is the most important one you will ever make. Heaven is celebrating right now. So are we.</p>
+              </div>
+            )}
+          </div>
+        )}
+      </div>
+
+      {/* Connect Section */}
+      {prayed && (
+        <div style={{ ...S.card, marginBottom: 24 }}>
+          <h3 style={{ fontFamily: "'Cinzel', serif", fontSize: 18, fontWeight: 400, color: "#fff", marginBottom: 8 }}>Connect With Someone Near You</h3>
+          <p style={{ color: "#CCCCCC", fontSize: 14, lineHeight: 1.8, marginBottom: 16 }}>You do not have to figure this out alone. Let us connect you with a real person in your area who can walk with you from here. No program. No pressure. Just a brother or sister who has been where you are.</p>
+          {!connected ? (
+            <div>
+              <div style={{ marginBottom: 12 }}>
+                <label style={S.label}>Anything you want to share (optional)</label>
+                <input style={S.input} placeholder="City, questions, background..." value={note} onChange={e => setNote(e.target.value)} />
+              </div>
+              <button style={{ ...S.btn, width: "100%", padding: 16 }} onClick={requestConnection} disabled={connecting}>
+                {connecting ? "Sending..." : "Connect Me With Someone"}
+              </button>
+            </div>
+          ) : (
+            <div style={{ background: "rgba(255,102,0,0.08)", border: "1px solid rgba(255,102,0,0.2)", borderRadius: 8, padding: 20, textAlign: "center" }}>
+              <p style={{ color: "#FF6600", fontFamily: "'Cinzel', serif", fontSize: 15 }}>Request sent. Someone will reach out to you soon.</p>
+              <p style={{ color: "#888", fontSize: 13, marginTop: 8 }}>In the meantime — you are already part of this community. Start here.</p>
+            </div>
+          )}
+        </div>
+      )}
+    </div>
+  );
+}
 
 function Profile({ profile, onUpdate, onSignOut }) {
   const [form, setForm] = useState({ full_name: profile.full_name || "", username: profile.username || "", city: profile.city || "", state: profile.state || "", bio: profile.bio || "", group_id: profile.group_id || "" });
@@ -1871,11 +2076,13 @@ export default function App() {
     { id: "devotion", label: "Daily Devotion", icon: "📖" },
     { id: "events", label: "Events", icon: "📅" },
     { id: "members", label: "Members", icon: "👥" },
+    { id: "faith", label: "Statement of Faith", icon: "✝️" },
+    { id: "salvation", label: "Do You Know Him?", icon: "🙏" },
     { id: "profile", label: "My Profile", icon: "👤" },
   ];
 
   const CONTENT = (
-    <div style={{ flex: 1, padding: isMobile ? "16px 16px 80px" : "32px 32px 60px", maxWidth: isMobile ? "100%" : 800, overflow: "hidden" }}>
+    <div style={{ flex: 1, padding: isMobile ? "20px 16px 88px" : "32px 32px 60px", maxWidth: isMobile ? "100%" : 800, overflow: "hidden" }}>
       {tab === "feed" && (
         <div>
           {isMobile && (
@@ -1897,6 +2104,8 @@ export default function App() {
       {tab === "events" && <Events profile={profile} />}
       {tab === "messages" && <Messages profile={profile} members={allMembers} />}
       {tab === "members" && <Members profile={profile} />}
+      {tab === "faith" && <StatementOfFaith onBack={() => setTab("more")} />}
+      {tab === "salvation" && <PlanOfSalvation onBack={() => setTab("more")} profile={profile} />}
       {tab === "profile" && <Profile profile={profile} onUpdate={setProfile} onSignOut={signOut} />}
     </div>
   );
@@ -1939,11 +2148,11 @@ export default function App() {
           )}
 
           {/* BOTTOM TAB BAR */}
-          <div style={{ position: "fixed", bottom: 0, left: 0, right: 0, height: 60, background: "rgba(10,10,10,0.98)", borderTop: "1px solid rgba(255,102,0,0.15)", display: "flex", zIndex: 100 }}>
+          <div style={{ position: "fixed", bottom: 0, left: 0, right: 0, height: 72, background: "rgba(13,17,23,0.99)", borderTop: "1px solid rgba(255,255,255,0.06)", display: "flex", zIndex: 100 }}>
             {NAV_ITEMS.map(item => (
               <div key={item.id} onClick={() => setTab(item.id)}
                 style={{ flex: 1, display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", gap: 2, cursor: "pointer", color: (tab === item.id || (item.id === "more" && MORE_ITEMS.some(m => m.id === tab))) ? "#FF6600" : "#555", fontSize: 9, letterSpacing: "0.05em", textTransform: "uppercase" }}>
-                <span style={{ fontSize: 18 }}>{item.icon}</span>
+                <span style={{ fontSize: 24 }}>{item.icon}</span>
                 <span>{item.label}</span>
               </div>
             ))}
@@ -1952,7 +2161,7 @@ export default function App() {
       ) : (
         <div style={{ display: "flex", paddingTop: 70 }}>
           {/* SIDEBAR */}
-          <div style={{ width: 200, minHeight: "calc(100vh - 70px)", borderRight: "1px solid rgba(255,255,255,0.05)", padding: "24px 12px", position: "sticky", top: 70, flexShrink: 0 }}>
+          <div style={{ width: 200, minHeight: "calc(100vh - 70px)", borderRight: "1px solid rgba(255,255,255,0.04)", padding: "24px 12px", position: "sticky", top: 70, flexShrink: 0, background: "rgba(13,17,23,0.5)" }}>
             <div style={{ marginBottom: 24 }}>
               <p style={{ ...S.eyebrow, marginBottom: 12 }}>Feed</p>
               {[{ id: "all", label: "My Feed", icon: "◎" }, ...(profile.role === "admin" ? GROUPS : GROUPS.filter(g => g.id === profile.group_id))].map(g => (
