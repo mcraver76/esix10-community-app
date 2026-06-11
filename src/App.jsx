@@ -3697,8 +3697,8 @@ export default function App() {
         if (!isAdmin) {
           fetch("https://bffcrhjdibxqfmdreksi.supabase.co/functions/v1/notify", {
             method: "POST",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({ full_name: fullName, email: u.email, group_id: newProfile?.group_id || "unknown" })
+            headers: { "Content-Type": "application/json", "apikey": SUPABASE_ANON_KEY },
+            body: JSON.stringify({ full_name: fullName, email: u.email, group_id: "pending" })
           }).catch(() => {});
         }
       } else if (error) {
