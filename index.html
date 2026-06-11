@@ -1428,7 +1428,6 @@ function Messages({ profile, members, onRead }) {
   function selectRoom(roomId) {
     setActiveRoom(roomId);
     localStorage.setItem(`esix10_room_${profile.id}`, roomId);
-    if (window.innerWidth <= 768) setShowRoomList(false);
     // Mark as read
     const lastRead = JSON.parse(localStorage.getItem(`esix10_lastread_${profile.id}`) || "{}");
     lastRead[roomId] = new Date().toISOString();
