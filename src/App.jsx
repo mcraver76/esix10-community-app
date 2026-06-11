@@ -2834,15 +2834,24 @@ export default function App() {
       const { data, error } = await supabase.from("profiles").select("*").eq("id", u.id).single();
       if (error && error.code === "PGRST116") {
         const isAdmin = u.email === ADMIN_EMAIL;
+        const fullName = u.user_metadata?.full_name || "";
         await supabase.from("profiles").insert({ 
           id: u.id, 
           email: u.email, 
-          full_name: u.user_metadata?.full_name || "", 
+          full_name: fullName, 
           role: isAdmin ? "admin" : "member",
           status: isAdmin ? "approved" : "pending"
         });
         const { data: newProfile } = await supabase.from("profiles").select("*").eq("id", u.id).single();
         setProfile(newProfile);
+        // Send admin notification for new non-admin signups
+        if (!isAdmin) {
+          fetch("https://bffcrhjdibxqfmdreksi.supabase.co/functions/v1/notify", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ full_name: fullName, email: u.email, group_id: newProfile?.group_id || "unknown" })
+          }).catch(() => {});
+        }
       } else if (error) {
         setShowSetup(true);
       } else {
