@@ -1437,6 +1437,16 @@ function Messages({ profile, members, onRead }) {
   }
 
   useEffect(() => {
+    // Load custom group rooms on mount
+    supabase.from("messages").select("room_id, body").like("room_id", "group_custom_%").order("created_at", { ascending: false }).then(({ data }) => {
+      if (!data) return;
+      const roomMap = {};
+      data.forEach(m => { if (!roomMap[m.room_id]) { const n = m.body?.match(/"([^"]+)"/); roomMap[m.room_id] = { id: m.room_id, label: n ? n[1] : "Group Chat", icon: "👥", type: "custom_group" }; } });
+      setCustomRooms(Object.values(roomMap));
+    });
+  }, []);
+
+  useEffect(() => {
     if (!activeRoom) return;
     loadMessages();
     const channel = supabase
@@ -1593,10 +1603,18 @@ function Messages({ profile, members, onRead }) {
           <div style={{ marginBottom: 8 }}>
             <p style={{ ...S.eyebrow, marginBottom: 8 }}>My Groups</p>
             {customRooms.map(room => (
-              <div key={room.id} onClick={() => isMobileChat ? selectRoomMobile(room.id) : selectRoom(room.id)}
-                style={{ padding: "10px 12px", borderRadius: 8, cursor: "pointer", marginBottom: 4, background: activeRoom === room.id ? "rgba(255,102,0,0.1)" : "rgba(255,255,255,0.02)", color: activeRoom === room.id ? "#FF6600" : "#CCCCCC", fontSize: 14, display: "flex", alignItems: "center", gap: 10, border: "1px solid rgba(255,255,255,0.04)" }}>
-                <span style={{ fontSize: 18 }}>👥</span>
-                <span style={{ flex: 1, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{room.label}</span>
+              <div key={room.id} style={{ display: "flex", alignItems: "center", marginBottom: 4, gap: 4 }}>
+                <div onClick={() => isMobileChat ? selectRoomMobile(room.id) : selectRoom(room.id)}
+                  style={{ flex: 1, padding: "10px 12px", borderRadius: 8, cursor: "pointer", background: activeRoom === room.id ? "rgba(255,102,0,0.1)" : "rgba(255,255,255,0.02)", color: activeRoom === room.id ? "#FF6600" : "#CCCCCC", fontSize: 14, display: "flex", alignItems: "center", gap: 10, border: "1px solid rgba(255,255,255,0.04)" }}>
+                  <span style={{ fontSize: 18 }}>👥</span>
+                  <span style={{ flex: 1, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{room.label}</span>
+                </div>
+                <button onClick={async () => {
+                  if (!window.confirm(`Delete "${room.label}"?`)) return;
+                  await supabase.from("messages").delete().eq("room_id", room.id);
+                  setCustomRooms(prev => prev.filter(r => r.id !== room.id));
+                  if (activeRoom === room.id) setActiveRoom(null);
+                }} style={{ background: "none", border: "none", color: "#555", cursor: "pointer", fontSize: 14, padding: "6px 8px", borderRadius: 6, flexShrink: 0 }} title="Delete group">✕</button>
               </div>
             ))}
           </div>
