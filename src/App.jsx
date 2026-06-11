@@ -1276,9 +1276,17 @@ function Messages({ profile, members }) {
         })}
         <div ref={bottomRef} />
       </div>
-      <div style={{ padding: "10px 12px", borderTop: "1px solid rgba(255,255,255,0.05)", display: "flex", gap: 8 }}>
+      {photoPreview && (
+        <div style={{ padding: "8px 12px 0", position: "relative", display: "inline-block", marginLeft: 12 }}>
+          <img src={photoPreview} alt="preview" style={{ maxHeight: 100, maxWidth: 160, borderRadius: 8, objectFit: "cover" }} />
+          <button onClick={() => { setPhotoFile(null); setPhotoPreview(null); }} style={{ position: "absolute", top: 14, right: 6, background: "rgba(0,0,0,0.7)", border: "none", color: "#fff", borderRadius: "50%", width: 20, height: 20, cursor: "pointer", fontSize: 12, display: "flex", alignItems: "center", justifyContent: "center" }}>✕</button>
+        </div>
+      )}
+      <div style={{ padding: "10px 12px", borderTop: "1px solid rgba(255,255,255,0.05)", display: "flex", gap: 8, alignItems: "center" }}>
+        <input ref={msgPhotoRef} type="file" accept="image/*" style={{ display: "none" }} onChange={e => { const f = e.target.files[0]; if (f && f.size <= 5*1024*1024) { setPhotoFile(f); setPhotoPreview(URL.createObjectURL(f)); } else if (f) alert("Max 5MB"); }} />
+        <button onClick={() => msgPhotoRef.current.click()} style={{ background: "none", border: "1px solid rgba(255,255,255,0.08)", borderRadius: 8, padding: "8px 10px", color: "#888", cursor: "pointer", fontSize: 16, flexShrink: 0 }}>📷</button>
         <input style={{ ...S.input, flex: 1, fontSize: 14, padding: "10px 14px" }} placeholder="Type a message..." value={body} onChange={e => setBody(e.target.value)} onKeyDown={e => { if (e.key === "Enter" && !e.shiftKey) { e.preventDefault(); send(); }}} />
-        <button style={{ ...S.btn, padding: "10px 16px", flexShrink: 0 }} onClick={send} disabled={posting || !body.trim()}>Send</button>
+        <button style={{ ...S.btn, padding: "10px 16px", flexShrink: 0 }} onClick={send} disabled={posting || uploading || (!body.trim() && !photoFile)}>{uploading ? "⏳" : "Send"}</button>
       </div>
     </div>
   );
