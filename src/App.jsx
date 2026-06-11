@@ -780,7 +780,7 @@ function Feed({ profile, activeGroup, isNewMember }) {
           </div>
         )}
         {posts.map(post => {
-          const reactions = postReactions[post.id] || post.reactions || {};
+          const reactions = postReactions[post.id] || (typeof post.reactions === "object" && post.reactions !== null ? post.reactions : {});
           return (
             <div key={post.id} className="post-card" style={{ ...S.post, marginBottom: 12 }}>
               <div style={S.flexBetween}>
@@ -1196,6 +1196,13 @@ function Messages({ profile, members }) {
   const [photoFile, setPhotoFile] = useState(null);
   const [photoPreview, setPhotoPreview] = useState(null);
   const [uploading, setUploading] = useState(false);
+  const [showNewDM, setShowNewDM] = useState(false);
+  const [dmSearch, setDmSearch] = useState("");
+  const [showNewGroup, setShowNewGroup] = useState(false);
+  const [newGroupName, setNewGroupName] = useState("");
+  const [newGroupMembers, setNewGroupMembers] = useState([]);
+  const [groupMemberSearch, setGroupMemberSearch] = useState("");
+  const [creatingGroup, setCreatingGroup] = useState(false);
   const msgPhotoRef = useRef();
   const bottomRef = useRef(null);
 
@@ -2235,6 +2242,318 @@ function AudioPlayer({ episode }) {
   );
 }
 
+// ─── Private Groups ───────────────────────────────────────────────────────────
+function PrivateGroups({ profile, allMembers }) {
+  const [groups, setGroups] = useState([]);
+  const [myGroups, setMyGroups] = useState([]);
+  const [showCreate, setShowCreate] = useState(false);
+  const [form, setForm] = useState({ name: '', description: '' });
+  const [saving, setSaving] = useState(false);
+  const [activeGroup, setActiveGroup] = useState(null);
+  const [messages, setMessages] = useState([]);
+  const [body, setBody] = useState('');
+  const [sending, setSending] = useState(false);
+  const [members, setMembers] = useState([]);
+  const [showAddMember, setShowAddMember] = useState(false);
+  const [memberSearch, setMemberSearch] = useState('');
+  const [requests, setRequests] = useState([]);
+  const bottomRef = useRef();
+  const isMobile = window.innerWidth <= 768;
+  const [showList, setShowList] = useState(true);
+
+  useEffect(() => { loadGroups(); }, []);
+  useEffect(() => { if (activeGroup) { loadMessages(); loadMembers(); loadRequests(); } }, [activeGroup]);
+
+  async function loadGroups() {
+    const { data: all } = await supabase.from('private_groups').select('*, private_group_members(user_id)').eq('approved', true).order('created_at', { ascending: false });
+    setGroups(all || []);
+    const mine = (all || []).filter(g => g.private_group_members?.some(m => m.user_id === profile.id));
+    setMyGroups(mine);
+  }
+
+  async function loadMessages() {
+    const { data } = await supabase.from('messages').select('*').eq('room_id', `private_${activeGroup.id}`).order('created_at', { ascending: true }).limit(50);
+    setMessages(data || []);
+    setTimeout(() => bottomRef.current?.scrollIntoView({ behavior: 'smooth' }), 100);
+  }
+
+  async function loadMembers() {
+    const { data } = await supabase.from('private_group_members').select('*, profiles(full_name, username, avatar_url, group_id)').eq('group_id', activeGroup.id);
+    setMembers(data || []);
+  }
+
+  async function loadRequests() {
+    if (activeGroup.created_by !== profile.id && profile.role !== 'admin') return;
+    const { data } = await supabase.from('private_group_requests').select('*, profiles(full_name, username)').eq('group_id', activeGroup.id).eq('status', 'pending');
+    setRequests(data || []);
+  }
+
+  async function createGroup() {
+    if (!form.name.trim()) return;
+    setSaving(true);
+    const { data } = await supabase.from('private_groups').insert({ name: form.name.trim(), description: form.description.trim(), created_by: profile.id, approved: profile.role === 'admin', member_count: 1 }).select().single();
+    if (data) {
+      await supabase.from('private_group_members').insert({ group_id: data.id, user_id: profile.id, role: 'creator' });
+      if (profile.role !== 'admin') {
+        // Notify admin
+        await supabase.from('posts').insert({ user_id: profile.id, group_id: profile.group_id, body: `🔒 ${profile.username ? `@${profile.username}` : formatName(profile.full_name)} requested a new private group: "${form.name}"`, reactions: {} });
+      }
+    }
+    setSaving(false);
+    setShowCreate(false);
+    setForm({ name: '', description: '' });
+    loadGroups();
+  }
+
+  async function requestJoin(groupId) {
+    await supabase.from('private_group_requests').insert({ group_id: groupId, user_id: profile.id, status: 'pending' });
+    alert('Request sent. The group creator will review it.');
+    loadGroups();
+  }
+
+  async function approveRequest(reqId, userId, groupId) {
+    await supabase.from('private_group_requests').update({ status: 'approved' }).eq('id', reqId);
+    await supabase.from('private_group_members').insert({ group_id: groupId, user_id: userId, role: 'member' });
+    await supabase.from('private_groups').update({ member_count: members.length + 1 }).eq('id', groupId);
+    loadRequests(); loadMembers();
+  }
+
+  async function denyRequest(reqId) {
+    await supabase.from('private_group_requests').update({ status: 'denied' }).eq('id', reqId);
+    loadRequests();
+  }
+
+  async function addMember(userId) {
+    if (members.length >= 15) { alert('Maximum 15 members per group'); return; }
+    const exists = members.find(m => m.user_id === userId);
+    if (exists) return;
+    await supabase.from('private_group_members').insert({ group_id: activeGroup.id, user_id: userId, role: 'member' });
+    await supabase.from('private_groups').update({ member_count: members.length + 1 }).eq('id', activeGroup.id);
+    setMemberSearch('');
+    loadMembers();
+  }
+
+  async function removeMemberFromGroup(userId) {
+    await supabase.from('private_group_members').delete().eq('group_id', activeGroup.id).eq('user_id', userId);
+    loadMembers();
+  }
+
+  async function sendMessage() {
+    if (!body.trim() || !activeGroup) return;
+    setSending(true);
+    const senderName = profile.username ? `@${profile.username}` : formatName(profile.full_name);
+    await supabase.from('messages').insert({ room_id: `private_${activeGroup.id}`, user_id: profile.id, body: body.trim(), sender_name: senderName });
+    setBody('');
+    setSending(false);
+    loadMessages();
+  }
+
+  async function approveGroup(id) {
+    await supabase.from('private_groups').update({ approved: true }).eq('id', id);
+    loadGroups();
+  }
+
+  async function deleteGroup(id) {
+    if (!confirm('Delete this group?')) return;
+    await supabase.from('private_groups').delete().eq('id', id);
+    setActiveGroup(null);
+    loadGroups();
+  }
+
+  const isMember = activeGroup && members.some(m => m.user_id === profile.id);
+  const isCreator = activeGroup && activeGroup.created_by === profile.id;
+  const pendingGroups = groups.filter(g => !g.approved);
+
+  // GROUP LIST VIEW
+  const GROUP_LIST = (
+    <div style={{ flex: 1, overflowY: 'auto', padding: 16 }}>
+      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 20 }}>
+        <div>
+          <span style={S.eyebrow}>Community</span>
+          <h2 style={{ ...S.h2, margin: 0 }}>Private Groups</h2>
+        </div>
+        <button style={S.btn} onClick={() => setShowCreate(!showCreate)}>+ Create Group</button>
+      </div>
+
+      {showCreate && (
+        <div style={{ ...S.card, marginBottom: 20 }}>
+          <span style={S.eyebrow}>New Private Group</span>
+          <div style={{ marginBottom: 12 }}>
+            <label style={S.label}>Group Name</label>
+            <input style={S.input} placeholder="Accountability Circle, Atlanta Brotherhood..." value={form.name} onChange={e => setForm({...form, name: e.target.value})} />
+          </div>
+          <div style={{ marginBottom: 16 }}>
+            <label style={S.label}>Description</label>
+            <textarea style={{ ...S.input, minHeight: 60 }} placeholder="What is this group for?" value={form.description} onChange={e => setForm({...form, description: e.target.value})} />
+          </div>
+          <p style={{ color: '#555', fontSize: 12, marginBottom: 12 }}>{profile.role === 'admin' ? 'Group will be created immediately.' : 'Group requires admin approval before going live.'}</p>
+          <button style={S.btn} onClick={createGroup} disabled={saving || !form.name.trim()}>{saving ? 'Submitting...' : 'Submit Request'}</button>
+        </div>
+      )}
+
+      {profile.role === 'admin' && pendingGroups.length > 0 && (
+        <div style={{ ...S.card, marginBottom: 20, borderTop: '3px solid #FF6600' }}>
+          <span style={{ ...S.eyebrow, color: '#FF6600' }}>Pending Approval ({pendingGroups.length})</span>
+          {pendingGroups.map(g => (
+            <div key={g.id} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '10px 0', borderBottom: '1px solid rgba(255,255,255,0.05)' }}>
+              <div>
+                <div style={{ color: '#fff', fontSize: 14 }}>{g.name}</div>
+                <div style={{ color: '#888', fontSize: 12 }}>{g.description}</div>
+              </div>
+              <div style={{ display: 'flex', gap: 8 }}>
+                <button style={{ ...S.btnSm, background: '#51cf66' }} onClick={() => approveGroup(g.id)}>Approve</button>
+                <button style={S.btnDanger} onClick={() => deleteGroup(g.id)}>Deny</button>
+              </div>
+            </div>
+          ))}
+        </div>
+      )}
+
+      {myGroups.length > 0 && (
+        <div style={{ marginBottom: 20 }}>
+          <span style={S.eyebrow}>My Groups</span>
+          {myGroups.map(g => (
+            <div key={g.id} style={{ ...S.card, marginBottom: 8, cursor: 'pointer', borderLeft: '3px solid #FF6600' }}
+              onClick={() => { setActiveGroup(g); if (isMobile) setShowList(false); }}>
+              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+                <div>
+                  <div style={{ color: '#fff', fontFamily: "'Cinzel', serif", fontSize: 15 }}>{g.name}</div>
+                  {g.description && <div style={{ color: '#888', fontSize: 12, marginTop: 2 }}>{g.description}</div>}
+                </div>
+                <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                  <span style={{ color: '#555', fontSize: 12 }}>{g.member_count || 1} members</span>
+                  <span style={{ color: '#FF6600', fontSize: 18 }}>›</span>
+                </div>
+              </div>
+            </div>
+          ))}
+        </div>
+      )}
+
+      <div>
+        <span style={S.eyebrow}>Discover Groups</span>
+        {groups.filter(g => g.approved && !myGroups.find(m => m.id === g.id)).length === 0 && (
+          <p style={S.muted}>No other groups to discover yet.</p>
+        )}
+        {groups.filter(g => g.approved && !myGroups.find(m => m.id === g.id)).map(g => (
+          <div key={g.id} style={{ ...S.card, marginBottom: 8 }}>
+            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+              <div>
+                <div style={{ color: '#fff', fontFamily: "'Cinzel', serif", fontSize: 15 }}>🔒 {g.name}</div>
+                {g.description && <div style={{ color: '#888', fontSize: 12, marginTop: 2 }}>{g.description}</div>}
+                <div style={{ color: '#555', fontSize: 12, marginTop: 4 }}>{g.member_count || 1} members</div>
+              </div>
+              <button style={S.btnSm} onClick={() => requestJoin(g.id)}>Request</button>
+            </div>
+          </div>
+        ))}
+      </div>
+    </div>
+  );
+
+  // CHAT VIEW
+  const CHAT_VIEW = activeGroup && (
+    <div style={{ flex: 1, display: 'flex', flexDirection: 'column', height: isMobile ? 'calc(100vh - 200px)' : '100%' }}>
+      <div style={{ padding: '12px 16px', borderBottom: '1px solid rgba(255,255,255,0.05)', display: 'flex', alignItems: 'center', gap: 12 }}>
+        {isMobile && <button onClick={() => setShowList(true)} style={{ background: 'none', border: 'none', color: '#FF6600', cursor: 'pointer', fontSize: 20, padding: 0 }}>←</button>}
+        <div style={{ flex: 1 }}>
+          <div style={{ fontFamily: "'Cinzel', serif", fontSize: 15, color: '#fff' }}>🔒 {activeGroup.name}</div>
+          <div style={{ color: '#555', fontSize: 11 }}>{members.length} members</div>
+        </div>
+        <div style={{ display: 'flex', gap: 6 }}>
+          {(isCreator || profile.role === 'admin') && (
+            <button style={{ ...S.btnSm, background: 'rgba(255,102,0,0.1)', color: '#FF6600', fontSize: 11 }} onClick={() => setShowAddMember(!showAddMember)}>+ Add</button>
+          )}
+          {profile.role === 'admin' && (
+            <button style={S.btnDanger} onClick={() => deleteGroup(activeGroup.id)}>Delete</button>
+          )}
+        </div>
+      </div>
+
+      {showAddMember && (isCreator || profile.role === 'admin') && (
+        <div style={{ padding: '10px 16px', borderBottom: '1px solid rgba(255,255,255,0.05)', background: 'rgba(255,102,0,0.04)' }}>
+          <input style={{ ...S.input, marginBottom: 8, fontSize: 13 }} placeholder="Search members to add..." value={memberSearch} onChange={e => setMemberSearch(e.target.value)} />
+          {memberSearch.length > 1 && allMembers.filter(m => m.status === 'approved' && !members.find(x => x.user_id === m.id) && ((m.full_name||'').toLowerCase().includes(memberSearch.toLowerCase()) || (m.username||'').toLowerCase().includes(memberSearch.toLowerCase()))).slice(0,5).map(m => (
+            <div key={m.id} onClick={() => addMember(m.id)} style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '6px 0', cursor: 'pointer' }}>
+              <Avatar profile={m} size={26} />
+              <span style={{ color: '#fff', fontSize: 13 }}>{m.username ? `@${m.username}` : formatName(m.full_name)}</span>
+              <span style={{ color: '#FF6600', fontSize: 11, marginLeft: 'auto' }}>+ Add</span>
+            </div>
+          ))}
+          <div style={{ marginTop: 8 }}>
+            <span style={{ color: '#555', fontSize: 11 }}>Members ({members.length}/15): </span>
+            {members.map(m => (
+              <span key={m.id} style={{ color: '#888', fontSize: 11, marginRight: 8 }}>
+                {m.profiles?.username ? `@${m.profiles.username}` : formatName(m.profiles?.full_name)}
+                {(isCreator || profile.role === 'admin') && m.user_id !== profile.id && (
+                  <span onClick={() => removeMemberFromGroup(m.user_id)} style={{ color: '#ff4444', cursor: 'pointer', marginLeft: 3 }}>✕</span>
+                )}
+              </span>
+            ))}
+          </div>
+        </div>
+      )}
+
+      {requests.length > 0 && (isCreator || profile.role === 'admin') && (
+        <div style={{ padding: '10px 16px', borderBottom: '1px solid rgba(255,255,255,0.05)', background: 'rgba(255,102,0,0.04)' }}>
+          <span style={{ color: '#FF6600', fontSize: 11, letterSpacing: '0.1em', textTransform: 'uppercase' }}>Join Requests ({requests.length})</span>
+          {requests.map(r => (
+            <div key={r.id} style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '6px 0' }}>
+              <span style={{ color: '#fff', fontSize: 13 }}>{r.profiles?.username ? `@${r.profiles.username}` : formatName(r.profiles?.full_name)}</span>
+              <div style={{ display: 'flex', gap: 6 }}>
+                <button style={{ ...S.btnSm, background: '#51cf66', padding: '4px 10px', fontSize: 11 }} onClick={() => approveRequest(r.id, r.user_id, r.group_id)}>✓</button>
+                <button style={{ ...S.btnDanger, padding: '4px 10px', fontSize: 11 }} onClick={() => denyRequest(r.id)}>✕</button>
+              </div>
+            </div>
+          ))}
+        </div>
+      )}
+
+      {!isMember && (
+        <div style={{ flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center', flexDirection: 'column', gap: 12, padding: 32 }}>
+          <span style={{ fontSize: 40 }}>🔒</span>
+          <p style={{ color: '#888', textAlign: 'center' }}>You are not a member of this group.</p>
+          <button style={S.btn} onClick={() => requestJoin(activeGroup.id)}>Request to Join</button>
+        </div>
+      )}
+
+      {isMember && (
+        <>
+          <div style={{ flex: 1, overflowY: 'auto', padding: 16, display: 'flex', flexDirection: 'column', gap: 8 }}>
+            {messages.map(msg => {
+              const isOwn = msg.user_id === profile.id;
+              return (
+                <div key={msg.id} style={{ display: 'flex', flexDirection: 'column', alignItems: isOwn ? 'flex-end' : 'flex-start' }}>
+                  {!isOwn && <div style={{ color: '#FF6600', fontSize: 11, marginBottom: 3, letterSpacing: '0.05em' }}>{msg.sender_name}</div>}
+                  <div style={{ background: isOwn ? 'rgba(255,102,0,0.15)' : 'rgba(255,255,255,0.05)', border: isOwn ? '1px solid rgba(255,102,0,0.2)' : '1px solid rgba(255,255,255,0.06)', borderRadius: 8, padding: '10px 14px', maxWidth: '75%', color: '#fff', fontSize: 14, lineHeight: 1.6 }}>
+                    {msg.body}
+                  </div>
+                </div>
+              );
+            })}
+            <div ref={bottomRef} />
+          </div>
+          <div style={{ padding: '10px 12px', borderTop: '1px solid rgba(255,255,255,0.05)', display: 'flex', gap: 8 }}>
+            <input style={{ ...S.input, flex: 1, fontSize: 14, padding: '10px 14px' }} placeholder="Message..." value={body} onChange={e => setBody(e.target.value)} onKeyDown={e => { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); sendMessage(); }}} />
+            <button style={{ ...S.btn, padding: '10px 16px', flexShrink: 0 }} onClick={sendMessage} disabled={sending || !body.trim()}>Send</button>
+          </div>
+        </>
+      )}
+    </div>
+  );
+
+  if (isMobile) {
+    return <div style={{ margin: '-16px -16px 0' }}>{showList || !activeGroup ? GROUP_LIST : CHAT_VIEW}</div>;
+  }
+
+  return (
+    <div style={{ display: 'flex', gap: 0, height: 'calc(100vh - 130px)', minHeight: 400 }}>
+      <div style={{ width: 280, borderRight: '1px solid rgba(255,255,255,0.05)', overflowY: 'auto' }}>{GROUP_LIST}</div>
+      <div style={{ flex: 1 }}>{activeGroup ? CHAT_VIEW : <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', height: '100%', flexDirection: 'column', gap: 12 }}><span style={{ fontSize: 40 }}>🔒</span><p style={{ color: '#888' }}>Select a group or create one</p></div>}</div>
+    </div>
+  );
+}
+
 function Media({ profile }) {
   const [subTab, setSubTab] = React.useState('watch');
   const [videos, setVideos] = React.useState([]);
@@ -3021,6 +3340,7 @@ export default function App() {
 
   const MORE_ITEMS = [
     { id: "media", label: "Media", icon: "📺" },
+    { id: "privategroups", label: "Private Groups", icon: "🔒" },
     { id: "devotion", label: "Daily Devotion", icon: "📖" },
     { id: "events", label: "Events", icon: "📅" },
     { id: "members", label: "Members", icon: "👥" },
@@ -3053,6 +3373,7 @@ export default function App() {
       {tab === "messages" && <Messages profile={profile} members={allMembers} />}
       {tab === "members" && <Members profile={profile} />}
       {tab === "media" && <Media profile={profile} />}
+      {tab === "privategroups" && <PrivateGroups profile={profile} allMembers={allMembers} />}
       {tab === "faith" && <StatementOfFaith onBack={() => setTab("more")} />}
       {tab === "salvation" && <PlanOfSalvation onBack={() => setTab("more")} profile={profile} />}
       {tab === "profile" && <Profile profile={profile} onUpdate={setProfile} onSignOut={signOut} />}
@@ -3127,7 +3448,7 @@ export default function App() {
             </div>
             <div style={{ marginBottom: 24 }}>
               <p style={{ ...S.eyebrow, marginBottom: 12 }}>Navigation</p>
-              {[{ id: "forge", label: "The Forge 🔥", icon: "🔥" }, { id: "media", label: "Media", icon: "📺" }, { id: "prayer", label: "Prayer", icon: "🙏" }, { id: "devotion", label: "Devotion", icon: "📖" }, { id: "messages", label: "Chat", icon: "💬" }, { id: "events", label: "Events", icon: "📅" }, { id: "members", label: "Members", icon: "👥" }, { id: "faith", label: "Statement of Faith", icon: "✝️" }, { id: "salvation", label: "Do You Know Him?", icon: "🙏" }, { id: "profile", label: "My Profile", icon: "👤" }].map(item => (
+              {[{ id: "forge", label: "The Forge 🔥", icon: "🔥" }, { id: "media", label: "Media", icon: "📺" }, { id: "privategroups", label: "Private Groups", icon: "🔒" }, { id: "prayer", label: "Prayer", icon: "🙏" }, { id: "devotion", label: "Devotion", icon: "📖" }, { id: "messages", label: "Chat", icon: "💬" }, { id: "events", label: "Events", icon: "📅" }, { id: "members", label: "Members", icon: "👥" }, { id: "faith", label: "Statement of Faith", icon: "✝️" }, { id: "salvation", label: "Do You Know Him?", icon: "🙏" }, { id: "profile", label: "My Profile", icon: "👤" }].map(item => (
                 <div key={item.id} onClick={() => setTab(item.id)}
                   style={{ padding: "10px 12px", borderRadius: 4, cursor: "pointer", marginBottom: 2, background: tab === item.id ? "rgba(255,102,0,0.1)" : "transparent", color: tab === item.id ? "#FF6600" : "#888", fontSize: 13, display: "flex", alignItems: "center", gap: 8 }}>
                   <span>{item.icon}</span> {item.label}
