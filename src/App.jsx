@@ -3760,13 +3760,13 @@ export default function App() {
   const MORE_ITEMS = [
     { id: "media", label: "Media", icon: "📺" },
     { id: "privategroups", label: "Private Groups", icon: "🔒" },
+    { id: "social", label: "Social Media", icon: "📱" },
     { id: "devotion", label: "Daily Devotion", icon: "📖" },
     { id: "events", label: "Events", icon: "📅" },
     { id: "members", label: "Members", icon: "👥" },
     { id: "faith", label: "Statement of Faith", icon: "✝️" },
     { id: "salvation", label: "Do You Know Him?", icon: "🙏" },
-    { id: "social", label: "Social Media", icon: "📱" },
-    { id: "social", label: "Social", icon: "📱" }, { id: "share", label: "Share ESix10", icon: "📤" },
+    { id: "share", label: "Share ESix10", icon: "📤" },
     { id: "profile", label: "My Profile", icon: "👤" },
   ];
 
