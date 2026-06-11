@@ -2636,7 +2636,7 @@ function WelcomeModal({ profile, onClose }) {
 }
 
 function Profile({ profile, onUpdate, onSignOut }) {
-  const [form, setForm] = useState({ full_name: profile.full_name || "", username: profile.username || "", city: profile.city || "", state: profile.state || "", bio: profile.bio || "", group_id: profile.group_id || "" });
+  const [form, setForm] = useState({ full_name: profile.full_name || "", username: profile.username || "", city: profile.city || "", state: profile.state || "", bio: profile.bio || "", group_id: profile.group_id || "", group_ids: profile.group_ids || [profile.group_id].filter(Boolean) });
   const [saving, setSaving] = useState(false);
   const [msg, setMsg] = useState("");
   const [avatarMode, setAvatarMode] = useState("preset"); // "preset" or "upload"
