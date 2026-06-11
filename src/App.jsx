@@ -1574,12 +1574,12 @@ function Messages({ profile, members, onRead }) {
                 const roomId = `group_custom_${Date.now()}`;
                 const senderName = profile.username ? `@${profile.username}` : formatName(profile.full_name);
                 await supabase.from("messages").insert({ room_id: roomId, user_id: profile.id, body: `📢 "${newGroupName}" — Members: ${newGroupMembers.map(m => m.username ? `@${m.username}` : formatName(m.full_name)).join(", ")}`, sender_name: senderName });
-                // Reload custom rooms
+                // Reload custom rooms inline
                 const { data: newRooms } = await supabase.from("messages").select("room_id, body").like("room_id", "group_custom_%").order("created_at", { ascending: false });
                 if (newRooms) {
-                  const rooms = {};
-                  newRooms.forEach(m => { if (!rooms[m.room_id]) { const n = m.body?.match(/"([^"]+)"/); rooms[m.room_id] = { id: m.room_id, label: n ? n[1] : "Group Chat", icon: "👥", type: "custom_group" }; } });
-                  setCustomRooms(Object.values(rooms));
+                  const roomMap = {};
+                  newRooms.forEach(m => { if (!roomMap[m.room_id]) { const n = m.body?.match(/"([^"]+)"/); roomMap[m.room_id] = { id: m.room_id, label: n ? n[1] : "Group Chat", icon: "👥", type: "custom_group" }; } });
+                  setCustomRooms(Object.values(roomMap));
                 }
                 isMobileChat ? selectRoomMobile(roomId) : selectRoom(roomId);
                 setShowNewGroup(false); setNewGroupName(""); setNewGroupMembers([]); setCreatingGroup(false);
