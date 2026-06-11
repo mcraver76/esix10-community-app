@@ -647,8 +647,10 @@ function Feed({ profile, activeGroup, isNewMember }) {
   const photoRef = useRef();
   const bottomRef = useRef(null);
   const verse = getTodayVerse();
-  const canPost = activeGroup === "all" || activeGroup === profile.group_id;
-  const postTarget = activeGroup === "all" ? profile.group_id : activeGroup;
+  const memberGroups = profile.group_ids && profile.group_ids.length > 0 ? profile.group_ids : [profile.group_id];
+  const canPost = true;
+  const [selectedPostGroup, setSelectedPostGroup] = useState(profile.group_id);
+  const postTarget = activeGroup && activeGroup !== "all" ? activeGroup : selectedPostGroup;
 
   useEffect(() => {
     loadPosts();
@@ -767,7 +769,20 @@ function Feed({ profile, activeGroup, isNewMember }) {
         </div>
       </div>
       <div style={S.card}>
-        <label style={S.label}>Share with {groupName}</label>
+        {memberGroups.length > 1 && (
+          <div style={{ display: "flex", gap: 6, marginBottom: 10, flexWrap: "wrap" }}>
+            {memberGroups.map(gid => {
+              const g = GROUPS.find(x => x.id === gid);
+              return (
+                <button key={gid} onClick={() => setSelectedPostGroup(gid)}
+                  style={{ ...S.tab(selectedPostGroup === gid), padding: "6px 14px", fontSize: 11, border: "none", cursor: "pointer", flexShrink: 0 }}>
+                  {g?.icon} {g?.label}
+                </button>
+              );
+            })}
+          </div>
+        )}
+        <label style={S.label}>Share with {GROUPS.find(g => g.id === postTarget)?.label || "Your Group"}</label>
         {!canPost && profile.role !== "admin" ? (
           <p style={{ ...S.muted, padding: "16px 0" }}>You can only post to your own group.</p>
         ) : (
