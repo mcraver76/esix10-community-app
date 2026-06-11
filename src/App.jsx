@@ -818,7 +818,7 @@ function Feed({ profile, activeGroup, isNewMember }) {
           const reactions = postReactions[post.id] || (typeof post.reactions === "object" && post.reactions !== null ? post.reactions : {});
           return (
             <div key={post.id} className="post-card" style={{ ...S.post, marginBottom: 12 }}>
-              <div style={S.flexBetween}>
+              <div style={{ ...S.flexBetween, flexWrap: "wrap", gap: 6 }}>
                 <div style={S.flex}>
                   <div style={{ width: 44, height: 44, borderRadius: "50%", background: "linear-gradient(135deg, rgba(255,102,0,0.3), rgba(192,154,47,0.2))", display: "flex", alignItems: "center", justifyContent: "center", color: "#FF6600", fontFamily: "'Cinzel', serif", fontSize: 17, fontWeight: 600, border: "1px solid rgba(255,102,0,0.2)" }}>
                     {(post.profiles?.username || post.profiles?.full_name || "?")[0].toUpperCase()}
@@ -842,7 +842,7 @@ function Feed({ profile, activeGroup, isNewMember }) {
                     </>
                   )}
                   {(profile.role === "admin" || profile.id === post.user_id) && (
-                    <button style={S.btnDanger} onClick={() => deletePost(post.id)}>Delete</button>
+                    <button style={{ ...S.btnDanger, padding: "4px 8px", fontSize: 11 }} onClick={() => deletePost(post.id)}>✕</button>
                   )}
                 </div>
               </div>
@@ -2493,7 +2493,7 @@ function PrivateGroups({ profile, allMembers }) {
       </div>
 
       {showCreate && (
-        <div style={{ ...S.card, marginBottom: 20 }}>
+        <div style={{ ...S.card, marginBottom: 20, overflow: "hidden" }}>
           <span style={S.eyebrow}>New Private Group</span>
           <div style={{ marginBottom: 12 }}>
             <label style={S.label}>Group Name</label>
@@ -2783,7 +2783,7 @@ function Media({ profile }) {
             {profile.role === 'admin' && <button style={S.btn} onClick={() => setShowAddVideo(!showAddVideo)}>+ Upload Video</button>}
           </div>
           {showAddVideo && (
-            <div style={{ ...S.card, marginBottom: 20 }}>
+            <div style={{ ...S.card, marginBottom: 20, overflow: "hidden" }}>
               <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12, marginBottom: 12 }}>
                 <div style={{ gridColumn: '1/-1' }}><label style={S.label}>Title</label><input style={S.input} value={videoForm.title} onChange={e => setVideoForm({...videoForm, title: e.target.value})} placeholder="Video title" /></div>
                 <div><label style={S.label}>Category</label><select style={S.input} value={videoForm.category} onChange={e => setVideoForm({...videoForm, category: e.target.value})}>{['Teaching','Forge','Devotion','Training'].map(c => <option key={c}>{c}</option>)}</select></div>
@@ -2837,7 +2837,7 @@ function Media({ profile }) {
             {profile.role === 'admin' && <button style={S.btn} onClick={() => setShowAddAudio(!showAddAudio)}>+ Add Episode</button>}
           </div>
           {showAddAudio && (
-            <div style={{ ...S.card, marginBottom: 20 }}>
+            <div style={{ ...S.card, marginBottom: 20, overflow: "hidden" }}>
               <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12, marginBottom: 12 }}>
                 <div style={{ gridColumn: '1/-1' }}><label style={S.label}>Title</label><input style={S.input} value={audioForm.title} onChange={e => setAudioForm({...audioForm, title: e.target.value})} /></div>
                 <div><label style={S.label}>Episode #</label><input style={S.input} type="number" value={audioForm.episode_number} onChange={e => setAudioForm({...audioForm, episode_number: e.target.value})} /></div>
@@ -2889,7 +2889,7 @@ function Media({ profile }) {
             )}
           </div>
           {showAddLive && (
-            <div style={{ ...S.card, marginBottom: 20 }}>
+            <div style={{ ...S.card, marginBottom: 20, overflow: "hidden" }}>
               <div style={{ display: 'grid', gap: 12, marginBottom: 12 }}>
                 <div><label style={S.label}>Stream Title</label><input style={S.input} value={liveForm.title} onChange={e => setLiveForm({...liveForm, title: e.target.value})} /></div>
                 <div><label style={S.label}>Scheduled Date/Time</label><input style={S.input} type="datetime-local" value={liveForm.scheduled_at} onChange={e => setLiveForm({...liveForm, scheduled_at: e.target.value})} /></div>
