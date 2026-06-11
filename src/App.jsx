@@ -142,7 +142,53 @@ const GLOBAL_CSS = `
 .reaction-btn:hover { transform: scale(1.2); transition: transform 0.15s; }
 .post-card:hover { border-color: rgba(255,102,0,0.2) !important; transition: border-color 0.2s; }
 .online-dot { width:8px; height:8px; border-radius:50%; background:#51cf66; display:inline-block; animation: pulse 2s infinite; }
-.verse-banner { background: linear-gradient(135deg, rgba(255,102,0,0.08) 0%, rgba(192,154,47,0.08) 100%); border: 1px solid rgba(255,102,0,0.2); border-radius:10px; padding:18px 20px; margin-bottom:20px; }
+
+/* Premium animations */
+@keyframes fadeIn { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: translateY(0); } }
+@keyframes shimmer { 0% { background-position: -200% 0; } 100% { background-position: 200% 0; } }
+@keyframes scaleIn { from { transform: scale(0.96); opacity: 0; } to { transform: scale(1); opacity: 1; } }
+
+/* Post cards animate in */
+.post-card { animation: fadeIn 0.3s ease forwards; }
+
+/* Skeleton loader */
+.skeleton { background: linear-gradient(90deg, rgba(255,255,255,0.04) 25%, rgba(255,255,255,0.08) 50%, rgba(255,255,255,0.04) 75%); background-size: 200% 100%; animation: shimmer 1.5s infinite; border-radius: 6px; }
+
+/* Button press effect */
+.btn-press { transition: transform 0.1s ease, opacity 0.1s ease; }
+.btn-press:active { transform: scale(0.97); opacity: 0.9; }
+
+/* Premium card */
+.premium-card { background: linear-gradient(145deg, rgba(26,26,36,0.98), rgba(18,18,26,0.98)); border: 1px solid rgba(255,255,255,0.06); border-radius: 12px; padding: 20px; transition: border-color 0.2s, transform 0.2s; }
+.premium-card:hover { border-color: rgba(255,102,0,0.2); }
+
+/* Gold gradient text */
+.gold-text { background: linear-gradient(135deg, #FF6600, #C09A2F); -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text; }
+
+/* Tab active gradient */
+.tab-active { background: linear-gradient(135deg, rgba(255,102,0,0.25), rgba(192,154,47,0.15)) !important; border-color: rgba(255,102,0,0.4) !important; }
+
+/* Section divider */
+.section-divider { height: 1px; background: linear-gradient(90deg, transparent, rgba(255,102,0,0.3), transparent); margin: 24px 0; }
+
+/* Online indicator pulse */
+.online-dot { width: 8px; height: 8px; border-radius: 50%; background: #51cf66; display: inline-block; animation: pulse 2s infinite; box-shadow: 0 0 6px rgba(81,207,102,0.5); }
+
+/* Reaction button hover */
+.reaction-btn { transition: transform 0.15s, background 0.15s !important; }
+.reaction-btn:hover { transform: scale(1.25) !important; }
+.reaction-btn:active { transform: scale(0.95) !important; }
+
+/* Input focus glow */
+input:focus, textarea:focus, select:focus { outline: none; border-color: rgba(255,102,0,0.5) !important; box-shadow: 0 0 0 2px rgba(255,102,0,0.1) !important; }
+
+/* Nav gradient border */
+.nav-premium { border-bottom: 1px solid rgba(255,102,0,0.15) !important; background: linear-gradient(180deg, rgba(13,17,23,0.99) 0%, rgba(10,12,18,0.99) 100%) !important; }
+
+/* Premium badge */
+.premium-badge { background: linear-gradient(135deg, #C09A2F, #FF6600); color: #fff; border-radius: 4px; padding: "2px 8px"; font-size: 10px; letter-spacing: 0.1em; text-transform: uppercase; }
+
+.verse-banner { background: linear-gradient(135deg, rgba(255,102,0,0.1) 0%, rgba(192,154,47,0.1) 100%); border: 1px solid rgba(255,102,0,0.25); border-radius:12px; padding:20px; margin-bottom:20px; box-shadow: 0 4px 20px rgba(255,102,0,0.08); }
 .activity-item { animation: slideIn 0.3s ease forwards; }
 .level-badge { display: inline-flex; align-items: center; gap: 4px; border-radius: 20px; padding: 3px 10px; font-size: 11px; font-weight: 600; letter-spacing: 0.05em; }
 .xp-bar { height: 4px; border-radius: 2px; background: rgba(255,255,255,0.06); overflow: hidden; }
@@ -158,17 +204,17 @@ const GLOBAL_CSS = `
 // ─── Styles ───────────────────────────────────────────────────────────────────
 const S = {
   app: { minHeight: "100vh", background: "#0d1117", color: "#fff", fontFamily: "'Lato', sans-serif", fontSize: 15 },
-  nav: { position: "fixed", top: 0, left: 0, right: 0, height: 80, background: "rgba(13,17,23,0.99)", borderBottom: "1px solid rgba(255,102,0,0.2)", display: "flex", alignItems: "center", justifyContent: "space-between", padding: "0 16px", zIndex: 100 },
+  nav: { position: "fixed", top: 0, left: 0, right: 0, height: 80, background: "linear-gradient(180deg, rgba(10,12,18,0.99) 0%, rgba(13,17,23,0.97) 100%)", borderBottom: "1px solid rgba(255,102,0,0.15)", display: "flex", alignItems: "center", justifyContent: "space-between", padding: "0 16px", zIndex: 100 },
   navLogo: { fontFamily: "'Cinzel', serif", fontSize: 16, fontWeight: 600, color: "#fff", letterSpacing: "0.08em" },
   navLogoSub: { color: "#FF6600", fontSize: 9, display: "block", letterSpacing: "0.35em", marginTop: -2 },
   navRight: { display: "flex", alignItems: "center", gap: 16 },
   badge: { background: "rgba(255,102,0,0.15)", color: "#FF6600", padding: "4px 12px", borderRadius: 20, fontSize: 12, fontWeight: 600, letterSpacing: "0.1em", textTransform: "uppercase" },
-  btn: { background: "#FF6600", color: "#fff", border: "none", borderRadius: 8, padding: "10px 24px", fontFamily: "'Lato', sans-serif", fontSize: 12, letterSpacing: "0.15em", textTransform: "uppercase", cursor: "pointer", transition: "background 0.2s" },
+  btn: { background: "linear-gradient(135deg, #FF6600, #E55A00)", color: "#fff", border: "none", borderRadius: 8, boxShadow: "0 2px 12px rgba(255,102,0,0.25)", padding: "10px 24px", fontFamily: "'Lato', sans-serif", fontSize: 12, letterSpacing: "0.15em", textTransform: "uppercase", cursor: "pointer", transition: "background 0.2s" },
   btnGhost: { background: "transparent", color: "#AAAAAA", border: "1px solid rgba(255,255,255,0.15)", borderRadius: 8, padding: "10px 24px", fontFamily: "'Lato', sans-serif", fontSize: 12, letterSpacing: "0.15em", textTransform: "uppercase", cursor: "pointer" },
-  btnSm: { background: "#FF6600", color: "#fff", border: "none", borderRadius: 6, padding: "8px 16px", fontFamily: "'Lato', sans-serif", fontSize: 11, letterSpacing: "0.12em", textTransform: "uppercase", cursor: "pointer" },
+  btnSm: { background: "linear-gradient(135deg, #FF6600, #E55A00)", color: "#fff", border: "none", borderRadius: 6, boxShadow: "0 2px 8px rgba(255,102,0,0.2)", padding: "8px 16px", fontFamily: "'Lato', sans-serif", fontSize: 11, letterSpacing: "0.12em", textTransform: "uppercase", cursor: "pointer" },
   btnDanger: { background: "transparent", color: "#ff4444", border: "1px solid #ff4444", borderRadius: 3, padding: "6px 12px", fontSize: 11, cursor: "pointer" },
   page: { paddingTop: 90, maxWidth: 1100, margin: "0 auto", padding: "90px 24px 60px" },
-  card: { background: "rgba(22,27,34,0.98)", border: "1px solid rgba(255,255,255,0.08)", borderRadius: 10, padding: 24 },
+  card: { background: "linear-gradient(145deg, rgba(22,27,36,0.98), rgba(16,20,28,0.98))", border: "1px solid rgba(255,255,255,0.07)", borderRadius: 12, padding: 24, transition: "border-color 0.2s" },
   input: { width: "100%", background: "rgba(255,255,255,0.04)", border: "1px solid rgba(255,255,255,0.08)", borderRadius: 8, padding: "12px 16px", color: "#fff", fontFamily: "'Lato', sans-serif", fontSize: 15, outline: "none", boxSizing: "border-box" },
   label: { fontSize: 10, letterSpacing: "0.2em", textTransform: "uppercase", color: "#FF6600", marginBottom: 6, display: "block" },
   divider: { width: 50, height: 2, background: "#FF6600", margin: "16px 0" },
@@ -185,7 +231,7 @@ const S = {
   flexBetween: { display: "flex", alignItems: "center", justifyContent: "space-between" },
   grid2: { display: "grid", gridTemplateColumns: "1fr 1fr", gap: 16 },
   grid3: { display: "grid", gridTemplateColumns: "repeat(3,1fr)", gap: 16 },
-  post: { background: "rgba(22,27,34,0.98)", border: "1px solid rgba(255,255,255,0.07)", borderRadius: 10, padding: 20, marginBottom: 12 },
+  post: { background: "linear-gradient(145deg, rgba(22,27,36,0.98), rgba(16,20,28,0.98))", border: "1px solid rgba(255,255,255,0.07)", borderRadius: 12, padding: 20, marginBottom: 12, transition: "border-color 0.2s" },
   postAuthor: { fontFamily: "'Cinzel', serif", fontSize: 14, fontWeight: 600, color: "#fff" },
   postTime: { fontSize: 11, color: "#555", marginLeft: 8 },
   postBody: { color: "#CCCCCC", fontSize: 15, lineHeight: 1.7, marginTop: 10 },
@@ -855,7 +901,7 @@ function Feed({ profile, activeGroup, isNewMember }) {
               )}
               <div style={{ display: "flex", gap: 6, marginTop: 12, flexWrap: "wrap" }}>
                 {REACTIONS.map(emoji => (
-                  <button key={emoji} className="reaction-btn" onClick={() => addReaction(post.id, emoji)}
+                  <button key={emoji} className="reaction-btn btn-press" onClick={() => addReaction(post.id, emoji)}
                     style={{ background: reactions[emoji] ? "rgba(255,102,0,0.12)" : "rgba(255,255,255,0.03)", border: reactions[emoji] ? "1px solid rgba(255,102,0,0.3)" : "1px solid rgba(255,255,255,0.06)", borderRadius: 20, padding: "4px 10px", cursor: "pointer", fontSize: 13, color: reactions[emoji] ? "#FF6600" : "#666", display: "flex", alignItems: "center", gap: 4 }}>
                     {emoji}{reactions[emoji] ? <span style={{ fontSize: 11 }}>{reactions[emoji]}</span> : null}
                   </button>
@@ -2802,7 +2848,24 @@ function Media({ profile }) {
           <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap', marginBottom: 20 }}>
             {['All','Teaching','Forge','Devotion','Training'].map(c => <button key={c} onClick={() => setCategory(c)} style={{ ...S.tab(category === c), padding: '6px 14px', fontSize: 11 }}>{c}</button>)}
           </div>
-          {loading && <p style={S.muted}>Loading...</p>}
+          {loading && (
+      <div>
+        {[1,2,3].map(i => (
+          <div key={i} style={{ ...S.post, marginBottom: 12 }}>
+            <div style={{ display: "flex", gap: 12, marginBottom: 16 }}>
+              <div className="skeleton" style={{ width: 44, height: 44, borderRadius: "50%", flexShrink: 0 }} />
+              <div style={{ flex: 1 }}>
+                <div className="skeleton" style={{ height: 14, width: "40%", marginBottom: 8 }} />
+                <div className="skeleton" style={{ height: 12, width: "25%" }} />
+              </div>
+            </div>
+            <div className="skeleton" style={{ height: 14, width: "90%", marginBottom: 8 }} />
+            <div className="skeleton" style={{ height: 14, width: "70%", marginBottom: 8 }} />
+            <div className="skeleton" style={{ height: 14, width: "50%" }} />
+          </div>
+        ))}
+      </div>
+    )}
           {!loading && filteredVideos.length === 0 && (
             <div style={{ textAlign: 'center', padding: 60 }}>
               <div style={{ fontSize: 48, marginBottom: 16 }}>📺</div>
@@ -3562,7 +3625,7 @@ export default function App() {
           )}
 
           {/* BOTTOM TAB BAR */}
-          <div style={{ position: "fixed", bottom: 0, left: 0, right: 0, height: 72, background: "rgba(13,17,23,0.99)", borderTop: "1px solid rgba(255,255,255,0.06)", display: "flex", zIndex: 100 }}>
+          <div style={{ position: "fixed", bottom: 0, left: 0, right: 0, height: 72, background: "linear-gradient(180deg, rgba(10,12,18,0.99) 0%, rgba(8,10,16,1) 100%)", borderTop: "1px solid rgba(255,102,0,0.12)", display: "flex", zIndex: 100 }}>
             {NAV_ITEMS.map(item => (
               <div key={item.id} onClick={() => setTab(item.id)}
                 style={{ flex: 1, display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", gap: 2, cursor: "pointer", color: (tab === item.id || (item.id === "more" && MORE_ITEMS.some(m => m.id === tab))) ? "#FF6600" : "#555", fontSize: 10, letterSpacing: "0.05em", textTransform: "uppercase" }}>
