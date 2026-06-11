@@ -933,7 +933,7 @@ function Members({ profile }) {
   useEffect(() => { loadMembers(); }, []);
 
   async function loadMembers() {
-    let q = supabase.from("profiles").select("*").order("state", { ascending: true });
+    let q = supabase.from("profiles").select("*").eq("status", "approved").order("state", { ascending: true });
     if (profile.role !== "admin") {
       q = q.eq("group_id", profile.group_id);
     }
@@ -942,9 +942,22 @@ function Members({ profile }) {
   }
 
   async function removeMember(id) {
-    if (!window.confirm("Are you sure you want to remove this member? This cannot be undone.")) return;
-    await supabase.from("profiles").delete().eq("id", id);
+    if (!window.confirm("Remove this member? They will be moved to the removed list.")) return;
+    await supabase.from("profiles").update({ status: "removed", updated_at: new Date().toISOString() }).eq("id", id);
     loadMembers();
+    loadRemoved();
+  }
+
+  async function restoreMember(id) {
+    await supabase.from("profiles").update({ status: "approved", updated_at: new Date().toISOString() }).eq("id", id);
+    loadMembers();
+    loadRemoved();
+  }
+
+  async function permanentlyDelete(id) {
+    if (!window.confirm("Permanently delete this member? This cannot be undone.")) return;
+    await supabase.from("profiles").delete().eq("id", id);
+    loadRemoved();
   }
 
   async function updateRole(id, role) {
@@ -964,10 +977,17 @@ function Members({ profile }) {
 
   const [flags, setFlags] = useState([]);
   const [showFlags, setShowFlags] = useState(false);
+  const [removed, setRemoved] = useState([]);
+  const [showRemoved, setShowRemoved] = useState(false);
 
   useEffect(() => {
-    if (profile.role === "admin") loadFlags();
+    if (profile.role === "admin") { loadFlags(); loadRemoved(); }
   }, []);
+
+  async function loadRemoved() {
+    const { data } = await supabase.from("profiles").select("*").in("status", ["denied", "removed"]).order("updated_at", { ascending: false });
+    setRemoved(data || []);
+  }
 
   async function loadFlags() {
     const { data: flagData } = await supabase
