@@ -662,7 +662,7 @@ function Feed({ profile, activeGroup, isNewMember }) {
     setLoading(true);
     let q = supabase.from("posts").select("*, profiles(full_name, username, group_id, role)").order("created_at", { ascending: false }).limit(50);
     if (profile.role !== "admin") {
-      if (activeGroup !== "all" && activeGroup !== profile.group_id) {
+      if (activeGroup && activeGroup !== "all" && activeGroup !== profile.group_id) {
         // Specific group selected
         q = q.eq("group_id", activeGroup);
       } else {
@@ -670,7 +670,7 @@ function Feed({ profile, activeGroup, isNewMember }) {
         const memberGroups = profile.group_ids && profile.group_ids.length > 0 ? profile.group_ids : [profile.group_id];
         q = q.in("group_id", memberGroups);
       }
-    } else if (activeGroup !== "all") {
+    } else if (activeGroup && activeGroup !== "all") {
       q = q.eq("group_id", activeGroup);
     }
     const { data } = await q;
@@ -3561,7 +3561,7 @@ export default function App() {
           <div style={{ width: 200, minHeight: "calc(100vh - 70px)", borderRight: "1px solid rgba(255,255,255,0.04)", padding: "24px 12px", position: "sticky", top: 70, flexShrink: 0, background: "rgba(13,17,23,0.5)" }}>
             <div style={{ marginBottom: 24 }}>
               <p style={{ ...S.eyebrow, marginBottom: 12 }}>Feed</p>
-              {[{ id: "all", label: "My Feed", icon: "◎" }, ...(profile.role === "admin" ? GROUPS : GROUPS.filter(g => g.id === profile.group_id))].map(g => (
+              {[{ id: "all", label: "My Feed", icon: "◎" }, ...(profile.role === "admin" ? GROUPS : GROUPS.filter(g => (profile.group_ids && profile.group_ids.length > 0 ? profile.group_ids : [profile.group_id]).includes(g.id)))].map(g => (
                 <div key={g.id} onClick={() => { setTab("feed"); setFeedGroup(g.id); }}
                   style={{ padding: "10px 12px", borderRadius: 4, cursor: "pointer", marginBottom: 2, background: tab === "feed" && feedGroup === g.id ? "rgba(255,102,0,0.1)" : "transparent", color: tab === "feed" && feedGroup === g.id ? "#FF6600" : "#888", fontSize: 13, display: "flex", alignItems: "center", gap: 8 }}>
                   <span>{g.icon || "◎"}</span> {g.label || "My Feed"}
