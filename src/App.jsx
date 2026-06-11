@@ -1112,6 +1112,10 @@ function Messages({ profile, members }) {
   const [messages, setMessages] = useState([]);
   const [body, setBody] = useState("");
   const [posting, setPosting] = useState(false);
+  const [photoFile, setPhotoFile] = useState(null);
+  const [photoPreview, setPhotoPreview] = useState(null);
+  const [uploading, setUploading] = useState(false);
+  const msgPhotoRef = useRef();
   const bottomRef = useRef(null);
 
   const GROUP_ROOMS = [
@@ -1161,20 +1165,33 @@ function Messages({ profile, members }) {
   }
 
   async function send() {
-    if (!body.trim() || !activeRoom) return;
+    if (!body.trim() && !photoFile) return;
+    if (!activeRoom) return;
     setPosting(true);
+    let photoUrl = null;
+    if (photoFile) {
+      setUploading(true);
+      const ext = photoFile.name.split(".").pop();
+      const path = `${profile.id}/msg_${Date.now()}.${ext}`;
+      const { error: uploadError } = await supabase.storage.from("avatars").upload(path, photoFile);
+      if (!uploadError) {
+        const { data } = supabase.storage.from("avatars").getPublicUrl(path);
+        photoUrl = data.publicUrl;
+      }
+      setUploading(false);
+    }
     const senderName = profile.username ? `@${profile.username}` : formatName(profile.full_name);
     const { error } = await supabase.from("messages").insert({ 
       room_id: activeRoom, 
       user_id: profile.id, 
-      body: body.trim(),
-      sender_name: senderName
+      body: body.trim() || "📷",
+      sender_name: senderName,
+      photo_url: photoUrl
     });
     if (error) {
       alert(`Message failed: ${error.message}`);
-      console.error("Message error:", error);
     } else {
-      setBody("");
+      setBody(""); setPhotoFile(null); setPhotoPreview(null);
       setTimeout(() => loadMessages(), 300);
     }
     setPosting(false);
