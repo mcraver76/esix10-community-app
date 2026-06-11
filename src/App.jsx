@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useRef } from "react";
+import { Player } from "@lottiefiles/react-lottie-player";
 import { createClient } from "@supabase/supabase-js";
 
 // Mobile detection hook
@@ -57,6 +58,16 @@ const displayName = (profile) => {
 };
 
 // Preset ESix10 avatars
+// Lottie animation URLs
+const LOTTIE = {
+  fire: "https://assets9.lottiefiles.com/packages/lf20_ud6D7H.json",
+  confetti: "https://assets9.lottiefiles.com/packages/lf20_u4yrau84.json",
+  cross: "https://assets4.lottiefiles.com/packages/lf20_hy4txm7l.json",
+  shield: "https://assets3.lottiefiles.com/packages/lf20_vvxx0ego.json",
+  pray: "https://assets9.lottiefiles.com/packages/lf20_ypqmjy3t.json",
+  celebrate: "https://assets5.lottiefiles.com/packages/lf20_jR229r.json",
+};
+
 // Level system
 const LEVELS = [
   { name: "Recruit", min: 0, max: 49, icon: "🛡️", color: "#888" },
@@ -221,6 +232,8 @@ create table if not exists posts (
   user_id uuid references profiles(id) on delete cascade,
   group_id text,
   body text not null,
+  photo_url text,
+  reactions jsonb default '{}',
   created_at timestamp default now()
 );
 alter table posts enable row level security;
@@ -629,6 +642,10 @@ function Feed({ profile, activeGroup, isNewMember }) {
   const [posting, setPosting] = useState(false);
   const [postReactions, setPostReactions] = useState({});
   const [showWelcome, setShowWelcome] = useState(isNewMember);
+  const [photoFile, setPhotoFile] = useState(null);
+  const [photoPreview, setPhotoPreview] = useState(null);
+  const [uploading, setUploading] = useState(false);
+  const photoRef = useRef();
   const bottomRef = useRef(null);
   const verse = getTodayVerse();
   const canPost = activeGroup === "all" || activeGroup === profile.group_id;
@@ -655,11 +672,31 @@ function Feed({ profile, activeGroup, isNewMember }) {
     setLoading(false);
   }
 
+  function handlePhotoSelect(e) {
+    const file = e.target.files[0];
+    if (!file) return;
+    if (file.size > 5 * 1024 * 1024) { alert("Photo must be under 5MB"); return; }
+    setPhotoFile(file);
+    setPhotoPreview(URL.createObjectURL(file));
+  }
+
   async function submitPost() {
     if (!body.trim() || !canPost) return;
     setPosting(true);
-    await supabase.from("posts").insert({ user_id: profile.id, group_id: postTarget, body: body.trim(), reactions: {} });
-    setBody(""); setPosting(false); loadPosts();
+    setUploading(true);
+    let photoUrl = null;
+    if (photoFile) {
+      const ext = photoFile.name.split(".").pop();
+      const path = `${profile.id}/post_${Date.now()}.${ext}`;
+      const { error } = await supabase.storage.from("avatars").upload(path, photoFile);
+      if (!error) {
+        const { data } = supabase.storage.from("avatars").getPublicUrl(path);
+        photoUrl = data.publicUrl;
+      }
+    }
+    setUploading(false);
+    await supabase.from("posts").insert({ user_id: profile.id, group_id: postTarget, body: body.trim(), photo_url: photoUrl, reactions: {} });
+    setBody(""); setPhotoFile(null); setPhotoPreview(null); setPosting(false); loadPosts();
   }
 
   async function deletePost(id) {
@@ -720,8 +757,20 @@ function Feed({ profile, activeGroup, isNewMember }) {
         ) : (
           <>
             <textarea style={{ ...S.input, minHeight: 90, resize: "vertical" }} placeholder="Share a win, ask a question, encourage someone..." value={body} onChange={e => setBody(e.target.value)} />
-            <div style={{ display: "flex", justifyContent: "flex-end", marginTop: 12 }}>
-              <button style={S.btn} onClick={submitPost} disabled={posting || !body.trim()}>{posting ? "Posting..." : "Post"}</button>
+            {photoPreview && (
+              <div style={{ position: "relative", marginTop: 10, display: "inline-block" }}>
+                <img src={photoPreview} alt="preview" style={{ maxHeight: 200, maxWidth: "100%", borderRadius: 8, objectFit: "cover" }} />
+                <button onClick={() => { setPhotoFile(null); setPhotoPreview(null); }} style={{ position: "absolute", top: 6, right: 6, background: "rgba(0,0,0,0.7)", border: "none", color: "#fff", borderRadius: "50%", width: 24, height: 24, cursor: "pointer", fontSize: 14, display: "flex", alignItems: "center", justifyContent: "center" }}>✕</button>
+              </div>
+            )}
+            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginTop: 12 }}>
+              <div>
+                <input ref={photoRef} type="file" accept="image/*" style={{ display: "none" }} onChange={handlePhotoSelect} />
+                <button onClick={() => photoRef.current.click()} style={{ background: "none", border: "1px solid rgba(255,255,255,0.1)", borderRadius: 6, padding: "8px 14px", color: "#888", cursor: "pointer", fontSize: 13, display: "flex", alignItems: "center", gap: 6 }}>
+                  📷 Photo
+                </button>
+              </div>
+              <button style={S.btn} onClick={submitPost} disabled={posting || uploading || !body.trim()}>{uploading ? "Uploading..." : posting ? "Posting..." : "Post"}</button>
             </div>
           </>
         )}
@@ -762,6 +811,11 @@ function Feed({ profile, activeGroup, isNewMember }) {
                 </div>
               </div>
               <p style={S.postBody}>{post.body}</p>
+              {post.photo_url && (
+                <div style={{ marginTop: 12, borderRadius: 10, overflow: "hidden" }}>
+                  <img src={post.photo_url} alt="post" style={{ width: "100%", maxHeight: 320, objectFit: "cover", display: "block" }} />
+                </div>
+              )}
               <div style={{ display: "flex", gap: 6, marginTop: 12, flexWrap: "wrap" }}>
                 {REACTIONS.map(emoji => (
                   <button key={emoji} className="reaction-btn" onClick={() => addReaction(post.id, emoji)}
@@ -1300,7 +1354,13 @@ function PrayerRequests({ profile }) {
         </div>
       </div>
       <div style={{ marginTop: 20 }}>
-        {prayers.length === 0 && <div style={{ textAlign: "center", padding: 60 }}><p style={{ fontFamily: "'Cinzel', serif", fontSize: 18, color: "#fff", marginBottom: 8 }}>No prayer requests yet.</p><p style={S.muted}>Be the first to share.</p></div>}
+        {prayers.length === 0 && (
+          <div style={{ textAlign: "center", padding: 40 }}>
+            <Player autoplay loop src={LOTTIE.pray} style={{ width: 100, height: 100, margin: "0 auto 16px" }} />
+            <p style={{ fontFamily: "'Cinzel', serif", fontSize: 18, color: "#fff", marginBottom: 8 }}>No prayer requests yet.</p>
+            <p style={S.muted}>Be the first to share. This community stands with you.</p>
+          </div>
+        )}
         {prayers.map(p => (
           <div key={p.id} style={{ ...S.post, borderLeft: p.pinned ? "3px solid #FF6600" : "none", marginBottom: 12 }}>
             <div style={S.flexBetween}>
@@ -1512,7 +1572,10 @@ function ForgeWalk({ profile }) {
           <h3 style={{ fontFamily: "'Cinzel', serif", fontSize: 20, color: '#fff', marginBottom: 8 }}>You walked today.</h3>
           <p style={{ color: '#888', fontSize: 14 }}>{todayWalk.distance_miles && `${todayWalk.distance_miles} miles`}{todayWalk.distance_miles && todayWalk.duration_minutes && ' · '}{todayWalk.duration_minutes && `${todayWalk.duration_minutes} minutes`}</p>
           {todayWalk.notes && <p style={{ color: '#AAAAAA', fontSize: 14, marginTop: 8, fontStyle: 'italic' }}>"{todayWalk.notes}"</p>}
-          <p style={{ color: '#FF6600', fontSize: 12, marginTop: 16, letterSpacing: '0.1em' }}>🔥 {streak} day streak — keep it going tomorrow</p>
+          <div style={{ display: "flex", alignItems: "center", justifyContent: "center", gap: 8, marginTop: 16 }}>
+          <Player autoplay loop src={LOTTIE.fire} style={{ width: 32, height: 32 }} />
+          <p style={{ color: '#FF6600', fontSize: 12, letterSpacing: '0.1em' }}>{streak} day streak — keep it going tomorrow</p>
+        </div>
         </div>
       ) : (
         <div style={S.card}>
@@ -1925,14 +1988,16 @@ function TheForge({ profile }) {
   return (
     <div>
       <style>{FORGE_CSS}</style>
-      <div className="forge-hero">
-        <span style={{ ...S.eyebrow, marginBottom: 6 }}>The Forge</span>
-        <h2 style={{ fontFamily: "'Cinzel', serif", fontSize: 24, fontWeight: 400, color: "#fff", marginBottom: 8, lineHeight: 1.2 }}>Train. Pray. Prepare.</h2>
-        <p style={{ color: "#FF6600", fontSize: 13, fontStyle: "italic", letterSpacing: "0.05em" }}>"{todayQuote}"</p>
-        <div style={{ display: "flex", gap: 12, marginTop: 16, flexWrap: "wrap" }}>
-          <span style={{ background: "rgba(255,102,0,0.1)", border: "1px solid rgba(255,102,0,0.2)", borderRadius: 20, padding: "4px 12px", fontSize: 11, color: "#FF6600", letterSpacing: "0.1em" }}>🔓 Beta — Full Access Free</span>
-          <span style={{ background: "rgba(255,255,255,0.04)", border: "1px solid rgba(255,255,255,0.08)", borderRadius: 20, padding: "4px 12px", fontSize: 11, color: "#888" }}>Premium coming soon</span>
+      <div className="forge-hero" style={{ display: "flex", alignItems: "center", gap: 16 }}>
+        <div style={{ flex: 1 }}>
+          <span style={{ ...S.eyebrow, marginBottom: 6 }}>The Forge</span>
+          <h2 style={{ fontFamily: "'Cinzel', serif", fontSize: 24, fontWeight: 400, color: "#fff", marginBottom: 8, lineHeight: 1.2 }}>Train. Pray. Prepare.</h2>
+          <p style={{ color: "#FF6600", fontSize: 13, fontStyle: "italic", letterSpacing: "0.05em" }}>"{todayQuote}"</p>
+          <div style={{ display: "flex", gap: 12, marginTop: 16, flexWrap: "wrap" }}>
+            <span style={{ background: "rgba(255,102,0,0.1)", border: "1px solid rgba(255,102,0,0.2)", borderRadius: 20, padding: "4px 12px", fontSize: 11, color: "#FF6600", letterSpacing: "0.1em" }}>🔓 Beta — Full Access Free</span>
+          </div>
         </div>
+        <Player autoplay loop src={LOTTIE.fire} style={{ width: 80, height: 80, flexShrink: 0 }} />
       </div>
       <div className="forge-tab-bar">
         {FORGE_TABS.map(t => (
