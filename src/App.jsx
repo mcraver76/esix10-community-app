@@ -2233,8 +2233,10 @@ function Media({ profile }) {
                 <div style={{ gridColumn: '1/-1' }}><label style={S.label}>Description</label><textarea style={{ ...S.input, minHeight: 60 }} value={videoForm.description} onChange={e => setVideoForm({...videoForm, description: e.target.value})} /></div>
               </div>
               {uploadProgress && <p style={{ color: '#FF6600', fontSize: 13, marginBottom: 12 }}>{uploadProgress}</p>}
-              <input ref={videoFileRef} type="file" accept="video/*" style={{ display: 'none' }} onChange={uploadVideo} />
-              <button style={S.btn} onClick={() => videoFileRef.current.click()} disabled={uploading || !videoForm.title}>{uploading ? 'Uploading...' : 'Choose Video & Upload'}</button>
+              <label style={{ ...S.btn, display: 'inline-block', cursor: uploading || !videoForm.title ? 'not-allowed' : 'pointer', opacity: uploading || !videoForm.title ? 0.5 : 1 }}>
+                {uploading ? uploadProgress || 'Uploading...' : 'Choose Video & Upload'}
+                <input type="file" accept="video/*" style={{ display: 'none' }} onChange={uploadVideo} disabled={uploading || !videoForm.title} />
+              </label>
             </div>
           )}
           <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap', marginBottom: 20 }}>
@@ -2285,8 +2287,10 @@ function Media({ profile }) {
                 <div style={{ gridColumn: '1/-1' }}><label style={S.label}>Description</label><textarea style={{ ...S.input, minHeight: 60 }} value={audioForm.description} onChange={e => setAudioForm({...audioForm, description: e.target.value})} /></div>
               </div>
               {uploadProgress && <p style={{ color: '#FF6600', fontSize: 13, marginBottom: 12 }}>{uploadProgress}</p>}
-              <input ref={audioFileRef} type="file" accept="audio/*" style={{ display: 'none' }} onChange={uploadAudio} />
-              <button style={S.btn} onClick={() => audioFileRef.current.click()} disabled={uploading || !audioForm.title}>{uploading ? 'Uploading...' : 'Choose Audio & Upload'}</button>
+              <label style={{ ...S.btn, display: 'inline-block', cursor: uploading || !audioForm.title ? 'not-allowed' : 'pointer', opacity: uploading || !audioForm.title ? 0.5 : 1 }}>
+                {uploading ? uploadProgress || 'Uploading...' : 'Choose Audio & Upload'}
+                <input type="file" accept="audio/*" style={{ display: 'none' }} onChange={uploadAudio} disabled={uploading || !audioForm.title} />
+              </label>
             </div>
           )}
           {audio.length === 0 && <div style={{ textAlign: 'center', padding: 60 }}><div style={{ fontSize: 48, marginBottom: 16 }}>🎙️</div><h3 style={{ fontFamily: "'Cinzel', serif", fontSize: 18, color: '#fff', marginBottom: 8 }}>No episodes yet.</h3><p style={S.muted}>{profile.role === 'admin' ? 'Upload your first episode above.' : 'Episodes coming soon.'}</p></div>}
