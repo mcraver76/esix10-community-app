@@ -3795,6 +3795,7 @@ export default function App() {
       {tab === "members" && <Members profile={profile} />}
       {tab === "media" && <Media profile={profile} />}
       {tab === "social" && <SocialFeed profile={profile} />}
+      {tab === "share" && <div style={{ textAlign: "center", padding: 60 }}><div style={{ fontSize: 48, marginBottom: 16 }}>📤</div><button style={S.btn} onClick={() => setShowShare(true)}>Open Share Screen</button></div>}
       {tab === "privategroups" && <PrivateGroups profile={profile} allMembers={allMembers} />}
       {tab === "faith" && <StatementOfFaith onBack={() => setTab("more")} />}
       {tab === "salvation" && <PlanOfSalvation onBack={() => setTab("more")} profile={profile} />}
@@ -3871,7 +3872,7 @@ export default function App() {
             <div style={{ marginBottom: 24 }}>
               <p style={{ ...S.eyebrow, marginBottom: 12 }}>Navigation</p>
               {[{ id: "forge", label: "The Forge 🔥", icon: "🔥" }, { id: "media", label: "Media", icon: "📺" }, { id: "privategroups", label: "Private Groups", icon: "🔒" }, { id: "prayer", label: "Prayer", icon: "🙏" }, { id: "social", label: "Social", icon: "📱" }, { id: "share", label: "Share ESix10", icon: "📤" }, { id: "devotion", label: "Devotion", icon: "📖" }, { id: "messages", label: "Chat", icon: "💬" }, { id: "events", label: "Events", icon: "📅" }, { id: "members", label: "Members", icon: "👥" }, { id: "faith", label: "Statement of Faith", icon: "✝️" }, { id: "salvation", label: "Do You Know Him?", icon: "🙏" }, { id: "profile", label: "My Profile", icon: "👤" }].map(item => (
-                <div key={item.id} onClick={() => setTab(item.id)}
+                <div key={item.id} onClick={() => { if (item.id === "share") { setShowShare(true); } else { setTab(item.id); } }}
                   style={{ padding: "10px 12px", borderRadius: 4, cursor: "pointer", marginBottom: 2, background: tab === item.id ? "rgba(255,102,0,0.1)" : "transparent", color: tab === item.id ? "#FF6600" : "#888", fontSize: 13, display: "flex", alignItems: "center", gap: 8 }}>
                   <span>{item.icon}</span> {item.label}
                 </div>
