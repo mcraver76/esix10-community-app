@@ -2128,9 +2128,9 @@ function ForgeWOD({ profile }) {
                 {wod.difficulty && <span style={{ ...S.badge, background: `${diffColor[wod.difficulty]}20`, color: diffColor[wod.difficulty] }}>{'●'.repeat(wod.difficulty)} {diffLabel[wod.difficulty]}</span>}
               </div>
             </div>
-            {wod.warmup && <div style={{ marginBottom: 16 }}><span style={S.eyebrow}>Warm Up</span><p style={{ color: '#AAAAAA', fontSize: 14, lineHeight: 1.8, whiteSpace: 'pre-line' }}>{wod.warmup}</p></div>}
+            {wod.warmup && <div style={{ marginBottom: 16 }}><span style={S.eyebrow}>Warm Up</span><p style={{ color: '#CCCCCC', fontSize: 15, lineHeight: 1.8, whiteSpace: 'pre-line' }}>{wod.warmup}</p></div>}
             {wod.main_work && <div style={{ background: 'rgba(255,102,0,0.05)', border: '1px solid rgba(255,102,0,0.15)', borderRadius: 4, padding: '16px 20px', marginBottom: 16 }}><span style={S.eyebrow}>Main Work</span><p style={{ color: '#fff', fontSize: 15, lineHeight: 2, whiteSpace: 'pre-line' }}>{wod.main_work}</p></div>}
-            {wod.cooldown && <div style={{ marginBottom: 16 }}><span style={S.eyebrow}>Cool Down</span><p style={{ color: '#AAAAAA', fontSize: 14, lineHeight: 1.8, whiteSpace: 'pre-line' }}>{wod.cooldown}</p></div>}
+            {wod.cooldown && <div style={{ marginBottom: 16 }}><span style={S.eyebrow}>Cool Down</span><p style={{ color: '#CCCCCC', fontSize: 15, lineHeight: 1.8, whiteSpace: 'pre-line' }}>{wod.cooldown}</p></div>}
             {wod.coaching_notes && <div style={{ background: 'rgba(192,154,47,0.06)', border: '1px solid rgba(192,154,47,0.15)', borderRadius: 4, padding: '12px 16px', marginBottom: 20 }}><span style={{ ...S.eyebrow, color: '#C09A2F' }}>Coaching Notes</span><p style={{ color: '#AAAAAA', fontSize: 13, lineHeight: 1.8 }}>{wod.coaching_notes}</p></div>}
             <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 16 }}>
               <span>✅</span><span style={{ color: '#888', fontSize: 14 }}><strong style={{ color: '#fff' }}>{completionCount}</strong> completed today</span>
@@ -2318,7 +2318,7 @@ function VideoPlayer({ video, onClose }) {
               allowFullScreen
             />
           </div>
-          {video.description && <p style={{ color: '#AAAAAA', fontSize: 14, lineHeight: 1.8, marginTop: 16 }}>{video.description}</p>}
+          {video.description && <p style={{ color: '#CCCCCC', fontSize: 15, lineHeight: 1.8, marginTop: 16 }}>{video.description}</p>}
         </div>
       </div>
     </div>
@@ -3563,7 +3563,7 @@ export default function App() {
           <div style={{ position: "fixed", bottom: 0, left: 0, right: 0, height: 72, background: "rgba(13,17,23,0.99)", borderTop: "1px solid rgba(255,255,255,0.06)", display: "flex", zIndex: 100 }}>
             {NAV_ITEMS.map(item => (
               <div key={item.id} onClick={() => setTab(item.id)}
-                style={{ flex: 1, display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", gap: 2, cursor: "pointer", color: (tab === item.id || (item.id === "more" && MORE_ITEMS.some(m => m.id === tab))) ? "#FF6600" : "#555", fontSize: 9, letterSpacing: "0.05em", textTransform: "uppercase" }}>
+                style={{ flex: 1, display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", gap: 2, cursor: "pointer", color: (tab === item.id || (item.id === "more" && MORE_ITEMS.some(m => m.id === tab))) ? "#FF6600" : "#555", fontSize: 10, letterSpacing: "0.05em", textTransform: "uppercase" }}>
                 <span style={{ fontSize: 24 }}>{item.icon}</span>
                 <span>{item.label}</span>
               </div>
