@@ -1,5 +1,4 @@
 import React, { useState, useEffect, useRef } from "react";
-import { Player } from "@lottiefiles/react-lottie-player";
 import { createClient } from "@supabase/supabase-js";
 
 // Mobile detection hook
@@ -58,16 +57,6 @@ const displayName = (profile) => {
 };
 
 // Preset ESix10 avatars
-// Lottie animation URLs
-const LOTTIE = {
-  fire: "https://assets9.lottiefiles.com/packages/lf20_ud6D7H.json",
-  confetti: "https://assets9.lottiefiles.com/packages/lf20_u4yrau84.json",
-  cross: "https://assets4.lottiefiles.com/packages/lf20_hy4txm7l.json",
-  shield: "https://assets3.lottiefiles.com/packages/lf20_vvxx0ego.json",
-  pray: "https://assets9.lottiefiles.com/packages/lf20_ypqmjy3t.json",
-  celebrate: "https://assets5.lottiefiles.com/packages/lf20_jR229r.json",
-};
-
 // Level system
 const LEVELS = [
   { name: "Recruit", min: 0, max: 49, icon: "🛡️", color: "#888" },
@@ -1356,7 +1345,7 @@ function PrayerRequests({ profile }) {
       <div style={{ marginTop: 20 }}>
         {prayers.length === 0 && (
           <div style={{ textAlign: "center", padding: 40 }}>
-            <Player autoplay loop src={LOTTIE.pray} style={{ width: 100, height: 100, margin: "0 auto 16px" }} />
+  <div style={{ fontSize: 64, marginBottom: 16, animation: "fadeUp 1s ease" }}>🙏</div>
             <p style={{ fontFamily: "'Cinzel', serif", fontSize: 18, color: "#fff", marginBottom: 8 }}>No prayer requests yet.</p>
             <p style={S.muted}>Be the first to share. This community stands with you.</p>
           </div>
@@ -1997,7 +1986,7 @@ function TheForge({ profile }) {
             <span style={{ background: "rgba(255,102,0,0.1)", border: "1px solid rgba(255,102,0,0.2)", borderRadius: 20, padding: "4px 12px", fontSize: 11, color: "#FF6600", letterSpacing: "0.1em" }}>🔓 Beta — Full Access Free</span>
           </div>
         </div>
-        <Player autoplay loop src={LOTTIE.fire} style={{ width: 80, height: 80, flexShrink: 0 }} />
+        <div style={{ width: 80, height: 80, flexShrink: 0, display: "flex", alignItems: "center", justifyContent: "center", fontSize: 56, animation: "pulse 1.5s infinite" }}>🔥</div>
       </div>
       <div className="forge-tab-bar">
         {FORGE_TABS.map(t => (
