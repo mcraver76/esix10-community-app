@@ -1441,7 +1441,7 @@ function Messages({ profile, members, onRead }) {
     supabase.from("messages").select("room_id, body").like("room_id", "group_custom_%").order("created_at", { ascending: false }).then(({ data }) => {
       if (!data) return;
       const roomMap = {};
-      data.forEach(m => { if (!roomMap[m.room_id]) { const n = m.body?.match(/[“”"\u0022]([^“”"\u0022]+)[“”"\u0022]/) || m.body?.match(/📢 (.+?) —/); roomMap[m.room_id] = { id: m.room_id, label: n ? n[1] : "Group Chat", icon: "👥", type: "custom_group" }; } });
+      data.forEach(m => { if (!roomMap[m.room_id]) { const gLabel = m.body && m.body.includes("[GROUP:") ? m.body.split("[GROUP:")[1].split("]")[0] : null; roomMap[m.room_id] = { id: m.room_id, label: gLabel || "Group Chat", icon: "👥", type: "custom_group" }; } });
       setCustomRooms(Object.values(roomMap));
     });
   }, []);
@@ -1588,7 +1588,7 @@ function Messages({ profile, members, onRead }) {
                 const { data: newRooms } = await supabase.from("messages").select("room_id, body").like("room_id", "group_custom_%").order("created_at", { ascending: false });
                 if (newRooms) {
                   const roomMap = {};
-                  newRooms.forEach(m => { if (!roomMap[m.room_id]) { const n = m.body?.match(/[“”"\u0022]([^“”"\u0022]+)[“”"\u0022]/) || m.body?.match(/📢 (.+?) —/); roomMap[m.room_id] = { id: m.room_id, label: n ? n[1] : "Group Chat", icon: "👥", type: "custom_group" }; } });
+      data.forEach(m => { if (!roomMap[m.room_id]) { const gLabel = m.body && m.body.includes("[GROUP:") ? m.body.split("[GROUP:")[1].split("]")[0] : null; roomMap[m.room_id] = { id: m.room_id, label: gLabel || "Group Chat", icon: "👥", type: "custom_group" }; } });
                   setCustomRooms(Object.values(roomMap));
                 }
                 isMobileChat ? selectRoomMobile(roomId) : selectRoom(roomId);
