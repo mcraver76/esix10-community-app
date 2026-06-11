@@ -1608,7 +1608,7 @@ function ForgeWalk({ profile }) {
   const [todayWalk, setTodayWalk] = useState(null);
   const [streak, setStreak] = useState(0);
   const [totalToday, setTotalToday] = useState(0);
-  const [form, setForm] = useState({ distance_miles: '', duration_minutes: '', notes: '' });
+  const [form, setForm] = useState({ distance_miles: '', duration_minutes: '', notes: '', shareToFeed: true });
   const [logging, setLogging] = useState(false);
   const today = new Date(new Date().getTime() - new Date().getTimezoneOffset() * 60000).toISOString().split('T')[0];
 
@@ -1634,6 +1634,13 @@ function ForgeWalk({ profile }) {
   async function logWalk() {
     setLogging(true);
     await supabase.from('forge_walks').insert({ user_id: profile.id, date: today, distance_miles: form.distance_miles ? parseFloat(form.distance_miles) : null, duration_minutes: form.duration_minutes ? parseInt(form.duration_minutes) : null, notes: form.notes || null });
+    // Share to feed if checked
+    if (form.shareToFeed) {
+      const name = profile.username ? `@${profile.username}` : formatName(profile.full_name);
+      const details = [form.distance_miles && `${form.distance_miles} mi`, form.duration_minutes && `${form.duration_minutes} min`].filter(Boolean).join(' · ');
+      const msg = `🚶 ${name} logged a walk today${details ? ` — ${details}` : ''}${form.notes ? ` · "${form.notes}"` : ''}`;
+      await supabase.from('posts').insert({ user_id: profile.id, group_id: profile.group_id, body: msg, reactions: {} });
+    }
     setLogging(false);
     // Check for streak milestone and celebrate
     const newStreak = streak + 1;
@@ -1681,9 +1688,13 @@ function ForgeWalk({ profile }) {
             <div><label style={S.label}>Distance (miles)</label><input style={S.input} type="number" step="0.1" placeholder="1.5" value={form.distance_miles} onChange={e => setForm({...form, distance_miles: e.target.value})} /></div>
             <div><label style={S.label}>Duration (minutes)</label><input style={S.input} type="number" placeholder="30" value={form.duration_minutes} onChange={e => setForm({...form, duration_minutes: e.target.value})} /></div>
           </div>
-          <div style={{ marginBottom: 20 }}>
+          <div style={{ marginBottom: 16 }}>
             <label style={S.label}>Notes (optional)</label>
             <input style={S.input} placeholder="Where did you walk? How did you feel?" value={form.notes} onChange={e => setForm({...form, notes: e.target.value})} />
+          </div>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 20, background: 'rgba(255,102,0,0.05)', border: '1px solid rgba(255,102,0,0.15)', borderRadius: 8, padding: '12px 16px' }}>
+            <input type="checkbox" checked={form.shareToFeed} onChange={e => setForm({...form, shareToFeed: e.target.checked})} style={{ accentColor: '#FF6600', width: 16, height: 16 }} />
+            <label style={{ color: '#AAAAAA', fontSize: 13 }}>Share this walk to the group feed</label>
           </div>
           <button style={{ ...S.btn, width: '100%', padding: 16 }} onClick={logWalk} disabled={logging}>{logging ? 'Logging...' : '✓ I Walked Today'}</button>
         </div>
@@ -1699,6 +1710,7 @@ function ForgeChallenge({ profile }) {
   const [completionCount, setCompletionCount] = useState(0);
   const [completions, setCompletions] = useState([]);
   const [submitting, setSubmitting] = useState(false);
+  const [shareChallenge, setShareChallenge] = useState(true);
   const [showForm, setShowForm] = useState(false);
   const [form, setForm] = useState({ title: '', description: '', category: 'Scripture', scheduled_date: '' });
   const [queue, setQueue] = useState([]);
@@ -1729,6 +1741,11 @@ function ForgeChallenge({ profile }) {
     if (completed || !challenge) return;
     setSubmitting(true);
     await supabase.from('forge_challenge_completions').insert({ user_id: profile.id, challenge_id: challenge.id, note: note.trim() || null });
+    if (shareChallenge) {
+      const name = profile.username ? `@${profile.username}` : formatName(profile.full_name);
+      const msg = `⚡ ${name} completed today's challenge — "${challenge.title}"${note.trim() ? ` · "${note.trim()}"` : ''}`;
+      await supabase.from('posts').insert({ user_id: profile.id, group_id: profile.group_id, body: msg, reactions: {} });
+    }
     setCompleted(true); setSubmitting(false); setNote(''); loadChallenge();
   }
 
@@ -1824,6 +1841,10 @@ function ForgeChallenge({ profile }) {
             {!completed ? (
               <div>
                 <div style={{ marginBottom: 12 }}><label style={S.label}>Note (optional)</label><input style={S.input} placeholder="How did it go?" value={note} onChange={e => setNote(e.target.value)} /></div>
+                <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 12, background: 'rgba(255,102,0,0.05)', border: '1px solid rgba(255,102,0,0.15)', borderRadius: 8, padding: '10px 14px' }}>
+                  <input type="checkbox" checked={shareChallenge} onChange={e => setShareChallenge(e.target.checked)} style={{ accentColor: '#FF6600', width: 16, height: 16 }} />
+                  <label style={{ color: '#AAAAAA', fontSize: 13 }}>Share completion to the group feed</label>
+                </div>
                 <button className={`complete-btn`} onClick={complete} disabled={submitting}>{submitting ? 'Marking...' : '✓ Mark Complete'}</button>
               </div>
             ) : (
@@ -1852,6 +1873,7 @@ function ForgeWOD({ profile }) {
   const [result, setResult] = useState('');
   const [completionCount, setCompletionCount] = useState(0);
   const [submitting, setSubmitting] = useState(false);
+  const [shareWOD, setShareWOD] = useState(true);
   const [showForm, setShowForm] = useState(false);
   const [form, setForm] = useState({ title: '', warmup: '', main_work: '', cooldown: '', coaching_notes: '', estimated_minutes: '', difficulty: 3, scheduled_date: '' });
   const [queue, setQueue] = useState([]);
@@ -1881,6 +1903,11 @@ function ForgeWOD({ profile }) {
     if (completed || !wod) return;
     setSubmitting(true);
     await supabase.from('forge_wod_completions').insert({ user_id: profile.id, wod_id: wod.id, result: result.trim() || null });
+    if (shareWOD) {
+      const name = profile.username ? `@${profile.username}` : formatName(profile.full_name);
+      const msg = `💪 ${name} crushed today's WOD — "${wod.title}"${result.trim() ? ` · ${result.trim()}` : ''}`;
+      await supabase.from('posts').insert({ user_id: profile.id, group_id: profile.group_id, body: msg, reactions: {} });
+    }
     setCompleted(true); setSubmitting(false); loadWOD();
   }
 
@@ -1987,6 +2014,10 @@ function ForgeWOD({ profile }) {
             {!completed ? (
               <div>
                 <div style={{ marginBottom: 12 }}><label style={S.label}>Log Result (optional)</label><input style={S.input} placeholder="Time, rounds, notes" value={result} onChange={e => setResult(e.target.value)} /></div>
+                <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 12, background: 'rgba(255,102,0,0.05)', border: '1px solid rgba(255,102,0,0.15)', borderRadius: 8, padding: '10px 14px' }}>
+                  <input type="checkbox" checked={shareWOD} onChange={e => setShareWOD(e.target.checked)} style={{ accentColor: '#FF6600', width: 16, height: 16 }} />
+                  <label style={{ color: '#AAAAAA', fontSize: 13 }}>Share completion to the group feed</label>
+                </div>
                 <button style={{ ...S.btn, width: '100%', padding: 16 }} onClick={completeWOD} disabled={submitting}>{submitting ? 'Logging...' : '✓ WOD Complete'}</button>
               </div>
             ) : (
