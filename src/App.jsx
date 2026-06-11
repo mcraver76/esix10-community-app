@@ -76,7 +76,7 @@ const GLOBAL_CSS = `
 // ─── Styles ───────────────────────────────────────────────────────────────────
 const S = {
   app: { minHeight: "100vh", background: "#0d1117", color: "#fff", fontFamily: "'Lato', sans-serif", fontSize: 15 },
-  nav: { position: "fixed", top: 0, left: 0, right: 0, height: 80, background: "rgba(13,17,23,0.99)", borderBottom: "1px solid rgba(255,102,0,0.2)", display: "flex", alignItems: "center", justifyContent: "space-between", padding: "0 16px", zIndex: 100 },
+  nav: { position: "fixed", top: 0, left: 0, right: 0, height: 96, background: "rgba(13,17,23,0.99)", borderBottom: "1px solid rgba(255,102,0,0.2)", display: "flex", alignItems: "center", justifyContent: "space-between", padding: "0 16px", zIndex: 100 },
   navLogo: { fontFamily: "'Cinzel', serif", fontSize: 16, fontWeight: 600, color: "#fff", letterSpacing: "0.08em" },
   navLogoSub: { color: "#FF6600", fontSize: 9, display: "block", letterSpacing: "0.35em", marginTop: -2 },
   navRight: { display: "flex", alignItems: "center", gap: 16 },
@@ -281,7 +281,7 @@ function PendingScreen({ profile, onSignOut }) {
   return (
     <div style={{ minHeight: "100vh", background: "#0a0a0a", display: "flex", alignItems: "center", justifyContent: "center", padding: 24 }}>
       <div style={{ maxWidth: 480, width: "100%", textAlign: "center" }}>
-        <img src="https://esix10.com/wp-content/uploads/2026/06/esix10logo.png" alt="ESix10" style={{ height: 112, width: "auto", objectFit: "contain", marginBottom: 8 }} />
+        <img src="https://esix10.com/wp-content/uploads/2026/06/esix10logo.png" alt="ESix10" style={{ height: 134, width: "auto", objectFit: "contain", marginBottom: 8 }} />
         <span style={{ color: "#FF6600", fontSize: 10, display: "block", letterSpacing: "0.35em", textTransform: "uppercase", marginBottom: 32 }}>Community</span>
         <div style={{ ...S.card, textAlign: "left" }}>
           <div style={{ textAlign: "center", marginBottom: 24 }}>
@@ -349,7 +349,7 @@ function AuthScreen({ onAuth }) {
     <div style={{ minHeight: "100vh", background: "#0a0a0a", display: "flex", alignItems: "center", justifyContent: "center", padding: 24 }}>
       <div style={{ width: "100%", maxWidth: 420 }}>
         <div style={{ textAlign: "center", marginBottom: 40 }}>
-          <img src="https://esix10.com/wp-content/uploads/2026/06/esix10logo.png" alt="ESix10" style={{ height: 120, width: "auto", objectFit: "contain", marginBottom: 8 }} />
+          <img src="https://esix10.com/wp-content/uploads/2026/06/esix10logo.png" alt="ESix10" style={{ height: 144, width: "auto", objectFit: "contain", marginBottom: 8 }} />
           <span style={{ color: "#FF6600", fontSize: 10, display: "block", letterSpacing: "0.35em", textTransform: "uppercase" }}>Community</span>
           <div style={{ width: 40, height: 2, background: "#FF6600", margin: "16px auto" }} />
           <p style={S.grey}>Prepared. Equipped. Unshaken.</p>
@@ -2116,8 +2116,8 @@ export default function App() {
       <style>{GLOBAL_CSS}</style>
 
       {/* NAV */}
-      <nav style={{ ...S.nav, height: isMobile ? 80 : 96, padding: isMobile ? "0 12px" : "0 32px" }}>
-        <img src="https://esix10.com/wp-content/uploads/2026/06/esix10logo.png" alt="ESix10" style={{ height: isMobile ? 72 : 88, width: "auto", objectFit: "contain" }} />
+      <nav style={{ ...S.nav, height: isMobile ? 96 : 110, padding: isMobile ? "0 12px" : "0 32px" }}>
+        <img src="https://esix10.com/wp-content/uploads/2026/06/esix10logo.png" alt="ESix10" style={{ height: isMobile ? 86 : 106, width: "auto", objectFit: "contain" }} />
         <div style={S.navRight}>
           <span style={{ ...S.badge, fontSize: 10 }}>{myGroup?.icon} {myGroup?.label}</span>
           {isAdmin && !isMobile && <span style={{ ...S.badge, background: "rgba(255,102,0,0.3)", color: "#FF6600" }}>Admin</span>}
@@ -2128,7 +2128,7 @@ export default function App() {
       </nav>
 
       {isMobile ? (
-        <div style={{ paddingTop: 96 }}>
+        <div style={{ paddingTop: 108 }}>
           {CONTENT}
           {/* MORE OVERLAY */}
           {tab === "more" && (
