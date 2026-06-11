@@ -933,9 +933,9 @@ function Members({ profile }) {
   useEffect(() => { loadMembers(); }, []);
 
   async function loadMembers() {
-    let q = supabase.from("profiles").select("*").eq("status", "approved").order("state", { ascending: true });
+    let q = supabase.from("profiles").select("*").in("status", ["approved", "pending"]).order("state", { ascending: true });
     if (profile.role !== "admin") {
-      q = q.eq("group_id", profile.group_id);
+      q = q.eq("group_id", profile.group_id).eq("status", "approved");
     }
     const { data } = await q;
     setMembers(data || []);
@@ -1042,9 +1042,63 @@ function Members({ profile }) {
                 {f === "all" ? "All" : GROUPS.find(g => g.id === f)?.label}
               </button>
             ))}
+            <button onClick={() => setShowFlags(!showFlags)} style={{ ...S.btnSm, background: flags.length > 0 ? "#ff4444" : "rgba(255,255,255,0.1)", color: "#fff" }}>
+              🚩 {flags.length > 0 ? flags.length : ""} Flagged
+            </button>
+            <button onClick={() => setShowRemoved(!showRemoved)} style={{ ...S.btnSm, background: removed.length > 0 ? "rgba(136,136,136,0.3)" : "rgba(255,255,255,0.1)", color: "#fff" }}>
+              🗂 {removed.length > 0 ? removed.length : ""} Removed
+            </button>
           </div>
         )}
       </div>
+
+      {/* FLAGGED POSTS */}
+      {showFlags && profile.role === "admin" && (
+        <div style={{ ...S.card, marginBottom: 16, borderTop: "3px solid #ff4444" }}>
+          <span style={{ ...S.eyebrow, color: "#ff4444" }}>Flagged Posts</span>
+          {flags.length === 0 && <p style={S.muted}>No flagged posts.</p>}
+          {flags.map(f => (
+            <div key={f.id} style={{ padding: "12px 0", borderBottom: "1px solid rgba(255,255,255,0.05)" }}>
+              <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", gap: 12, flexWrap: "wrap" }}>
+                <div style={{ flex: 1 }}>
+                  <div style={{ color: "#888", fontSize: 12, marginBottom: 4 }}>Flagged by {f.profiles?.username ? `@${f.profiles.username}` : formatName(f.profiles?.full_name)} · Reason: {f.reason}</div>
+                  <div style={{ background: "rgba(255,255,255,0.03)", border: "1px solid rgba(255,255,255,0.06)", borderRadius: 6, padding: "8px 12px" }}>
+                    <p style={{ color: "#CCCCCC", fontSize: 13 }}>{f.posts?.body}</p>
+                  </div>
+                </div>
+                <div style={{ display: "flex", gap: 8, flexShrink: 0 }}>
+                  <button style={{ ...S.btnSm, background: "#51cf66" }} onClick={() => dismissFlag(f.id)}>Dismiss</button>
+                  <button style={S.btnDanger} onClick={() => removeFlaggedPost(f.id, f.post_id)}>Remove</button>
+                </div>
+              </div>
+            </div>
+          ))}
+        </div>
+      )}
+
+      {/* REMOVED / DENIED */}
+      {showRemoved && profile.role === "admin" && (
+        <div style={{ ...S.card, marginBottom: 16, borderTop: "3px solid #888" }}>
+          <span style={{ ...S.eyebrow, color: "#888" }}>Removed & Denied Members</span>
+          {removed.length === 0 && <p style={S.muted}>No removed or denied members.</p>}
+          {removed.map(m => (
+            <div key={m.id} style={{ display: "flex", justifyContent: "space-between", alignItems: "center", padding: "12px 0", borderBottom: "1px solid rgba(255,255,255,0.05)", flexWrap: "wrap", gap: 8 }}>
+              <div>
+                <div style={{ color: "#fff", fontSize: 14 }}>{m.full_name || m.email}</div>
+                <div style={{ color: "#555", fontSize: 12 }}>
+                  {m.email} · {GROUPS.find(g => g.id === m.group_id)?.label || m.group_id} · 
+                  <span style={{ color: m.status === "removed" ? "#ff4444" : "#888", marginLeft: 4 }}>{m.status}</span>
+                  {m.updated_at && ` · ${new Date(m.updated_at).toLocaleDateString()}`}
+                </div>
+              </div>
+              <div style={{ display: "flex", gap: 8 }}>
+                <button style={{ ...S.btnSm, background: "#51cf66" }} onClick={() => restoreMember(m.id)}>Restore</button>
+                <button style={S.btnDanger} onClick={() => permanentlyDelete(m.id)}>Delete</button>
+              </div>
+            </div>
+          ))}
+        </div>
+      )}
 
       <div style={{ display: "flex", gap: 12, marginTop: 16, marginBottom: 4, alignItems: "center" }}>
         <div style={{ flex: 1 }}>
@@ -1614,7 +1668,7 @@ function ForgeWalk({ profile }) {
           <p style={{ color: '#888', fontSize: 14 }}>{todayWalk.distance_miles && `${todayWalk.distance_miles} miles`}{todayWalk.distance_miles && todayWalk.duration_minutes && ' · '}{todayWalk.duration_minutes && `${todayWalk.duration_minutes} minutes`}</p>
           {todayWalk.notes && <p style={{ color: '#AAAAAA', fontSize: 14, marginTop: 8, fontStyle: 'italic' }}>"{todayWalk.notes}"</p>}
           <div style={{ display: "flex", alignItems: "center", justifyContent: "center", gap: 8, marginTop: 16 }}>
-          <Player autoplay loop src={LOTTIE.fire} style={{ width: 32, height: 32 }} />
+          <span style={{ fontSize: 22, animation: "pulse 1.5s infinite", display: "inline-block" }}>🔥</span>
           <p style={{ color: '#FF6600', fontSize: 12, letterSpacing: '0.1em' }}>{streak} day streak — keep it going tomorrow</p>
         </div>
         </div>
