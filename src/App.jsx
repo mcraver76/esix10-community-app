@@ -1275,7 +1275,7 @@ function Members({ profile }) {
 }
 
 // ─── Messaging ────────────────────────────────────────────────────────────────
-function Messages({ profile, members }) {
+function Messages({ profile, members, onRead }) {
   const defaultRoom = `group_${profile.group_id}`;
   const [activeRoom, setActiveRoom] = useState(
     localStorage.getItem(`esix10_room_${profile.id}`) || defaultRoom
@@ -1316,6 +1316,11 @@ function Messages({ profile, members }) {
     setActiveRoom(roomId);
     localStorage.setItem(`esix10_room_${profile.id}`, roomId);
     if (window.innerWidth <= 768) setShowRoomList(false);
+    // Mark as read
+    const lastRead = JSON.parse(localStorage.getItem(`esix10_lastread_${profile.id}`) || "{}");
+    lastRead[roomId] = new Date().toISOString();
+    localStorage.setItem(`esix10_lastread_${profile.id}`, JSON.stringify(lastRead));
+    if (onRead) onRead();
   }
 
   useEffect(() => {
@@ -3646,6 +3651,7 @@ export default function App() {
   const [allMembers, setAllMembers] = useState([]);
   const [showWelcome, setShowWelcome] = useState(false);
   const [showShare, setShowShare] = useState(false);
+  const [unreadCount, setUnreadCount] = useState(0);
   const [showMore, setShowMore] = useState(false);
 
   useEffect(() => {
@@ -3705,6 +3711,8 @@ export default function App() {
           data.status = "approved";
         }
         setProfile(data);
+        // Check for unread messages
+        checkUnread(data.id);
         // Show welcome modal on first login
         const welcomeKey = `esix10_welcomed_${u.id}`;
         if (!localStorage.getItem(welcomeKey) && data.status === "approved" && data.group_id) {
@@ -3716,6 +3724,23 @@ export default function App() {
       setShowSetup(true);
     }
     setLoading(false);
+  }
+
+  async function checkUnread(userId) {
+    try {
+      const lastRead = JSON.parse(localStorage.getItem(`esix10_lastread_${userId}`) || "{}");
+      const { data: messages } = await supabase.from("messages").select("room_id, created_at").order("created_at", { ascending: false }).limit(100);
+      if (!messages) return;
+      let unread = 0;
+      const rooms = [...new Set(messages.map(m => m.room_id))];
+      rooms.forEach(roomId => {
+        const roomMessages = messages.filter(m => m.room_id === roomId);
+        const lastMsg = roomMessages[0];
+        const lastReadTime = lastRead[roomId] || "2000-01-01";
+        if (new Date(lastMsg.created_at) > new Date(lastReadTime)) unread++;
+      });
+      setUnreadCount(unread);
+    } catch(e) {}
   }
 
   async function signOut() {
@@ -3748,7 +3773,7 @@ export default function App() {
     { id: "feed", label: "Feed", icon: "📋" },
     { id: "forge", label: "Forge", icon: "🔥" },
     { id: "prayer", label: "Prayer", icon: "🙏" },
-    { id: "messages", label: "Chat", icon: "💬" },
+    { id: "messages", label: unreadCount > 0 ? `Chat (${unreadCount})` : "Chat", icon: "💬" },
     { id: "more", label: "More", icon: "☰" },
   ];
 
@@ -3786,7 +3811,7 @@ export default function App() {
       {tab === "prayer" && <PrayerRequests profile={profile} />}
       {tab === "devotion" && <Devotion profile={profile} />}
       {tab === "events" && <Events profile={profile} />}
-      {tab === "messages" && <Messages profile={profile} members={allMembers} />}
+      {tab === "messages" && <Messages profile={profile} members={allMembers} onRead={() => setUnreadCount(0)} />}
       {tab === "members" && <Members profile={profile} />}
       {tab === "media" && <Media profile={profile} />}
       {tab === "social" && <SocialFeed profile={profile} />}
@@ -3874,11 +3899,18 @@ export default function App() {
                       background: isActive ? "linear-gradient(135deg, rgba(255,102,0,0.2), rgba(192,154,47,0.1))" : "transparent",
                       transition: "all 0.2s ease"
                     }}>
-                    <span style={{ 
-                      fontSize: 22, 
-                      filter: isActive ? "drop-shadow(0 0 6px rgba(255,102,0,0.6))" : "none",
-                      transition: "filter 0.2s"
-                    }}>{item.icon}</span>
+                    <div style={{ position: "relative", display: "inline-block" }}>
+                      <span style={{ 
+                        fontSize: 22, 
+                        filter: isActive ? "drop-shadow(0 0 6px rgba(255,102,0,0.6))" : "none",
+                        transition: "filter 0.2s"
+                      }}>{item.icon}</span>
+                      {item.id === "messages" && unreadCount > 0 && (
+                        <span style={{ position: "absolute", top: -4, right: -6, background: "#ff4444", color: "#fff", borderRadius: "50%", width: 16, height: 16, fontSize: 9, display: "flex", alignItems: "center", justifyContent: "center", fontWeight: 700, border: "2px solid rgba(10,12,18,1)" }}>
+                          {unreadCount > 9 ? "9+" : unreadCount}
+                        </span>
+                      )}
+                    </div>
                     <span style={{ 
                       fontSize: 9, 
                       letterSpacing: "0.08em", 
@@ -3908,7 +3940,7 @@ export default function App() {
             </div>
             <div style={{ marginBottom: 24 }}>
               <p style={{ ...S.eyebrow, marginBottom: 12 }}>Navigation</p>
-              {[{ id: "forge", label: "The Forge 🔥", icon: "🔥" }, { id: "media", label: "Media", icon: "📺" }, { id: "privategroups", label: "Private Groups", icon: "🔒" }, { id: "prayer", label: "Prayer", icon: "🙏" }, { id: "social", label: "Social", icon: "📱" }, { id: "share", label: "Share ESix10", icon: "📤" }, { id: "devotion", label: "Devotion", icon: "📖" }, { id: "messages", label: "Chat", icon: "💬" }, { id: "events", label: "Events", icon: "📅" }, { id: "members", label: "Members", icon: "👥" }, { id: "faith", label: "Statement of Faith", icon: "✝️" }, { id: "salvation", label: "Do You Know Him?", icon: "🙏" }, { id: "profile", label: "My Profile", icon: "👤" }].map(item => (
+              {[{ id: "forge", label: "The Forge 🔥", icon: "🔥" }, { id: "media", label: "Media", icon: "📺" }, { id: "privategroups", label: "Private Groups", icon: "🔒" }, { id: "prayer", label: "Prayer", icon: "🙏" }, { id: "social", label: "Social", icon: "📱" }, { id: "share", label: "Share ESix10", icon: "📤" }, { id: "devotion", label: "Devotion", icon: "📖" }, { id: "messages", label: unreadCount > 0 ? `Chat (${unreadCount})` : "Chat", icon: "💬" }, { id: "events", label: "Events", icon: "📅" }, { id: "members", label: "Members", icon: "👥" }, { id: "faith", label: "Statement of Faith", icon: "✝️" }, { id: "salvation", label: "Do You Know Him?", icon: "🙏" }, { id: "profile", label: "My Profile", icon: "👤" }].map(item => (
                 <div key={item.id} onClick={() => { if (item.id === "share") { setShowShare(true); } else { setTab(item.id); } }}
                   style={{ padding: "10px 12px", borderRadius: 4, cursor: "pointer", marginBottom: 2, background: tab === item.id ? "rgba(255,102,0,0.1)" : "transparent", color: tab === item.id ? "#FF6600" : "#888", fontSize: 13, display: "flex", alignItems: "center", gap: 8 }}>
                   <span>{item.icon}</span> {item.label}
