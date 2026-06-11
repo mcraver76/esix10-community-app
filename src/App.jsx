@@ -57,6 +57,29 @@ const displayName = (profile) => {
 };
 
 // Preset ESix10 avatars
+// Level system
+const LEVELS = [
+  { name: "Recruit", min: 0, max: 49, icon: "🛡️", color: "#888" },
+  { name: "Soldier", min: 50, max: 149, icon: "⚔️", color: "#51cf66" },
+  { name: "Warrior", min: 150, max: 349, icon: "🔥", color: "#FF6600" },
+  { name: "Guardian", min: 350, max: 699, icon: "🦁", color: "#fcc419" },
+  { name: "Iron", min: 700, max: 99999, icon: "👑", color: "#C09A2F" },
+];
+
+function getLevel(xp = 0) {
+  return LEVELS.find(l => xp >= l.min && xp <= l.max) || LEVELS[0];
+}
+
+function getXP(profile) {
+  // Simple XP calculation from profile data
+  const posts = profile.post_count || 0;
+  const walks = profile.walk_count || 0;
+  const challenges = profile.challenge_count || 0;
+  const wods = profile.wod_count || 0;
+  const days = Math.floor((new Date() - new Date(profile.created_at || Date.now())) / 86400000);
+  return (posts * 5) + (walks * 10) + (challenges * 8) + (wods * 12) + Math.min(days * 2, 100);
+}
+
 const PRESET_AVATARS = [
   { id: "shield", emoji: "🛡️", label: "Shield" },
   { id: "sword", emoji: "⚔️", label: "Sword" },
@@ -120,6 +143,16 @@ const GLOBAL_CSS = `
 .post-card:hover { border-color: rgba(255,102,0,0.2) !important; transition: border-color 0.2s; }
 .online-dot { width:8px; height:8px; border-radius:50%; background:#51cf66; display:inline-block; animation: pulse 2s infinite; }
 .verse-banner { background: linear-gradient(135deg, rgba(255,102,0,0.08) 0%, rgba(192,154,47,0.08) 100%); border: 1px solid rgba(255,102,0,0.2); border-radius:10px; padding:18px 20px; margin-bottom:20px; }
+.activity-item { animation: slideIn 0.3s ease forwards; }
+.level-badge { display: inline-flex; align-items: center; gap: 4px; border-radius: 20px; padding: 3px 10px; font-size: 11px; font-weight: 600; letter-spacing: 0.05em; }
+.xp-bar { height: 4px; border-radius: 2px; background: rgba(255,255,255,0.06); overflow: hidden; }
+.xp-fill { height: 100%; border-radius: 2px; background: linear-gradient(90deg, #FF6600, #C09A2F); transition: width 0.8s ease; }
+.forge-hero { background: linear-gradient(135deg, rgba(255,102,0,0.12) 0%, rgba(10,10,10,0.8) 60%); border: 1px solid rgba(255,102,0,0.2); border-radius: 12px; padding: 28px 24px; margin-bottom: 20px; position: relative; overflow: hidden; }
+.forge-hero::before { content: "🔥"; position: absolute; right: 20px; top: 50%; transform: translateY(-50%); font-size: 64px; opacity: 0.15; }
+.streak-fire { animation: pulse 1.5s infinite; display: inline-block; }
+@keyframes celebrate { 0%{transform:scale(1)} 50%{transform:scale(1.3)} 100%{transform:scale(1)} }
+.celebrate { animation: celebrate 0.5s ease; }
+.activity-ticker { background: rgba(255,102,0,0.04); border: 1px solid rgba(255,102,0,0.1); border-radius: 10px; padding: 12px 16px; margin-bottom: 16px; overflow: hidden; }
 `;
 
 // ─── Styles ───────────────────────────────────────────────────────────────────
@@ -531,6 +564,64 @@ function GroupSelect({ user, onSelect }) {
   );
 }
 
+
+// ─── Activity Ticker ──────────────────────────────────────────────────────────
+function ActivityTicker({ profile }) {
+  const [activities, setActivities] = useState([]);
+  const [idx, setIdx] = useState(0);
+
+  useEffect(() => { loadActivity(); }, []);
+  useEffect(() => {
+    if (activities.length === 0) return;
+    const timer = setInterval(() => setIdx(i => (i + 1) % activities.length), 4000);
+    return () => clearInterval(timer);
+  }, [activities]);
+
+  async function loadActivity() {
+    const items = [];
+    // Recent walks
+    const { data: walks } = await supabase.from("forge_walks").select("*, profiles(username, full_name)").eq("date", new Date().toISOString().split("T")[0]).order("created_at", { ascending: false }).limit(5);
+    (walks || []).forEach(w => {
+      const name = w.profiles?.username ? `@${w.profiles.username}` : formatName(w.profiles?.full_name);
+      items.push(`🚶 ${name} logged ${w.distance_miles ? w.distance_miles + " mi" : "a walk"} today`);
+    });
+    // Recent posts
+    const { data: posts } = await supabase.from("posts").select("*, profiles(username, full_name)").eq("group_id", profile.group_id).order("created_at", { ascending: false }).limit(3);
+    (posts || []).forEach(p => {
+      const name = p.profiles?.username ? `@${p.profiles.username}` : formatName(p.profiles?.full_name);
+      items.push(`📋 ${name} posted in ${profile.group_id}`);
+    });
+    // Recent challenge completions
+    const { data: challenges } = await supabase.from("forge_challenge_completions").select("*, profiles(username, full_name)").order("created_at", { ascending: false }).limit(5);
+    (challenges || []).forEach(c => {
+      const name = c.profiles?.username ? `@${c.profiles.username}` : formatName(c.profiles?.full_name);
+      items.push(`⚡ ${name} completed today's challenge`);
+    });
+    // Recent WOD completions
+    const { data: wods } = await supabase.from("forge_wod_completions").select("*, profiles(username, full_name)").order("created_at", { ascending: false }).limit(5);
+    (wods || []).forEach(w => {
+      const name = w.profiles?.username ? `@${w.profiles.username}` : formatName(w.profiles?.full_name);
+      items.push(`🏋️ ${name} crushed today's WOD`);
+    });
+    if (items.length === 0) items.push("🔥 Be the first to log activity today");
+    setActivities(items);
+  }
+
+  if (activities.length === 0) return null;
+
+  return (
+    <div className="activity-ticker">
+      <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
+        <span style={{ fontSize: 10, letterSpacing: "0.15em", textTransform: "uppercase", color: "#FF6600", flexShrink: 0 }}>Live</span>
+        <span style={{ width: 6, height: 6, borderRadius: "50%", background: "#51cf66", flexShrink: 0, animation: "pulse 1.5s infinite" }} />
+        <span style={{ color: "#CCCCCC", fontSize: 13, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }} className="activity-item">
+          {activities[idx]}
+        </span>
+      </div>
+    </div>
+  );
+}
+
 function Feed({ profile, activeGroup, isNewMember }) {
   const [posts, setPosts] = useState([]);
   const [body, setBody] = useState("");
@@ -603,6 +694,7 @@ function Feed({ profile, activeGroup, isNewMember }) {
         <h2 style={{ fontFamily: "'Cinzel', serif", fontSize: 22, fontWeight: 400, color: "#fff", marginBottom: 4 }}>{activeGroupData?.label || "Community"}</h2>
         <p style={{ color: "#FF6600", fontSize: 12, letterSpacing: "0.15em", textTransform: "uppercase", fontWeight: 700 }}>{activeGroupData?.subtitle || ""}</p>
       </div>
+      <ActivityTicker profile={profile} />
       {showWelcome && (
         <div style={{ background: "linear-gradient(135deg, rgba(255,102,0,0.15), rgba(192,154,47,0.1))", border: "1px solid rgba(255,102,0,0.3)", borderRadius: 6, padding: "20px 24px", marginBottom: 20, position: "relative" }}>
           <button onClick={() => setShowWelcome(false)} style={{ position: "absolute", top: 12, right: 16, background: "none", border: "none", color: "#666", cursor: "pointer", fontSize: 18 }}>x</button>
@@ -828,12 +920,18 @@ function Members({ profile }) {
   }, []);
 
   async function loadFlags() {
-    const { data } = await supabase
+    const { data: flagData } = await supabase
       .from("post_flags")
-      .select("*, posts(body, user_id, group_id), profiles!post_flags_flagged_by_fkey(username, full_name)")
+      .select("*, posts(body, user_id, group_id)")
       .eq("reviewed", false)
       .order("created_at", { ascending: false });
-    setFlags(data || []);
+    
+    // Fetch flaggers separately
+    const enrichedFlags = await Promise.all((flagData || []).map(async f => {
+      const { data: flagger } = await supabase.from("profiles").select("username, full_name").eq("id", f.flagged_by).maybeSingle();
+      return { ...f, profiles: flagger };
+    }));
+    setFlags(enrichedFlags);
   }
 
   async function dismissFlag(flagId) {
@@ -1381,7 +1479,19 @@ function ForgeWalk({ profile }) {
   async function logWalk() {
     setLogging(true);
     await supabase.from('forge_walks').insert({ user_id: profile.id, date: today, distance_miles: form.distance_miles ? parseFloat(form.distance_miles) : null, duration_minutes: form.duration_minutes ? parseInt(form.duration_minutes) : null, notes: form.notes || null });
-    setLogging(false); loadWalkData();
+    setLogging(false);
+    // Check for streak milestone and celebrate
+    const newStreak = streak + 1;
+    if ([7, 14, 30, 60, 100, 365].includes(newStreak)) {
+      const milestoneMsg = `🔥 Just hit a ${newStreak}-day walk streak! "${newStreak >= 30 ? "Iron sharpens iron." : "One day at a time."}" — Ephesians 6:10`;
+      await supabase.from("posts").insert({
+        user_id: profile.id,
+        group_id: profile.group_id,
+        body: milestoneMsg,
+        reactions: {}
+      });
+    }
+    loadWalkData();
   }
 
   return (
@@ -1792,8 +1902,20 @@ function ForgeLog({ profile }) {
   );
 }
 
+const FORGE_QUOTES = [
+  "Iron sharpens iron.",
+  "Prepared. Equipped. Unshaken.",
+  "The armor of God is put on daily.",
+  "A man who cannot walk a mile cannot protect his family.",
+  "Strength under control — not weakness.",
+  "Stand firm. The Lord fights for you.",
+  "Discipline is the highest form of self-respect.",
+  "Be watchful, stand firm in the faith, act like men, be strong.",
+];
+
 function TheForge({ profile }) {
   const [subTab, setSubTab] = useState('walk');
+  const todayQuote = FORGE_QUOTES[new Date().getDay() % FORGE_QUOTES.length];
   const FORGE_TABS = [
     { id: 'walk', label: 'Walk', icon: '🚶' },
     { id: 'challenge', label: 'Challenge', icon: '⚡' },
@@ -1803,11 +1925,13 @@ function TheForge({ profile }) {
   return (
     <div>
       <style>{FORGE_CSS}</style>
-      <div className="beta-banner">
-        <span style={{ fontSize: 20 }}>🔥</span>
-        <div>
-          <span style={{ fontFamily: "'Cinzel', serif", fontSize: 15, color: '#fff' }}>The Forge</span>
-          <span style={{ color: '#FF6600', fontSize: 11, marginLeft: 10, letterSpacing: '0.1em', textTransform: 'uppercase' }}>Beta — Full Access Free</span>
+      <div className="forge-hero">
+        <span style={{ ...S.eyebrow, marginBottom: 6 }}>The Forge</span>
+        <h2 style={{ fontFamily: "'Cinzel', serif", fontSize: 24, fontWeight: 400, color: "#fff", marginBottom: 8, lineHeight: 1.2 }}>Train. Pray. Prepare.</h2>
+        <p style={{ color: "#FF6600", fontSize: 13, fontStyle: "italic", letterSpacing: "0.05em" }}>"{todayQuote}"</p>
+        <div style={{ display: "flex", gap: 12, marginTop: 16, flexWrap: "wrap" }}>
+          <span style={{ background: "rgba(255,102,0,0.1)", border: "1px solid rgba(255,102,0,0.2)", borderRadius: 20, padding: "4px 12px", fontSize: 11, color: "#FF6600", letterSpacing: "0.1em" }}>🔓 Beta — Full Access Free</span>
+          <span style={{ background: "rgba(255,255,255,0.04)", border: "1px solid rgba(255,255,255,0.08)", borderRadius: 20, padding: "4px 12px", fontSize: 11, color: "#888" }}>Premium coming soon</span>
         </div>
       </div>
       <div className="forge-tab-bar">
@@ -2126,7 +2250,25 @@ function Profile({ profile, onUpdate, onSignOut }) {
     <div style={{ maxWidth: 600 }}>
       <h2 style={S.h2}>Your Profile</h2>
       <div style={S.divider} />
-      <div style={{ ...S.card, marginTop: 20 }}>
+      {(() => {
+        const xp = getXP(profile);
+        const lvl = getLevel(xp);
+        const nextLvl = LEVELS[LEVELS.indexOf(lvl) + 1];
+        const progress = nextLvl ? ((xp - lvl.min) / (nextLvl.min - lvl.min)) * 100 : 100;
+        return (
+          <div style={{ ...S.card, marginBottom: 16, marginTop: 20, background: `linear-gradient(135deg, ${lvl.color}15, rgba(22,27,34,0.98))`, border: `1px solid ${lvl.color}30` }}>
+            <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 12 }}>
+              <div>
+                <span className="level-badge" style={{ background: `${lvl.color}20`, color: lvl.color, border: `1px solid ${lvl.color}40`, fontSize: 13, padding: "4px 14px" }}>{lvl.icon} {lvl.name}</span>
+                <div style={{ color: "#888", fontSize: 12, marginTop: 6 }}>{xp} XP total{nextLvl ? ` · ${nextLvl.min - xp} XP to ${nextLvl.name}` : " · Max Level"}</div>
+              </div>
+              <Avatar profile={profile} size={56} />
+            </div>
+            <div className="xp-bar"><div className="xp-fill" style={{ width: `${progress}%` }} /></div>
+          </div>
+        );
+      })()}
+      <div style={{ ...S.card, marginTop: 0 }}>
 
         {/* AVATAR SECTION */}
         <div style={{ marginBottom: 24 }}>
@@ -2387,7 +2529,10 @@ export default function App() {
               : `${myGroup?.icon} ${myGroup?.label}`}
           </span>
           {isAdmin && !isMobile && <span style={{ ...S.badge, background: "rgba(255,102,0,0.3)", color: "#FF6600" }}>Admin</span>}
-          <Avatar profile={profile} size={36} onClick={() => setTab("profile")} />
+          <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+            {!isMobile && (() => { const lvl = getLevel(getXP(profile)); return <span className="level-badge" style={{ background: `${lvl.color}20`, color: lvl.color, border: `1px solid ${lvl.color}40`, fontSize: 10 }}>{lvl.icon} {lvl.name}</span>; })()}
+            <Avatar profile={profile} size={36} onClick={() => setTab("profile")} />
+          </div>
         </div>
       </nav>
 
