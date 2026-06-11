@@ -1656,8 +1656,8 @@ function Messages({ profile, members, onRead }) {
         <span style={{ fontFamily: "'Cinzel', serif", fontSize: 15, color: "#fff" }}>{currentRoom?.label}</span>
       </div>
       <div style={{ flex: 1, overflowY: "auto", padding: "12px 16px", display: "flex", flexDirection: "column", gap: 8 }}>
-        {messages.length === 0 && <div style={{ textAlign: "center", padding: 40 }}><p style={S.muted}>No messages yet. Start the conversation.</p></div>}
-        {messages.map(msg => {
+        {messages.filter(m => !m.body?.includes('[GROUP:')).length === 0 && <div style={{ textAlign: "center", padding: 40 }}><p style={S.muted}>No messages yet. Start the conversation.</p></div>}
+        {messages.filter(m => !m.body?.includes('[GROUP:')).map(msg => {
           const isOwn = msg.user_id === profile.id;
           const senderName = msg.sender_name || "Member";
           return (
