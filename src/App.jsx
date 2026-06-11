@@ -204,7 +204,7 @@ input:focus, textarea:focus, select:focus { outline: none; border-color: rgba(25
 // ─── Styles ───────────────────────────────────────────────────────────────────
 const S = {
   app: { minHeight: "100vh", background: "#0d1117", color: "#fff", fontFamily: "'Lato', sans-serif", fontSize: 15 },
-  nav: { position: "fixed", top: 0, left: 0, right: 0, height: 80, background: "linear-gradient(180deg, rgba(10,12,18,0.99) 0%, rgba(13,17,23,0.97) 100%)", borderBottom: "1px solid rgba(255,102,0,0.15)", display: "flex", alignItems: "center", justifyContent: "space-between", padding: "0 16px", zIndex: 100 },
+  nav: { position: "fixed", top: 0, left: 0, right: 0, height: 60, background: "linear-gradient(180deg, rgba(10,12,18,0.99) 0%, rgba(13,17,23,0.97) 100%)", borderBottom: "1px solid rgba(255,102,0,0.15)", display: "flex", alignItems: "center", justifyContent: "space-between", padding: "0 16px", zIndex: 100 },
   navLogo: { fontFamily: "'Cinzel', serif", fontSize: 16, fontWeight: 600, color: "#fff", letterSpacing: "0.08em" },
   navLogoSub: { color: "#FF6600", fontSize: 9, display: "block", letterSpacing: "0.35em", marginTop: -2 },
   navRight: { display: "flex", alignItems: "center", gap: 16 },
@@ -3771,7 +3771,7 @@ export default function App() {
   ];
 
   const CONTENT = (
-    <div style={{ flex: 1, padding: isMobile ? "20px 16px 88px" : "32px 32px 60px", maxWidth: isMobile ? "100%" : 800, overflow: "hidden", boxSizing: "border-box" }}>
+    <div style={{ flex: 1, padding: isMobile ? "20px 16px 110px" : "32px 32px 60px", maxWidth: isMobile ? "100%" : 800, overflow: "hidden", boxSizing: "border-box" }}>
       {tab === "feed" && (
         <div>
           {isMobile && (
@@ -3809,7 +3809,7 @@ export default function App() {
       <style>{GLOBAL_CSS}</style>
 
       {/* NAV */}
-      <nav style={{ ...S.nav, height: isMobile ? 80 : 80, padding: isMobile ? "0 12px" : "0 32px" }}>
+      <nav style={{ ...S.nav, height: isMobile ? 60 : 72, padding: isMobile ? "0 12px" : "0 32px" }}>
         <img src="https://esix10.com/wp-content/uploads/2026/06/esix10logo.png" alt="ESix10" style={{ height: isMobile ? 60 : 88, width: "auto", objectFit: "contain" }} />
         <div style={S.navRight}>
           <span style={{ ...S.badge, fontSize: 10 }}>
@@ -3826,7 +3826,7 @@ export default function App() {
       </nav>
 
       {isMobile ? (
-        <div style={{ paddingTop: 96 }}>
+        <div style={{ paddingTop: 72 }}>
           {CONTENT}
           {/* MORE OVERLAY */}
           {tab === "more" && (
@@ -3850,15 +3850,52 @@ export default function App() {
             </div>
           )}
 
-          {/* BOTTOM TAB BAR */}
-          <div style={{ position: "fixed", bottom: 0, left: 0, right: 0, height: 72, background: "linear-gradient(180deg, rgba(10,12,18,0.99) 0%, rgba(8,10,16,1) 100%)", borderTop: "1px solid rgba(255,102,0,0.12)", display: "flex", zIndex: 100 }}>
-            {NAV_ITEMS.map(item => (
-              <div key={item.id} onClick={() => setTab(item.id)}
-                style={{ flex: 1, display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", gap: 2, cursor: "pointer", color: (tab === item.id || (item.id === "more" && MORE_ITEMS.some(m => m.id === tab))) ? "#FF6600" : "#555", fontSize: 10, letterSpacing: "0.05em", textTransform: "uppercase" }}>
-                <span style={{ fontSize: 24 }}>{item.icon}</span>
-                <span>{item.label}</span>
-              </div>
-            ))}
+          {/* FLOATING BOTTOM NAV */}
+          <div style={{ position: "fixed", bottom: 16, left: 12, right: 12, zIndex: 100 }}>
+            <div style={{ 
+              background: "rgba(13,17,23,0.97)", 
+              backdropFilter: "blur(20px)",
+              WebkitBackdropFilter: "blur(20px)",
+              border: "1px solid rgba(255,102,0,0.2)", 
+              borderRadius: 24, 
+              padding: "10px 8px",
+              display: "flex",
+              boxShadow: "0 8px 32px rgba(0,0,0,0.6), 0 0 0 1px rgba(255,102,0,0.1), inset 0 1px 0 rgba(255,255,255,0.05)"
+            }}>
+              {NAV_ITEMS.map(item => {
+                const isActive = tab === item.id || (item.id === "more" && MORE_ITEMS.some(m => m.id === tab));
+                return (
+                  <div key={item.id} onClick={() => setTab(item.id)}
+                    style={{ 
+                      flex: 1, 
+                      display: "flex", 
+                      flexDirection: "column", 
+                      alignItems: "center", 
+                      justifyContent: "center", 
+                      gap: 3,
+                      cursor: "pointer", 
+                      padding: "6px 4px",
+                      borderRadius: 16,
+                      background: isActive ? "linear-gradient(135deg, rgba(255,102,0,0.2), rgba(192,154,47,0.1))" : "transparent",
+                      transition: "all 0.2s ease"
+                    }}>
+                    <span style={{ 
+                      fontSize: 22, 
+                      filter: isActive ? "drop-shadow(0 0 6px rgba(255,102,0,0.6))" : "none",
+                      transition: "filter 0.2s"
+                    }}>{item.icon}</span>
+                    <span style={{ 
+                      fontSize: 9, 
+                      letterSpacing: "0.08em", 
+                      textTransform: "uppercase",
+                      color: isActive ? "#FF6600" : "#444",
+                      fontWeight: isActive ? 700 : 400,
+                      transition: "color 0.2s"
+                    }}>{item.label}</span>
+                  </div>
+                );
+              })}
+            </div>
           </div>
         </div>
       ) : (
