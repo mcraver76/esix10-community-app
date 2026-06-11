@@ -1406,7 +1406,7 @@ function Messages({ profile, members }) {
             <input style={{ ...S.input, fontSize: 12, padding: "8px 12px", marginBottom: 4 }} placeholder="Search members..." value={dmSearch} onChange={e => setDmSearch(e.target.value)} />
             {dmSearch.length > 1 && (
               <div style={{ background: "rgba(10,10,10,0.98)", border: "1px solid rgba(255,255,255,0.08)", borderRadius: 6, maxHeight: 180, overflowY: "auto" }}>
-                {allMembers.filter(m => m.id !== profile.id && m.status === "approved" && ((m.full_name||"").toLowerCase().includes(dmSearch.toLowerCase()) || (m.username||"").toLowerCase().includes(dmSearch.toLowerCase()))).slice(0, 8).map(m => (
+                {(members || []).filter(m => m.id !== profile.id && m.status === "approved" && ((m.full_name||"").toLowerCase().includes(dmSearch.toLowerCase()) || (m.username||"").toLowerCase().includes(dmSearch.toLowerCase()))).slice(0, 8).map(m => (
                   <div key={m.id} onClick={() => { const roomId = [profile.id, m.id].sort().join("_"); isMobileChat ? selectRoomMobile(roomId) : selectRoom(roomId); setShowNewDM(false); setDmSearch(""); }}
                     style={{ display: "flex", alignItems: "center", gap: 8, padding: "8px 12px", cursor: "pointer", borderBottom: "1px solid rgba(255,255,255,0.04)" }}
                     onMouseOver={e => e.currentTarget.style.background = "rgba(255,102,0,0.08)"}
@@ -1429,7 +1429,7 @@ function Messages({ profile, members }) {
             <input style={{ ...S.input, fontSize: 12, padding: "8px 12px", marginBottom: 6 }} placeholder="Add members..." value={groupMemberSearch} onChange={e => setGroupMemberSearch(e.target.value)} />
             {groupMemberSearch.length > 1 && (
               <div style={{ background: "rgba(10,10,10,0.98)", border: "1px solid rgba(255,255,255,0.08)", borderRadius: 6, maxHeight: 150, overflowY: "auto", marginBottom: 6 }}>
-                {allMembers.filter(m => m.id !== profile.id && m.status === "approved" && !newGroupMembers.find(x => x.id === m.id) && ((m.full_name||"").toLowerCase().includes(groupMemberSearch.toLowerCase()) || (m.username||"").toLowerCase().includes(groupMemberSearch.toLowerCase()))).slice(0, 5).map(m => (
+                {(members || []).filter(m => m.id !== profile.id && m.status === "approved" && !newGroupMembers.find(x => x.id === m.id) && ((m.full_name||"").toLowerCase().includes(groupMemberSearch.toLowerCase()) || (m.username||"").toLowerCase().includes(groupMemberSearch.toLowerCase()))).slice(0, 5).map(m => (
                   <div key={m.id} onClick={() => { setNewGroupMembers([...newGroupMembers, m]); setGroupMemberSearch(""); }}
                     style={{ display: "flex", alignItems: "center", gap: 8, padding: "6px 10px", cursor: "pointer" }}
                     onMouseOver={e => e.currentTarget.style.background = "rgba(255,102,0,0.08)"}
