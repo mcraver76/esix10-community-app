@@ -1529,7 +1529,7 @@ function ForgeWalk({ profile }) {
   const [totalToday, setTotalToday] = useState(0);
   const [form, setForm] = useState({ distance_miles: '', duration_minutes: '', notes: '' });
   const [logging, setLogging] = useState(false);
-  const today = new Date().toISOString().split('T')[0];
+  const today = new Date(new Date().getTime() - new Date().getTimezoneOffset() * 60000).toISOString().split('T')[0];
 
   useEffect(() => { loadWalkData(); }, []);
 
@@ -1623,7 +1623,7 @@ function ForgeChallenge({ profile }) {
   const [queue, setQueue] = useState([]);
   const [showQueue, setShowQueue] = useState(false);
   const [generating, setGenerating] = useState(false);
-  const today = new Date().toISOString().split('T')[0];
+  const today = new Date(new Date().getTime() - new Date().getTimezoneOffset() * 60000).toISOString().split('T')[0];
 
   useEffect(() => { loadChallenge(); }, []);
 
@@ -1776,7 +1776,7 @@ function ForgeWOD({ profile }) {
   const [queue, setQueue] = useState([]);
   const [showQueue, setShowQueue] = useState(false);
   const [generating, setGenerating] = useState(false);
-  const today = new Date().toISOString().split('T')[0];
+  const today = new Date(new Date().getTime() - new Date().getTimezoneOffset() * 60000).toISOString().split('T')[0];
 
   useEffect(() => { loadWOD(); }, []);
 
@@ -1806,6 +1806,11 @@ function ForgeWOD({ profile }) {
     if (!form.title || !form.scheduled_date) return;
     await supabase.from('forge_wods').insert({ ...form, estimated_minutes: form.estimated_minutes ? parseInt(form.estimated_minutes) : null, difficulty: parseInt(form.difficulty), created_by: profile.id });
     setShowForm(false); setForm({ title: '', warmup: '', main_work: '', cooldown: '', coaching_notes: '', estimated_minutes: '', difficulty: 3, scheduled_date: '' }); loadWOD();
+  }
+
+  async function deleteWOD(id) {
+    await supabase.from('forge_wods').delete().eq('id', id);
+    loadWOD();
   }
 
   async function generateWODs() {
