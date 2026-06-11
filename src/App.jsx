@@ -3250,6 +3250,115 @@ function WelcomeModal({ profile, onClose }) {
 
 
 // ─── Kudos ────────────────────────────────────────────────────────────────────
+
+// ─── Share ESix10 ─────────────────────────────────────────────────────────────
+function ShareESix10({ profile, onClose }) {
+  const [copied, setCopied] = useState(false);
+  const [copiedMsg, setCopiedMsg] = useState(false);
+
+  const appUrl = "https://community.esix10.com";
+  const inviteMsg = `I joined ESix10 — a faith-based community built on Ephesians 6:10. Brotherhood, Sisterhood, and Family groups with daily devotions, prayer requests, and The Forge fitness section. Come check it out: ${appUrl}`;
+
+  function copyLink() {
+    navigator.clipboard.writeText(appUrl);
+    setCopied(true);
+    setTimeout(() => setCopied(false), 2000);
+  }
+
+  function copyMessage() {
+    navigator.clipboard.writeText(inviteMsg);
+    setCopiedMsg(true);
+    setTimeout(() => setCopiedMsg(false), 2000);
+  }
+
+  function shareNative() {
+    if (navigator.share) {
+      navigator.share({ title: "ESix10 Community", text: inviteMsg, url: appUrl });
+    }
+  }
+
+  function shareSMS() {
+    window.open(`sms:?body=${encodeURIComponent(inviteMsg)}`);
+  }
+
+  function shareFacebook() {
+    window.open(`https://www.facebook.com/sharer/sharer.php?u=${encodeURIComponent(appUrl)}`, "_blank");
+  }
+
+  function shareInstagram() {
+    // Instagram doesn't have a direct share URL — copy message and open Instagram
+    navigator.clipboard.writeText(inviteMsg);
+    window.open("https://instagram.com", "_blank");
+    alert("Message copied! Paste it in your Instagram story or post.");
+  }
+
+  return (
+    <div style={{ position: "fixed", inset: 0, background: "rgba(0,0,0,0.92)", zIndex: 500, display: "flex", alignItems: "center", justifyContent: "center", padding: 24 }}>
+      <div style={{ maxWidth: 440, width: "100%", animation: "scaleIn 0.2s ease" }}>
+        <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 24 }}>
+          <div>
+            <span style={S.eyebrow}>Spread the Word</span>
+            <h2 style={{ ...S.h2, margin: 0 }}>Share ESix10</h2>
+          </div>
+          <button onClick={onClose} style={{ background: "none", border: "none", color: "#FF6600", fontSize: 24, cursor: "pointer" }}>✕</button>
+        </div>
+
+        {/* App URL */}
+        <div style={{ ...S.card, marginBottom: 16 }}>
+          <span style={S.eyebrow}>App Link</span>
+          <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
+            <div style={{ flex: 1, background: "rgba(255,255,255,0.04)", border: "1px solid rgba(255,255,255,0.08)", borderRadius: 8, padding: "10px 14px", color: "#FF6600", fontSize: 14, fontFamily: "'Lato', sans-serif" }}>
+              community.esix10.com
+            </div>
+            <button style={{ ...S.btn, padding: "10px 16px", flexShrink: 0 }} onClick={copyLink}>
+              {copied ? "✓ Copied!" : "Copy"}
+            </button>
+          </div>
+        </div>
+
+        {/* Share buttons */}
+        <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 10, marginBottom: 16 }}>
+          {navigator.share && (
+            <button onClick={shareNative} style={{ ...S.card, border: "1px solid rgba(255,102,0,0.2)", cursor: "pointer", textAlign: "center", padding: 16 }}>
+              <div style={{ fontSize: 28, marginBottom: 6 }}>📤</div>
+              <div style={{ color: "#fff", fontSize: 13, fontFamily: "'Cinzel', serif" }}>Share</div>
+              <div style={{ color: "#888", fontSize: 11, marginTop: 2 }}>Native share</div>
+            </button>
+          )}
+          <button onClick={shareSMS} style={{ ...S.card, border: "1px solid rgba(255,102,0,0.2)", cursor: "pointer", textAlign: "center", padding: 16 }}>
+            <div style={{ fontSize: 28, marginBottom: 6 }}>💬</div>
+            <div style={{ color: "#fff", fontSize: 13, fontFamily: "'Cinzel', serif" }}>Text</div>
+            <div style={{ color: "#888", fontSize: 11, marginTop: 2 }}>Send via SMS</div>
+          </button>
+          <button onClick={shareFacebook} style={{ ...S.card, border: "1px solid rgba(255,102,0,0.2)", cursor: "pointer", textAlign: "center", padding: 16 }}>
+            <div style={{ fontSize: 28, marginBottom: 6 }}>📘</div>
+            <div style={{ color: "#fff", fontSize: 13, fontFamily: "'Cinzel', serif" }}>Facebook</div>
+            <div style={{ color: "#888", fontSize: 11, marginTop: 2 }}>Share to page</div>
+          </button>
+          <button onClick={shareInstagram} style={{ ...S.card, border: "1px solid rgba(255,102,0,0.2)", cursor: "pointer", textAlign: "center", padding: 16 }}>
+            <div style={{ fontSize: 28, marginBottom: 6 }}>📸</div>
+            <div style={{ color: "#fff", fontSize: 13, fontFamily: "'Cinzel', serif" }}>Instagram</div>
+            <div style={{ color: "#888", fontSize: 11, marginTop: 2 }}>Copy & post</div>
+          </button>
+        </div>
+
+        {/* Invite message */}
+        <div style={S.card}>
+          <span style={S.eyebrow}>Invite Message</span>
+          <p style={{ color: "#CCCCCC", fontSize: 14, lineHeight: 1.8, marginBottom: 12, fontStyle: "italic" }}>"{inviteMsg}"</p>
+          <button style={{ ...S.btn, width: "100%" }} onClick={copyMessage}>
+            {copiedMsg ? "✓ Message Copied!" : "Copy Invite Message"}
+          </button>
+        </div>
+
+        <p style={{ color: "#444", fontSize: 12, textAlign: "center", marginTop: 16 }}>
+          "Iron sharpens iron." — Proverbs 27:17
+        </p>
+      </div>
+    </div>
+  );
+}
+
 function KudosCount({ userId }) {
   const [count, setCount] = React.useState(0);
   React.useEffect(() => {
@@ -3433,6 +3542,7 @@ export default function App() {
   const [showSetup, setShowSetup] = useState(false);
   const [allMembers, setAllMembers] = useState([]);
   const [showWelcome, setShowWelcome] = useState(false);
+  const [showShare, setShowShare] = useState(false);
   const [showMore, setShowMore] = useState(false);
 
   useEffect(() => {
@@ -3528,6 +3638,7 @@ export default function App() {
   if (!profile?.group_id) return <GroupSelect user={user} onSelect={(g, groups) => { setProfile({ ...profile, group_id: g, group_ids: groups }); setFeedGroup(g); }} />;
   if (profile?.status === "pending") return <PendingScreen profile={profile} onSignOut={signOut} />;
   if (showWelcome && profile?.group_id) return <WelcomeModal profile={profile} onClose={() => setShowWelcome(false)} />;
+  if (showShare) return <ShareESix10 profile={profile} onClose={() => setShowShare(false)} />;
 
   const myGroup = GROUPS.find(g => g.id === profile.group_id);
   const isAdmin = profile?.role === "admin";
@@ -3548,6 +3659,7 @@ export default function App() {
     { id: "members", label: "Members", icon: "👥" },
     { id: "faith", label: "Statement of Faith", icon: "✝️" },
     { id: "salvation", label: "Do You Know Him?", icon: "🙏" },
+    { id: "share", label: "Share ESix10", icon: "📤" },
     { id: "profile", label: "My Profile", icon: "👤" },
   ];
 
@@ -3612,7 +3724,7 @@ export default function App() {
             <div style={{ position: "fixed", inset: 0, background: "rgba(10,10,10,0.97)", zIndex: 200, display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", gap: 8 }}>
               <div style={{ fontFamily: "'Cinzel', serif", fontSize: 11, letterSpacing: "0.3em", color: "#FF6600", textTransform: "uppercase", marginBottom: 24 }}>More</div>
               {MORE_ITEMS.map(item => (
-                <div key={item.id} onClick={() => setTab(item.id)}
+                <div key={item.id} onClick={() => { if (item.id === "share") { setShowShare(true); } else { setTab(item.id); } }}
                   style={{ width: 280, padding: "16px 24px", background: "rgba(255,102,0,0.05)", border: "1px solid rgba(255,102,0,0.15)", borderRadius: 6, cursor: "pointer", display: "flex", alignItems: "center", gap: 16 }}>
                   <span style={{ fontSize: 24 }}>{item.icon}</span>
                   <span style={{ fontFamily: "'Cinzel', serif", fontSize: 18, color: "#fff" }}>{item.label}</span>
@@ -3650,7 +3762,7 @@ export default function App() {
             </div>
             <div style={{ marginBottom: 24 }}>
               <p style={{ ...S.eyebrow, marginBottom: 12 }}>Navigation</p>
-              {[{ id: "forge", label: "The Forge 🔥", icon: "🔥" }, { id: "media", label: "Media", icon: "📺" }, { id: "privategroups", label: "Private Groups", icon: "🔒" }, { id: "prayer", label: "Prayer", icon: "🙏" }, { id: "devotion", label: "Devotion", icon: "📖" }, { id: "messages", label: "Chat", icon: "💬" }, { id: "events", label: "Events", icon: "📅" }, { id: "members", label: "Members", icon: "👥" }, { id: "faith", label: "Statement of Faith", icon: "✝️" }, { id: "salvation", label: "Do You Know Him?", icon: "🙏" }, { id: "profile", label: "My Profile", icon: "👤" }].map(item => (
+              {[{ id: "forge", label: "The Forge 🔥", icon: "🔥" }, { id: "media", label: "Media", icon: "📺" }, { id: "privategroups", label: "Private Groups", icon: "🔒" }, { id: "prayer", label: "Prayer", icon: "🙏" }, { id: "share", label: "Share ESix10", icon: "📤" }, { id: "devotion", label: "Devotion", icon: "📖" }, { id: "messages", label: "Chat", icon: "💬" }, { id: "events", label: "Events", icon: "📅" }, { id: "members", label: "Members", icon: "👥" }, { id: "faith", label: "Statement of Faith", icon: "✝️" }, { id: "salvation", label: "Do You Know Him?", icon: "🙏" }, { id: "profile", label: "My Profile", icon: "👤" }].map(item => (
                 <div key={item.id} onClick={() => setTab(item.id)}
                   style={{ padding: "10px 12px", borderRadius: 4, cursor: "pointer", marginBottom: 2, background: tab === item.id ? "rgba(255,102,0,0.1)" : "transparent", color: tab === item.id ? "#FF6600" : "#888", fontSize: 13, display: "flex", alignItems: "center", gap: 8 }}>
                   <span>{item.icon}</span> {item.label}
