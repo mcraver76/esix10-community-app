@@ -1405,6 +1405,7 @@ function Messages({ profile, members, onRead }) {
   const [newGroupMembers, setNewGroupMembers] = useState([]);
   const [groupMemberSearch, setGroupMemberSearch] = useState("");
   const [creatingGroup, setCreatingGroup] = useState(false);
+  const [customRooms, setCustomRooms] = useState([]);
   const msgPhotoRef = useRef();
   const bottomRef = useRef(null);
 
@@ -1498,7 +1499,7 @@ function Messages({ profile, members, onRead }) {
     loadMessages();
   }
 
-  const currentRoom = [...GROUP_ROOMS, ...dmRooms].find(r => r.id === activeRoom);
+  const currentRoom = [...GROUP_ROOMS, ...dmRooms, ...customRooms].find(r => r.id === activeRoom);
   const isMobileChat = useMobile();
   const [showRoomList, setShowRoomList] = useState(!activeRoom);
 
@@ -1573,6 +1574,7 @@ function Messages({ profile, members, onRead }) {
                 const roomId = `group_custom_${Date.now()}`;
                 const senderName = profile.username ? `@${profile.username}` : formatName(profile.full_name);
                 await supabase.from("messages").insert({ room_id: roomId, user_id: profile.id, body: `📢 "${newGroupName}" — Members: ${newGroupMembers.map(m => m.username ? `@${m.username}` : formatName(m.full_name)).join(", ")}`, sender_name: senderName });
+                await loadCustomRooms();
                 isMobileChat ? selectRoomMobile(roomId) : selectRoom(roomId);
                 setShowNewGroup(false); setNewGroupName(""); setNewGroupMembers([]); setCreatingGroup(false);
               }}>
@@ -1581,6 +1583,18 @@ function Messages({ profile, members, onRead }) {
           </div>
         )}
 
+        {customRooms.length > 0 && (
+          <div style={{ marginBottom: 8 }}>
+            <p style={{ ...S.eyebrow, marginBottom: 8 }}>My Groups</p>
+            {customRooms.map(room => (
+              <div key={room.id} onClick={() => isMobileChat ? selectRoomMobile(room.id) : selectRoom(room.id)}
+                style={{ padding: "10px 12px", borderRadius: 8, cursor: "pointer", marginBottom: 4, background: activeRoom === room.id ? "rgba(255,102,0,0.1)" : "rgba(255,255,255,0.02)", color: activeRoom === room.id ? "#FF6600" : "#CCCCCC", fontSize: 14, display: "flex", alignItems: "center", gap: 10, border: "1px solid rgba(255,255,255,0.04)" }}>
+                <span style={{ fontSize: 18 }}>👥</span>
+                <span style={{ flex: 1, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{room.label}</span>
+              </div>
+            ))}
+          </div>
+        )}
         <p style={{ ...S.eyebrow, marginBottom: 8 }}>Group Chats</p>
         {GROUP_ROOMS.map(room => (
           <div key={room.id} onClick={() => isMobileChat ? selectRoomMobile(room.id) : selectRoom(room.id)}
