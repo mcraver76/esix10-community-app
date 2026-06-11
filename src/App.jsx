@@ -2556,6 +2556,7 @@ export default function App() {
   ];
 
   const MORE_ITEMS = [
+    { id: "media", label: "Media", icon: "📺" },
     { id: "devotion", label: "Daily Devotion", icon: "📖" },
     { id: "events", label: "Events", icon: "📅" },
     { id: "members", label: "Members", icon: "👥" },
@@ -2587,6 +2588,7 @@ export default function App() {
       {tab === "events" && <Events profile={profile} />}
       {tab === "messages" && <Messages profile={profile} members={allMembers} />}
       {tab === "members" && <Members profile={profile} />}
+      {tab === "media" && <Media profile={profile} />}
       {tab === "faith" && <StatementOfFaith onBack={() => setTab("more")} />}
       {tab === "salvation" && <PlanOfSalvation onBack={() => setTab("more")} profile={profile} />}
       {tab === "profile" && <Profile profile={profile} onUpdate={setProfile} onSignOut={signOut} />}
@@ -2661,7 +2663,7 @@ export default function App() {
             </div>
             <div style={{ marginBottom: 24 }}>
               <p style={{ ...S.eyebrow, marginBottom: 12 }}>Navigation</p>
-              {[{ id: "forge", label: "The Forge 🔥", icon: "🔥" }, { id: "prayer", label: "Prayer", icon: "🙏" }, { id: "devotion", label: "Devotion", icon: "📖" }, { id: "messages", label: "Chat", icon: "💬" }, { id: "events", label: "Events", icon: "📅" }, { id: "members", label: "Members", icon: "👥" }, { id: "faith", label: "Statement of Faith", icon: "✝️" }, { id: "salvation", label: "Do You Know Him?", icon: "🙏" }, { id: "profile", label: "My Profile", icon: "👤" }].map(item => (
+              {[{ id: "forge", label: "The Forge 🔥", icon: "🔥" }, { id: "media", label: "Media", icon: "📺" }, { id: "prayer", label: "Prayer", icon: "🙏" }, { id: "devotion", label: "Devotion", icon: "📖" }, { id: "messages", label: "Chat", icon: "💬" }, { id: "events", label: "Events", icon: "📅" }, { id: "members", label: "Members", icon: "👥" }, { id: "faith", label: "Statement of Faith", icon: "✝️" }, { id: "salvation", label: "Do You Know Him?", icon: "🙏" }, { id: "profile", label: "My Profile", icon: "👤" }].map(item => (
                 <div key={item.id} onClick={() => setTab(item.id)}
                   style={{ padding: "10px 12px", borderRadius: 4, cursor: "pointer", marginBottom: 2, background: tab === item.id ? "rgba(255,102,0,0.1)" : "transparent", color: tab === item.id ? "#FF6600" : "#888", fontSize: 13, display: "flex", alignItems: "center", gap: 8 }}>
                   <span>{item.icon}</span> {item.label}
