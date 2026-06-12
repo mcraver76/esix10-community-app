@@ -37,6 +37,14 @@ const VERSES = [
   { text: "No weapon formed against you shall prosper.", ref: "Isaiah 54:17" },
 ];
 
+
+// Get YYYY-MM-DD in local timezone
+const localDateStr = (d = new Date()) => {
+  const date = new Date(d);
+  date.setMinutes(date.getMinutes() - date.getTimezoneOffset());
+  return date.toISOString().split("T")[0];
+};
+
 const getTodayVerse = () => {
   const day = new Date().getDay();
   return VERSES[day % VERSES.length];
@@ -635,7 +643,7 @@ function ActivityTicker({ profile }) {
   async function loadActivity() {
     const items = [];
     // Recent walks
-    const { data: walks } = await supabase.from("forge_walks").select("*, profiles(username, full_name)").eq("date", new Date().toISOString().split("T")[0]).order("created_at", { ascending: false }).limit(5);
+    const { data: walks } = await supabase.from("forge_walks").select("*, profiles(username, full_name)").eq("date", localDateStr()).order("created_at", { ascending: false }).limit(5);
     (walks || []).forEach(w => {
       const name = w.profiles?.username ? `@${w.profiles.username}` : formatName(w.profiles?.full_name);
       items.push(`🚶 ${name} logged ${w.distance_miles ? w.distance_miles + " mi" : "a walk"} today`);
@@ -704,7 +712,7 @@ function PersonalHeader({ profile }) {
       let streak = 0;
       let checkDate = new Date();
       for (let i = 0; i < 30; i++) {
-        const d = new Date(checkDate.getTime() - checkDate.getTimezoneOffset() * 60000).toISOString().split("T")[0];
+        const d = localDateStr(checkDate);
         if (walks.find(w => w.date === d)) { streak++; checkDate.setDate(checkDate.getDate() - 1); }
         else break;
       }
@@ -1936,7 +1944,7 @@ function ForgeWalk({ profile }) {
   const [totalToday, setTotalToday] = useState(0);
   const [form, setForm] = useState({ distance_miles: '', duration_minutes: '', notes: '', shareToFeed: true });
   const [logging, setLogging] = useState(false);
-  const today = new Date(new Date().getTime() - new Date().getTimezoneOffset() * 60000).toISOString().split('T')[0];
+  const today = localDateStr();
 
   useEffect(() => { loadWalkData(); }, []);
 
@@ -1948,7 +1956,7 @@ function ForgeWalk({ profile }) {
     let s = 0;
     let checkDate = new Date();
     for (let i = 0; i < 60; i++) {
-      const d = checkDate.toISOString().split('T')[0];
+      const d = localDateStr(checkDate);
       if (walks.find(w => w.date === d)) { s++; checkDate.setDate(checkDate.getDate() - 1); }
       else break;
     }
@@ -2042,7 +2050,7 @@ function ForgeChallenge({ profile }) {
   const [queue, setQueue] = useState([]);
   const [showQueue, setShowQueue] = useState(false);
   const [generating, setGenerating] = useState(false);
-  const today = new Date(new Date().getTime() - new Date().getTimezoneOffset() * 60000).toISOString().split('T')[0];
+  const today = localDateStr();
 
   useEffect(() => { loadChallenge(); }, []);
 
@@ -2205,7 +2213,7 @@ function ForgeWOD({ profile }) {
   const [queue, setQueue] = useState([]);
   const [showQueue, setShowQueue] = useState(false);
   const [generating, setGenerating] = useState(false);
-  const today = new Date(new Date().getTime() - new Date().getTimezoneOffset() * 60000).toISOString().split('T')[0];
+  const today = localDateStr();
 
   useEffect(() => { loadWOD(); }, []);
 
