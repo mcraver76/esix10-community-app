@@ -4422,6 +4422,152 @@ function Profile({ profile, onUpdate, onSignOut }) {
 }
 
 // ─── Main App ──────────────────────────────────────────────────────────────────
+function AdminDashboard({ profile }) {
+  const [pendingMembers, setPendingMembers] = useState([]);
+  const [flags, setFlags] = useState([]);
+  const [pendingEvents, setPendingEvents] = useState([]);
+  const [pendingRecs, setPendingRecs] = useState([]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => { loadAll(); }, []);
+
+  async function loadAll() {
+    setLoading(true);
+    const [m, f, e, r] = await Promise.all([
+      supabase.from("profiles").select("*").eq("status", "pending").order("created_at", { ascending: true }),
+      supabase.from("post_flags").select("*, posts(body, user_id, group_id)").eq("reviewed", false).order("created_at", { ascending: false }),
+      supabase.from("events").select("*").eq("approved", false).order("created_at", { ascending: false }),
+      supabase.from("local_recommendations").select("*, profiles(username, full_name)").eq("approved", false).order("created_at", { ascending: false }),
+    ]);
+    setPendingMembers(m.data || []);
+    setFlags(f.data || []);
+    setPendingEvents(e.data || []);
+    setPendingRecs(r.data || []);
+    setLoading(false);
+  }
+
+  async function approveMember(mem) {
+    await supabase.from("profiles").update({ status: "approved" }).eq("id", mem.id);
+    if (mem.email) {
+      fetch("/api/send-email", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ to: mem.email, name: mem.full_name, type: "approval" }) }).catch(e => console.error("approval email failed", e));
+    }
+    loadAll();
+  }
+  async function denyMember(id) {
+    await supabase.from("profiles").update({ status: "denied" }).eq("id", id);
+    loadAll();
+  }
+  async function removeFlaggedPost(flagId, postId) {
+    if (postId) await supabase.from("posts").delete().eq("id", postId);
+    await supabase.from("post_flags").update({ reviewed: true }).eq("id", flagId);
+    loadAll();
+  }
+  async function dismissFlag(flagId) {
+    await supabase.from("post_flags").update({ reviewed: true }).eq("id", flagId);
+    loadAll();
+  }
+  async function approveEvent(id) {
+    await supabase.from("events").update({ approved: true }).eq("id", id);
+    loadAll();
+  }
+  async function removeEvent(id) {
+    await supabase.from("events").delete().eq("id", id);
+    loadAll();
+  }
+  async function approveRec(id) {
+    await supabase.from("local_recommendations").update({ approved: true }).eq("id", id);
+    loadAll();
+  }
+  async function removeRec(id) {
+    await supabase.from("local_recommendations").delete().eq("id", id);
+    loadAll();
+  }
+
+  const total = pendingMembers.length + flags.length + pendingEvents.length + pendingRecs.length;
+
+  const Section = ({ title, icon, count, children }) => (
+    <div style={{ ...S.card, marginTop: 16 }}>
+      <div style={S.flexBetween}>
+        <span style={S.eyebrow}>{icon} {title}</span>
+        <span style={{ ...S.badge, background: count ? "rgba(255,102,0,0.15)" : "rgba(255,255,255,0.06)", color: count ? "#FF6600" : "#888" }}>{count}</span>
+      </div>
+      {count === 0 ? <p style={{ ...S.muted, marginTop: 10 }}>Nothing pending.</p> : <div style={{ marginTop: 12 }}>{children}</div>}
+    </div>
+  );
+
+  const Row = ({ main, sub, actions }) => (
+    <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", gap: 12, padding: "10px 0", borderBottom: "1px solid rgba(255,255,255,0.05)" }}>
+      <div style={{ minWidth: 0 }}>
+        <div style={{ color: "#fff", fontSize: 14, fontWeight: 600 }}>{main}</div>
+        {sub && <div style={{ ...S.muted, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{sub}</div>}
+      </div>
+      <div style={{ display: "flex", gap: 8, flexShrink: 0 }}>{actions}</div>
+    </div>
+  );
+
+  return (
+    <div>
+      <div style={S.flexBetween}>
+        <h2 style={{ ...S.h2, margin: 0 }}>Admin Dashboard</h2>
+        <button style={S.btnGhost} onClick={loadAll}>Refresh</button>
+      </div>
+      <p style={S.muted}>{loading ? "Loading…" : total === 0 ? "All clear — nothing needs your attention." : `${total} item${total === 1 ? "" : "s"} need your attention.`}</p>
+
+      <Section title="Pending Members" icon="👤" count={pendingMembers.length}>
+        {pendingMembers.map(m => (
+          <Row key={m.id}
+            main={displayName(m)}
+            sub={`${m.email || ""} · ${GROUPS.find(g => g.id === m.group_id)?.label || "—"}`}
+            actions={<>
+              <button style={S.btnSm} onClick={() => approveMember(m)}>Approve</button>
+              <button style={S.btnDanger} onClick={() => denyMember(m.id)}>Deny</button>
+            </>}
+          />
+        ))}
+      </Section>
+
+      <Section title="Flagged Posts" icon="🚩" count={flags.length}>
+        {flags.map(f => (
+          <Row key={f.id}
+            main={f.posts?.body ? `"${f.posts.body.slice(0, 60)}${f.posts.body.length > 60 ? "…" : ""}"` : "(post deleted)"}
+            sub={`Reason: ${f.reason || "—"}`}
+            actions={<>
+              <button style={S.btnDanger} onClick={() => removeFlaggedPost(f.id, f.post_id)}>Remove Post</button>
+              <button style={S.btnGhost} onClick={() => dismissFlag(f.id)}>Dismiss</button>
+            </>}
+          />
+        ))}
+      </Section>
+
+      <Section title="Pending Events" icon="📅" count={pendingEvents.length}>
+        {pendingEvents.map(ev => (
+          <Row key={ev.id}
+            main={ev.title}
+            sub={`${ev.event_date ? new Date(ev.event_date).toLocaleDateString() : ""} · ${ev.location || ""}`}
+            actions={<>
+              <button style={S.btnSm} onClick={() => approveEvent(ev.id)}>Approve</button>
+              <button style={S.btnDanger} onClick={() => removeEvent(ev.id)}>Remove</button>
+            </>}
+          />
+        ))}
+      </Section>
+
+      <Section title="Pending Local Recommendations" icon="📍" count={pendingRecs.length}>
+        {pendingRecs.map(rec => (
+          <Row key={rec.id}
+            main={rec.name}
+            sub={`${rec.category || ""} · ${rec.city || ""}, ${rec.state || ""}`}
+            actions={<>
+              <button style={S.btnSm} onClick={() => approveRec(rec.id)}>Approve</button>
+              <button style={S.btnDanger} onClick={() => removeRec(rec.id)}>Remove</button>
+            </>}
+          />
+        ))}
+      </Section>
+    </div>
+  );
+}
+
 export default function App() {
   const [user, setUser] = useState(null);
   const [profile, setProfile] = useState(null);
@@ -4558,6 +4704,7 @@ export default function App() {
   ];
 
   const MORE_ITEMS = [
+    ...(isAdmin ? [{ id: "admin", label: "Admin", icon: "🛡️" }] : []),
     { id: "profile", label: "My Profile", icon: "👤" },
     { id: "stats", label: "Stats Dashboard", icon: "📊" },
     { id: "members", label: "Members", icon: "👥" },
@@ -4609,6 +4756,7 @@ export default function App() {
       {tab === "salvation" && <PlanOfSalvation onBack={() => setTab("more")} profile={profile} />}
       {tab === "profile" && <Profile profile={profile} onUpdate={setProfile} onSignOut={signOut} />}
       {tab === "stats" && <StatsDashboard profile={profile} />}
+      {tab === "admin" && <AdminDashboard profile={profile} />}
     </div>
   );
 
@@ -4730,7 +4878,7 @@ export default function App() {
             </div>
             <div style={{ marginBottom: 24 }}>
               <p style={{ ...S.eyebrow, marginBottom: 12 }}>Navigation</p>
-              {[{ id: "forge", label: "The Forge 🔥", icon: "🔥" }, { id: "prayer", label: "Prayer", icon: "🙏" }, { id: "messages", label: unreadCount > 0 ? `Chat (${unreadCount})` : "Chat", icon: "💬" }, { id: "profile", label: "My Profile", icon: "👤" }, { id: "stats", label: "Stats", icon: "📊" }, { id: "members", label: "Members", icon: "👥" }, { id: "devotion", label: "Devotion", icon: "📖" }, { id: "social", label: "Social", icon: "📱" }, { id: "share", label: "Share ESix10", icon: "📤" }, { id: "events", label: "Events", icon: "📅" }, { id: "privategroups", label: "Private Groups", icon: "🔒" }, { id: "local", label: "Local", icon: "📍" }, { id: "faith", label: "Statement of Faith", icon: "✝️" }, { id: "salvation", label: "Do You Know Him?", icon: "🙏" }, { id: "media", label: "Media", icon: "📺" }].map(item => (
+              {[...(profile.role === "admin" ? [{ id: "admin", label: "Admin", icon: "🛡️" }] : []), { id: "forge", label: "The Forge 🔥", icon: "🔥" }, { id: "prayer", label: "Prayer", icon: "🙏" }, { id: "messages", label: unreadCount > 0 ? `Chat (${unreadCount})` : "Chat", icon: "💬" }, { id: "profile", label: "My Profile", icon: "👤" }, { id: "stats", label: "Stats", icon: "📊" }, { id: "members", label: "Members", icon: "👥" }, { id: "devotion", label: "Devotion", icon: "📖" }, { id: "social", label: "Social", icon: "📱" }, { id: "share", label: "Share ESix10", icon: "📤" }, { id: "events", label: "Events", icon: "📅" }, { id: "privategroups", label: "Private Groups", icon: "🔒" }, { id: "local", label: "Local", icon: "📍" }, { id: "faith", label: "Statement of Faith", icon: "✝️" }, { id: "salvation", label: "Do You Know Him?", icon: "🙏" }, { id: "media", label: "Media", icon: "📺" }].map(item => (
                 <div key={item.id} onClick={() => { if (item.id === "share") { setShowShare(true); } else { setTab(item.id); } }}
                   style={{ padding: "10px 12px", borderRadius: 4, cursor: "pointer", marginBottom: 2, background: tab === item.id ? "rgba(255,102,0,0.1)" : "transparent", color: tab === item.id ? "#FF6600" : "#888", fontSize: 13, display: "flex", alignItems: "center", gap: 8 }}>
                   <span>{item.icon}</span> {item.label}
