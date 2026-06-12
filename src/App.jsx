@@ -1,5 +1,32 @@
 import React, { useState, useEffect, useRef } from "react";
 import { createClient } from "@supabase/supabase-js";
+import {
+  LayoutGrid, Newspaper, Swords, Sparkles, Gem, Flame, HeartHandshake,
+  MessageCircle, Menu, User, BarChart3, Users, BookOpen, Smartphone, Share2,
+  CalendarDays, Lock, MapPin, Cross, HandHeart, Tv, Shield, Sword, PawPrint,
+  Bird, Mountain, Anchor, Star, Dumbbell, Crown,
+} from "lucide-react";
+
+// Map nav/group ids -> line icons (replaces emoji UI icons).
+const NAV_ICONS = {
+  all: LayoutGrid, feed: Newspaper,
+  brotherhood: Swords, sisterhood: Sparkles, family: Gem,
+  forge: Flame, prayer: HeartHandshake, messages: MessageCircle, more: Menu,
+  profile: User, stats: BarChart3, members: Users, devotion: BookOpen,
+  social: Smartphone, share: Share2, events: CalendarDays, privategroups: Lock,
+  local: MapPin, faith: Cross, salvation: HandHeart, media: Tv, admin: Shield,
+};
+function NavIcon({ id, size = 18, color }) {
+  const I = NAV_ICONS[id];
+  return I ? <I size={size} color={color} strokeWidth={1.75} style={{ flexShrink: 0 }} /> : null;
+}
+
+// Preset avatar id -> line icon.
+const AVATAR_ICONS = {
+  shield: Shield, sword: Sword, cross: Cross, fire: Flame, lion: PawPrint,
+  eagle: Bird, mountain: Mountain, anchor: Anchor, star: Star, fist: Dumbbell,
+  pray: HandHeart, crown: Crown,
+};
 
 // Mobile detection hook
 function useMobile() {
@@ -224,7 +251,7 @@ function Avatar({ profile, size = 38, onClick }) {
   if (preset) {
     return (
       <div style={{ ...style, background: "linear-gradient(135deg, rgba(255,102,0,0.2), rgba(192,154,47,0.15))" }} onClick={onClick}>
-        <span style={{ fontSize: size * 0.5 }}>{preset.emoji}</span>
+        {(() => { const I = AVATAR_ICONS[preset.id] || User; return <I size={Math.round(size * 0.5)} color="#FF6600" strokeWidth={1.75} />; })()}
       </div>
     );
   }
@@ -712,7 +739,7 @@ function GroupSelect({ user, onSelect }) {
         <div style={S.grid3}>
           {GROUPS.map(g => (
             <div key={g.id} style={S.groupCard(selected.includes(g.id))} onClick={() => toggleGroup(g.id)}>
-              <div style={{ fontSize: 32, marginBottom: 12, color: "#FF6600" }}>{g.icon}</div>
+              <div style={{ marginBottom: 12, color: "#FF6600", display: "flex", justifyContent: "center" }}><NavIcon id={g.id} size={32} /></div>
               {selected.includes(g.id) && <div style={{ position: "absolute", top: 12, right: 12, background: "#FF6600", borderRadius: "50%", width: 20, height: 20, display: "flex", alignItems: "center", justifyContent: "center", color: "#fff", fontSize: 12 }}>✓</div>}
               <h3 style={{ fontFamily: "'Cinzel', serif", fontSize: 20, fontWeight: 400, color: "#fff", marginBottom: 8 }}>{g.label}</h3>
               <p style={{ fontSize: 13, color: "#FF6600", letterSpacing: "0.1em", textTransform: "uppercase", fontWeight: 700 }}>{g.subtitle}</p>
@@ -4362,7 +4389,7 @@ function Profile({ profile, onUpdate, onSignOut }) {
               {PRESET_AVATARS.map(a => (
                 <div key={a.id} onClick={() => setCurrentAvatar(a.id)}
                   style={{ aspectRatio: "1", borderRadius: 8, display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", cursor: "pointer", background: currentAvatar === a.id ? "rgba(255,102,0,0.15)" : "rgba(255,255,255,0.03)", border: currentAvatar === a.id ? "2px solid #FF6600" : "1px solid rgba(255,255,255,0.08)", gap: 4 }}>
-                  <span style={{ fontSize: 22 }}>{a.emoji}</span>
+                  {(() => { const I = AVATAR_ICONS[a.id] || User; return <I size={22} color={currentAvatar === a.id ? "#FF6600" : "#aaa"} strokeWidth={1.75} />; })()}
                   <span style={{ fontSize: 9, color: "#666", letterSpacing: "0.05em" }}>{a.label}</span>
                 </div>
               ))}
@@ -4417,7 +4444,7 @@ function Profile({ profile, onUpdate, onSignOut }) {
                   setForm({ ...form, group_id: primary, group_ids: newGroups });
                 }}
                 style={{ background: isSelected ? "rgba(255,102,0,0.15)" : "rgba(255,255,255,0.03)", border: isSelected ? "2px solid #FF6600" : "1px solid rgba(255,255,255,0.08)", borderRadius: 8, padding: "10px 16px", cursor: "pointer", display: "flex", alignItems: "center", gap: 8 }}>
-                  <span style={{ fontSize: 16 }}>{g.icon}</span>
+                  <NavIcon id={g.id} size={16} color={isSelected ? "#FF6600" : "#888"} />
                   <span style={{ color: isSelected ? "#FF6600" : "#888", fontSize: 13 }}>{g.label}</span>
                   {isSelected && <span style={{ color: "#FF6600", fontSize: 12 }}>✓</span>}
                 </div>
@@ -4867,7 +4894,7 @@ export default function App() {
                 {MORE_ITEMS.map(item => (
                   <div key={item.id} onClick={() => { if (item.id === "share") { setShowShare(true); } else { setTab(item.id); } }}
                     style={{ padding: "16px 20px", background: "rgba(255,102,0,0.05)", border: "1px solid rgba(255,102,0,0.15)", borderRadius: 10, cursor: "pointer", display: "flex", alignItems: "center", gap: 16 }}>
-                    <span style={{ fontSize: 28 }}>{item.icon}</span>
+                    <NavIcon id={item.id} size={24} color="#FF6600" />
                     <span style={{ fontFamily: "'Cinzel', serif", fontSize: 16, color: "#fff" }}>{item.label}</span>
                     <span style={{ marginLeft: "auto", color: "#555", fontSize: 18 }}>›</span>
                   </div>
@@ -4909,11 +4936,11 @@ export default function App() {
                       transition: "all 0.2s ease"
                     }}>
                     <div style={{ position: "relative", display: "inline-block" }}>
-                      <span style={{ 
-                        fontSize: 22, 
+                      <span style={{
                         filter: isActive ? "drop-shadow(0 0 6px rgba(255,102,0,0.6))" : "none",
-                        transition: "filter 0.2s"
-                      }}>{item.icon}</span>
+                        transition: "filter 0.2s",
+                        display: "flex"
+                      }}><NavIcon id={item.id} size={22} color={isActive ? "#FF6600" : "#888"} /></span>
                       {item.id === "messages" && unreadCount > 0 && (
                         <span style={{ position: "absolute", top: -4, right: -6, background: "#ff4444", color: "#fff", borderRadius: "50%", width: 16, height: 16, fontSize: 9, display: "flex", alignItems: "center", justifyContent: "center", fontWeight: 700, border: "2px solid rgba(10,12,18,1)" }}>
                           {unreadCount > 9 ? "9+" : unreadCount}
@@ -4943,16 +4970,16 @@ export default function App() {
               {[{ id: "all", label: "My Feed", icon: "◎" }, ...(profile.role === "admin" ? GROUPS : GROUPS.filter(g => (profile.group_ids && profile.group_ids.length > 0 ? profile.group_ids : [profile.group_id]).includes(g.id)))].map(g => (
                 <div key={g.id} onClick={() => { setTab("feed"); setFeedGroup(g.id); }}
                   style={{ padding: "10px 12px", borderRadius: 4, cursor: "pointer", marginBottom: 2, background: tab === "feed" && feedGroup === g.id ? "rgba(255,102,0,0.1)" : "transparent", color: tab === "feed" && feedGroup === g.id ? "#FF6600" : "#888", fontSize: 13, display: "flex", alignItems: "center", gap: 8 }}>
-                  <span>{g.icon || "◎"}</span> {g.label || "My Feed"}
+                  <NavIcon id={g.id} size={18} /> {g.label || "My Feed"}
                 </div>
               ))}
             </div>
             <div style={{ marginBottom: 24 }}>
               <p style={{ ...S.eyebrow, marginBottom: 12 }}>Navigation</p>
-              {[...(isStaff(profile) ? [{ id: "admin", label: adminPending > 0 ? `Admin (${adminPending})` : "Admin", icon: "🛡️" }] : []), { id: "forge", label: "The Forge 🔥", icon: "🔥" }, { id: "prayer", label: "Prayer", icon: "🙏" }, { id: "messages", label: unreadCount > 0 ? `Chat (${unreadCount})` : "Chat", icon: "💬" }, { id: "profile", label: "My Profile", icon: "👤" }, { id: "stats", label: "Stats", icon: "📊" }, { id: "members", label: "Members", icon: "👥" }, { id: "devotion", label: "Devotion", icon: "📖" }, { id: "social", label: "Social", icon: "📱" }, { id: "share", label: "Share ESix10", icon: "📤" }, { id: "events", label: "Events", icon: "📅" }, { id: "privategroups", label: "Private Groups", icon: "🔒" }, { id: "local", label: "Local", icon: "📍" }, { id: "faith", label: "Statement of Faith", icon: "✝️" }, { id: "salvation", label: "Do You Know Him?", icon: "🙏" }, { id: "media", label: "Media", icon: "📺" }].map(item => (
+              {[...(isStaff(profile) ? [{ id: "admin", label: adminPending > 0 ? `Admin (${adminPending})` : "Admin", icon: "🛡️" }] : []), { id: "forge", label: "The Forge", icon: "🔥" }, { id: "prayer", label: "Prayer", icon: "🙏" }, { id: "messages", label: unreadCount > 0 ? `Chat (${unreadCount})` : "Chat", icon: "💬" }, { id: "profile", label: "My Profile", icon: "👤" }, { id: "stats", label: "Stats", icon: "📊" }, { id: "members", label: "Members", icon: "👥" }, { id: "devotion", label: "Devotion", icon: "📖" }, { id: "social", label: "Social", icon: "📱" }, { id: "share", label: "Share ESix10", icon: "📤" }, { id: "events", label: "Events", icon: "📅" }, { id: "privategroups", label: "Private Groups", icon: "🔒" }, { id: "local", label: "Local", icon: "📍" }, { id: "faith", label: "Statement of Faith", icon: "✝️" }, { id: "salvation", label: "Do You Know Him?", icon: "🙏" }, { id: "media", label: "Media", icon: "📺" }].map(item => (
                 <div key={item.id} onClick={() => { if (item.id === "share") { setShowShare(true); } else { setTab(item.id); } }}
                   style={{ padding: "10px 12px", borderRadius: 4, cursor: "pointer", marginBottom: 2, background: tab === item.id ? "rgba(255,102,0,0.1)" : "transparent", color: tab === item.id ? "#FF6600" : "#888", fontSize: 13, display: "flex", alignItems: "center", gap: 8 }}>
-                  <span>{item.icon}</span> {item.label}
+                  <NavIcon id={item.id} size={18} /> {item.label}
                 </div>
               ))}
             </div>
