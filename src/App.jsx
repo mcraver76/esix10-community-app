@@ -2050,9 +2050,25 @@ function ForgeChallenge({ profile }) {
   const [queue, setQueue] = useState([]);
   const [showQueue, setShowQueue] = useState(false);
   const [generating, setGenerating] = useState(false);
+  const [streak, setStreak] = useState(0);
   const today = localDateStr();
 
-  useEffect(() => { loadChallenge(); }, []);
+  useEffect(() => { loadChallenge(); loadStreak(); }, []);
+
+  async function loadStreak() {
+    // Get my completions joined with challenge scheduled_date
+    const { data: myCompletions } = await supabase.from('forge_challenge_completions').select('challenge_id, forge_challenges(scheduled_date)').eq('user_id', profile.id);
+    if (!myCompletions) return;
+    const dates = new Set(myCompletions.map(c => c.forge_challenges?.scheduled_date).filter(Boolean));
+    let s = 0;
+    let checkDate = new Date();
+    for (let i = 0; i < 60; i++) {
+      const d = localDateStr(checkDate);
+      if (dates.has(d)) { s++; checkDate.setDate(checkDate.getDate() - 1); }
+      else break;
+    }
+    setStreak(s);
+  }
 
   async function loadChallenge() {
     const { data } = await supabase.from('forge_challenges').select('*').eq('scheduled_date', today).maybeSingle();
@@ -2080,7 +2096,7 @@ function ForgeChallenge({ profile }) {
       const msg = `⚡ ${name} completed today's challenge — "${challenge.title}"${note.trim() ? ` · "${note.trim()}"` : ''}`;
       await supabase.from('posts').insert({ user_id: profile.id, group_id: profile.group_id, body: msg, reactions: {} });
     }
-    setCompleted(true); setSubmitting(false); setNote(''); loadChallenge();
+    setCompleted(true); setSubmitting(false); setNote(''); loadChallenge(); loadStreak();
   }
 
   async function createChallenge() {
@@ -2121,6 +2137,12 @@ function ForgeChallenge({ profile }) {
 
   return (
     <div>
+      {streak > 0 && (
+        <div className="streak-badge" style={{ marginBottom: 16 }}>
+          <span style={{ fontSize: 18 }}>🔥</span>
+          <div><div style={{ fontFamily: "'Cinzel', serif", fontSize: 18, color: '#FF6600', lineHeight: 1 }}>{streak}</div><div style={{ fontSize: 9, color: '#888', letterSpacing: '0.1em', textTransform: 'uppercase' }}>Day Streak</div></div>
+        </div>
+      )}
       <div style={S.flexBetween}>
         <div><span style={S.eyebrow}>Daily Challenge</span><h2 style={{ ...S.h2, margin: 0 }}>Today</h2></div>
         {profile.role === 'admin' && (
@@ -2213,9 +2235,24 @@ function ForgeWOD({ profile }) {
   const [queue, setQueue] = useState([]);
   const [showQueue, setShowQueue] = useState(false);
   const [generating, setGenerating] = useState(false);
+  const [streak, setStreak] = useState(0);
   const today = localDateStr();
 
-  useEffect(() => { loadWOD(); }, []);
+  useEffect(() => { loadWOD(); loadStreak(); }, []);
+
+  async function loadStreak() {
+    const { data: myCompletions } = await supabase.from('forge_wod_completions').select('wod_id, forge_wods(scheduled_date)').eq('user_id', profile.id);
+    if (!myCompletions) return;
+    const dates = new Set(myCompletions.map(c => c.forge_wods?.scheduled_date).filter(Boolean));
+    let s = 0;
+    let checkDate = new Date();
+    for (let i = 0; i < 60; i++) {
+      const d = localDateStr(checkDate);
+      if (dates.has(d)) { s++; checkDate.setDate(checkDate.getDate() - 1); }
+      else break;
+    }
+    setStreak(s);
+  }
 
   async function loadWOD() {
     const { data: wodList } = await supabase.from('forge_wods').select('*').eq('scheduled_date', today).order('created_at', { ascending: true }).limit(1);
@@ -2242,7 +2279,7 @@ function ForgeWOD({ profile }) {
       const msg = `💪 ${name} crushed today's WOD — "${wod.title}"${result.trim() ? ` · ${result.trim()}` : ''}`;
       await supabase.from('posts').insert({ user_id: profile.id, group_id: profile.group_id, body: msg, reactions: {} });
     }
-    setCompleted(true); setSubmitting(false); loadWOD();
+    setCompleted(true); setSubmitting(false); loadWOD(); loadStreak();
   }
 
   async function createWOD() {
@@ -2286,6 +2323,12 @@ function ForgeWOD({ profile }) {
 
   return (
     <div>
+      {streak > 0 && (
+        <div className="streak-badge" style={{ marginBottom: 16 }}>
+          <span style={{ fontSize: 18 }}>🔥</span>
+          <div><div style={{ fontFamily: "'Cinzel', serif", fontSize: 18, color: '#FF6600', lineHeight: 1 }}>{streak}</div><div style={{ fontSize: 9, color: '#888', letterSpacing: '0.1em', textTransform: 'uppercase' }}>Day Streak</div></div>
+        </div>
+      )}
       <div style={S.flexBetween}>
         <div><span style={S.eyebrow}>Workout of the Day</span><h2 style={{ ...S.h2, margin: 0 }}>Today</h2></div>
         {profile.role === 'admin' && (
