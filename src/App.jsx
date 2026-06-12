@@ -26,6 +26,10 @@ function requireApproved(profile) {
   return false;
 }
 
+// "Staff" = admin or moderator. Both can use the Admin Dashboard / moderation
+// actions; only admins can change roles or create official content.
+const isStaff = (p) => p?.role === "admin" || p?.role === "moderator";
+
 const GROUPS = [
   { id: "brotherhood", label: "Brotherhood", subtitle: "Steadfast. Unmovable.", icon: "⚔", color: "#FF6600" },
   { id: "sisterhood", label: "Sisterhood", subtitle: "Fierce. Faithful.", icon: "✦", color: "#FF6600" },
@@ -1510,6 +1514,7 @@ function Members({ profile }) {
                   <span style={{ color: "#fff", fontFamily: "'Cinzel', serif", fontSize: 14 }}>{formatName(m.full_name)}</span>
                   <span style={{ ...S.badge, fontSize: 10 }}>{(m.group_ids && m.group_ids.length > 1 ? m.group_ids : [m.group_id]).map(id => GROUPS.find(g => g.id === id)?.label).filter(Boolean).join(" · ") || "No Group"}</span>
                   {m.role === "admin" && <span style={{ ...S.badge, background: "rgba(255,102,0,0.3)", color: "#FF6600", fontSize: 10 }}>Admin</span>}
+                  {m.role === "moderator" && <span style={{ ...S.badge, background: "rgba(192,154,47,0.25)", color: "#C09A2F", fontSize: 10 }}>Mod</span>}
                 </div>
                 {profile.role === "admin" && <div style={{ ...S.muted, fontSize: 12 }}>{m.email}</div>}
                 {(m.city || m.state) && <div style={{ color: "#FF6600", fontSize: 12, marginTop: 2 }}>📍 {[m.city, m.state].filter(Boolean).join(", ")}</div>}
@@ -1519,9 +1524,11 @@ function Members({ profile }) {
                 )}
                 {profile.role === "admin" && m.id !== profile.id && (
                   <div style={{ display: "flex", gap: 8, marginTop: 10, flexWrap: "wrap" }}>
-                    <button style={{ ...S.btnSm, fontSize: 10, padding: "6px 12px" }} onClick={() => updateRole(m.id, m.role === "admin" ? "member" : "admin")}>
-                      {m.role === "admin" ? "Remove Admin" : "Make Admin"}
-                    </button>
+                    {["member", "moderator", "admin"].filter(r => r !== m.role).map(r => (
+                      <button key={r} style={{ ...S.btnSm, fontSize: 10, padding: "6px 12px" }} onClick={() => updateRole(m.id, r)}>
+                        {r === "member" ? "Set Member" : r === "moderator" ? "Make Mod" : "Make Admin"}
+                      </button>
+                    ))}
                     <button style={{ ...S.btnDanger, fontSize: 10, padding: "6px 10px" }} onClick={() => removeMember(m.id)}>Remove</button>
                   </div>
                 )}
@@ -4624,6 +4631,25 @@ export default function App() {
   const [showShare, setShowShare] = useState(false);
   const [unreadCount, setUnreadCount] = useState(0);
   const [showMore, setShowMore] = useState(false);
+  const [adminPending, setAdminPending] = useState(0);
+
+  useEffect(() => {
+    if (!isStaff(profile)) { setAdminPending(0); return; }
+    let active = true;
+    async function loadAdminCount() {
+      const [pm, pf, mf, pe, pr] = await Promise.all([
+        supabase.from("profiles").select("id", { count: "exact", head: true }).eq("status", "pending"),
+        supabase.from("post_flags").select("id", { count: "exact", head: true }).eq("reviewed", false),
+        supabase.from("member_flags").select("id", { count: "exact", head: true }).eq("reviewed", false),
+        supabase.from("events").select("id", { count: "exact", head: true }).eq("approved", false),
+        supabase.from("local_recommendations").select("id", { count: "exact", head: true }).eq("approved", false),
+      ]);
+      if (active) setAdminPending((pm.count || 0) + (pf.count || 0) + (mf.count || 0) + (pe.count || 0) + (pr.count || 0));
+    }
+    loadAdminCount();
+    const interval = setInterval(loadAdminCount, 60000);
+    return () => { active = false; clearInterval(interval); };
+  }, [profile?.role, tab]);
 
   useEffect(() => {
     if (profile?.id) {
@@ -4748,7 +4774,7 @@ export default function App() {
   ];
 
   const MORE_ITEMS = [
-    ...(isAdmin ? [{ id: "admin", label: "Admin", icon: "🛡️" }] : []),
+    ...(isStaff(profile) ? [{ id: "admin", label: adminPending > 0 ? `Admin (${adminPending})` : "Admin", icon: "🛡️" }] : []),
     { id: "profile", label: "My Profile", icon: "👤" },
     { id: "stats", label: "Stats Dashboard", icon: "📊" },
     { id: "members", label: "Members", icon: "👥" },
@@ -4820,6 +4846,7 @@ export default function App() {
               : `${myGroup?.icon} ${myGroup?.label}`}
           </span>
           {isAdmin && !isMobile && <span style={{ ...S.badge, background: "rgba(255,102,0,0.3)", color: "#FF6600" }}>Admin</span>}
+          {profile?.role === "moderator" && !isMobile && <span style={{ ...S.badge, background: "rgba(192,154,47,0.25)", color: "#C09A2F" }}>Mod</span>}
           <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
             {!isMobile && <LevelBadgeForUser profile={profile} fontSize={10} />}
             <Avatar profile={profile} size={36} onClick={() => setTab("profile")} />
@@ -4922,7 +4949,7 @@ export default function App() {
             </div>
             <div style={{ marginBottom: 24 }}>
               <p style={{ ...S.eyebrow, marginBottom: 12 }}>Navigation</p>
-              {[...(profile.role === "admin" ? [{ id: "admin", label: "Admin", icon: "🛡️" }] : []), { id: "forge", label: "The Forge 🔥", icon: "🔥" }, { id: "prayer", label: "Prayer", icon: "🙏" }, { id: "messages", label: unreadCount > 0 ? `Chat (${unreadCount})` : "Chat", icon: "💬" }, { id: "profile", label: "My Profile", icon: "👤" }, { id: "stats", label: "Stats", icon: "📊" }, { id: "members", label: "Members", icon: "👥" }, { id: "devotion", label: "Devotion", icon: "📖" }, { id: "social", label: "Social", icon: "📱" }, { id: "share", label: "Share ESix10", icon: "📤" }, { id: "events", label: "Events", icon: "📅" }, { id: "privategroups", label: "Private Groups", icon: "🔒" }, { id: "local", label: "Local", icon: "📍" }, { id: "faith", label: "Statement of Faith", icon: "✝️" }, { id: "salvation", label: "Do You Know Him?", icon: "🙏" }, { id: "media", label: "Media", icon: "📺" }].map(item => (
+              {[...(isStaff(profile) ? [{ id: "admin", label: adminPending > 0 ? `Admin (${adminPending})` : "Admin", icon: "🛡️" }] : []), { id: "forge", label: "The Forge 🔥", icon: "🔥" }, { id: "prayer", label: "Prayer", icon: "🙏" }, { id: "messages", label: unreadCount > 0 ? `Chat (${unreadCount})` : "Chat", icon: "💬" }, { id: "profile", label: "My Profile", icon: "👤" }, { id: "stats", label: "Stats", icon: "📊" }, { id: "members", label: "Members", icon: "👥" }, { id: "devotion", label: "Devotion", icon: "📖" }, { id: "social", label: "Social", icon: "📱" }, { id: "share", label: "Share ESix10", icon: "📤" }, { id: "events", label: "Events", icon: "📅" }, { id: "privategroups", label: "Private Groups", icon: "🔒" }, { id: "local", label: "Local", icon: "📍" }, { id: "faith", label: "Statement of Faith", icon: "✝️" }, { id: "salvation", label: "Do You Know Him?", icon: "🙏" }, { id: "media", label: "Media", icon: "📺" }].map(item => (
                 <div key={item.id} onClick={() => { if (item.id === "share") { setShowShare(true); } else { setTab(item.id); } }}
                   style={{ padding: "10px 12px", borderRadius: 4, cursor: "pointer", marginBottom: 2, background: tab === item.id ? "rgba(255,102,0,0.1)" : "transparent", color: tab === item.id ? "#FF6600" : "#888", fontSize: 13, display: "flex", alignItems: "center", gap: 8 }}>
                   <span>{item.icon}</span> {item.label}
