@@ -17,6 +17,15 @@ const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBh
 
 const supabase = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
+// New members are let into the app immediately but limited until an admin
+// approves their profile. "Approved" = status 'approved' (admins always count).
+const isApproved = (p) => p?.role === "admin" || p?.status === "approved";
+function requireApproved(profile) {
+  if (isApproved(profile)) return true;
+  alert("Your profile is still under review. Posting, messaging, kudos, and joining unlock once an admin approves you — usually within 24–48 hours.");
+  return false;
+}
+
 const GROUPS = [
   { id: "brotherhood", label: "Brotherhood", subtitle: "Steadfast. Unmovable.", icon: "⚔", color: "#FF6600" },
   { id: "sisterhood", label: "Sisterhood", subtitle: "Fierce. Faithful.", icon: "✦", color: "#FF6600" },
@@ -954,6 +963,7 @@ function Feed({ profile, activeGroup, isNewMember }) {
   }
 
   async function submitPost() {
+    if (!requireApproved(profile)) return;
     if (!body.trim() || !canPost) return;
     setPosting(true);
     setUploading(true);
@@ -979,6 +989,7 @@ function Feed({ profile, activeGroup, isNewMember }) {
   }
 
   async function sendKudos(toUserId) {
+    if (!requireApproved(profile)) return;
     await supabase.from("kudos").insert({ from_user_id: profile.id, to_user_id: toUserId });
     // Show brief confirmation
     const btn = document.getElementById(`kudos_${toUserId}`);
@@ -1143,6 +1154,7 @@ function Events({ profile }) {
   }
 
   async function createEvent() {
+    if (!requireApproved(profile)) return;
     setLoading(true);
     await supabase.from("events").insert({ ...form, created_by: profile.id, approved: profile.role === "admin" });
     setShowForm(false);
@@ -1253,6 +1265,7 @@ function Members({ profile }) {
   }
 
   async function sendKudosMember(toUserId) {
+    if (!requireApproved(profile)) return;
     await supabase.from("kudos").insert({ from_user_id: profile.id, to_user_id: toUserId });
     const btn = document.getElementById(`kudos_${toUserId}`);
     if (btn) { btn.textContent = "👊 Sent!"; setTimeout(() => { btn.textContent = "👊 Kudos"; }, 2000); }
@@ -1586,6 +1599,7 @@ function Messages({ profile, members, onRead }) {
   }
 
   async function send() {
+    if (!requireApproved(profile)) return;
     if (!body.trim() && !photoFile) return;
     if (!activeRoom) return;
     setPosting(true);
@@ -1853,6 +1867,7 @@ function PrayerRequests({ profile }) {
   }
 
   async function submitPrayer() {
+    if (!requireApproved(profile)) return;
     if (!body.trim()) return;
     setPosting(true);
     const authorName = anonymous ? "Anonymous" : (profile.username ? `@${profile.username}` : formatName(profile.full_name));
@@ -1961,6 +1976,7 @@ function Devotion({ profile }) {
   }
 
   async function postComment(devotionId) {
+    if (!requireApproved(profile)) return;
     if (!comment[devotionId]?.trim()) return;
     const authorName = profile.username ? `@${profile.username}` : formatName(profile.full_name);
     await supabase.from("devotion_comments").insert({ devotion_id: devotionId, user_id: profile.id, author_name: authorName, body: comment[devotionId].trim() });
@@ -2925,6 +2941,7 @@ function PrivateGroups({ profile, allMembers }) {
   }
 
   async function createGroup() {
+    if (!requireApproved(profile)) return;
     if (!form.name.trim()) return;
     setSaving(true);
     const { data } = await supabase.from('private_groups').insert({ name: form.name.trim(), description: form.description.trim(), created_by: profile.id, approved: profile.role === 'admin', member_count: 1 }).select().single();
@@ -2942,6 +2959,7 @@ function PrivateGroups({ profile, allMembers }) {
   }
 
   async function requestJoin(groupId) {
+    if (!requireApproved(profile)) return;
     await supabase.from('private_group_requests').insert({ group_id: groupId, user_id: profile.id, status: 'pending' });
     alert('Request sent. The group creator will review it.');
     loadGroups();
@@ -2975,6 +2993,7 @@ function PrivateGroups({ profile, allMembers }) {
   }
 
   async function sendMessage() {
+    if (!requireApproved(profile)) return;
     if (!body.trim() || !activeGroup) return;
     setSending(true);
     const senderName = profile.username ? `@${profile.username}` : formatName(profile.full_name);
@@ -4517,7 +4536,6 @@ export default function App() {
   if (!user) return <AuthScreen onAuth={(u) => loadProfile(u)} />;
   if (showSetup) return <SetupModal onClose={() => { setShowSetup(false); loadProfile(user); }} />;
   if (!profile?.group_id) return <GroupSelect user={user} onSelect={(g, groups) => { setProfile({ ...profile, group_id: g, group_ids: groups }); setFeedGroup(g); }} />;
-  if (profile?.status === "pending") return <PendingScreen profile={profile} onSignOut={signOut} />;
   if (showWelcome && profile?.group_id) return <WelcomeModal profile={profile} onClose={() => setShowWelcome(false)} />;
   if (showShare) return <ShareESix10 profile={profile} onClose={() => setShowShare(false)} />;
 
@@ -4549,6 +4567,11 @@ export default function App() {
 
   const CONTENT = (
     <div style={{ flex: 1, padding: isMobile ? "20px 16px 110px" : "32px 32px 60px", maxWidth: isMobile ? "100%" : 800, overflow: "hidden", boxSizing: "border-box" }}>
+      {!isApproved(profile) && (
+        <div style={{ background: "rgba(252,196,25,0.1)", border: "1px solid rgba(252,196,25,0.3)", color: "#fcc419", padding: "12px 16px", borderRadius: 8, marginBottom: 16, fontSize: 13, lineHeight: 1.5 }}>
+          ⏳ <strong>Your profile is under review.</strong> You can browse and react now — posting, messaging, kudos, and joining groups unlock once an admin approves you (usually within 24–48 hours).
+        </div>
+      )}
       {tab === "feed" && (
         <div>
           {isMobile && (
