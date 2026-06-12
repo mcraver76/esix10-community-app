@@ -6,7 +6,7 @@ import {
   CalendarDays, Lock, MapPin, Cross, HandHeart, Tv, Shield, Sword, PawPrint,
   Bird, Mountain, Anchor, Star, Dumbbell, Crown, Footprints, Award,
   Zap, Megaphone, Activity, Camera, Flag, Archive, Hourglass, Medal,
-  NotebookPen, Unlock, CheckCircle2,
+  NotebookPen, Unlock, CheckCircle2, Eye, Pencil, Pin,
 } from "lucide-react";
 
 // Map nav/group ids -> line icons (replaces emoji UI icons).
@@ -903,7 +903,7 @@ function PersonalHeader({ profile }) {
 
       {lastVisitSummary && (lastVisitSummary.posts > 0 || lastVisitSummary.prayers > 0) && (
         <div style={{ background: "linear-gradient(135deg, rgba(255,102,0,0.08), rgba(192,154,47,0.06))", border: "1px solid rgba(255,102,0,0.2)", borderRadius: 10, padding: "10px 16px", marginBottom: 12, display: "flex", alignItems: "center", gap: 10 }}>
-          <span style={{ fontSize: 16 }}>👁</span>
+          <Eye size={15} color="#FF6600" strokeWidth={1.75} />
           <p style={{ color: "#CCCCCC", fontSize: 13 }}>
             Since your last visit:
             {lastVisitSummary.posts > 0 && <span style={{ color: "#FF6600" }}> {lastVisitSummary.posts} new post{lastVisitSummary.posts !== 1 ? "s" : ""}</span>}
@@ -946,7 +946,7 @@ function PersonalHeader({ profile }) {
 
         {profile.state && localCount > 1 && (
           <div style={{ background: "rgba(255,102,0,0.06)", border: "1px solid rgba(255,102,0,0.15)", borderRadius: 10, padding: "10px 16px", flexShrink: 0, textAlign: "center", minWidth: 80 }}>
-            <div style={{ fontSize: 20, marginBottom: 2 }}>📍</div>
+            <div style={{ marginBottom: 2, display: "flex", justifyContent: "center" }}><MapPin size={20} color="#FF6600" strokeWidth={1.75} /></div>
             <div style={{ fontFamily: "'Cinzel', serif", fontSize: 18, color: "#FF6600", lineHeight: 1 }}>{localCount}</div>
             <div style={{ color: "#555", fontSize: 10, letterSpacing: "0.08em", textTransform: "uppercase", marginTop: 2 }}>{profile.state}</div>
           </div>
@@ -1723,8 +1723,8 @@ function Messages({ profile, members, onRead }) {
         <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 12 }}>
           <p style={{ ...S.eyebrow, margin: 0 }}>Chats</p>
           <div style={{ display: "flex", gap: 4 }}>
-            <button onClick={() => { setShowNewDM(!showNewDM); setShowNewGroup(false); }} style={{ background: showNewDM ? "rgba(255,102,0,0.2)" : "rgba(255,255,255,0.05)", border: "1px solid rgba(255,102,0,0.2)", borderRadius: 6, padding: "4px 8px", color: "#FF6600", cursor: "pointer", fontSize: 11 }}>✏️ DM</button>
-            <button onClick={() => { setShowNewGroup(!showNewGroup); setShowNewDM(false); }} style={{ background: showNewGroup ? "rgba(192,154,47,0.2)" : "rgba(255,255,255,0.05)", border: "1px solid rgba(192,154,47,0.2)", borderRadius: 6, padding: "4px 8px", color: "#C09A2F", cursor: "pointer", fontSize: 11 }}>👥 Group</button>
+            <button onClick={() => { setShowNewDM(!showNewDM); setShowNewGroup(false); }} style={{ background: showNewDM ? "rgba(255,102,0,0.2)" : "rgba(255,255,255,0.05)", border: "1px solid rgba(255,102,0,0.2)", borderRadius: 6, padding: "4px 8px", color: "#FF6600", cursor: "pointer", fontSize: 11, display: "inline-flex", alignItems: "center", gap: 4 }}><Pencil size={12} /> DM</button>
+            <button onClick={() => { setShowNewGroup(!showNewGroup); setShowNewDM(false); }} style={{ background: showNewGroup ? "rgba(192,154,47,0.2)" : "rgba(255,255,255,0.05)", border: "1px solid rgba(192,154,47,0.2)", borderRadius: 6, padding: "4px 8px", color: "#C09A2F", cursor: "pointer", fontSize: 11, display: "inline-flex", alignItems: "center", gap: 4 }}><Users size={12} /> Group</button>
           </div>
         </div>
 
@@ -1805,7 +1805,7 @@ function Messages({ profile, members, onRead }) {
               <div key={room.id} style={{ display: "flex", alignItems: "center", marginBottom: 4, gap: 4 }}>
                 <div onClick={() => isMobileChat ? selectRoomMobile(room.id) : selectRoom(room.id)}
                   style={{ flex: 1, padding: "10px 12px", borderRadius: 8, cursor: "pointer", background: activeRoom === room.id ? "rgba(255,102,0,0.1)" : "rgba(255,255,255,0.02)", color: activeRoom === room.id ? "#FF6600" : "#CCCCCC", fontSize: 14, display: "flex", alignItems: "center", gap: 10, border: "1px solid rgba(255,255,255,0.04)" }}>
-                  <span style={{ fontSize: 18 }}>👥</span>
+                  <Users size={18} color="#aaa" strokeWidth={1.75} />
                   <span style={{ flex: 1, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{room.label}</span>
                 </div>
                 <button onClick={async () => {
@@ -1912,7 +1912,7 @@ function Messages({ profile, members, onRead }) {
       <div style={{ flex: 1, display: "flex", flexDirection: "column" }}>
         {!activeRoom ? (
           <div style={{ flex: 1, display: "flex", alignItems: "center", justifyContent: "center", flexDirection: "column", gap: 12 }}>
-            <span style={{ fontSize: 40 }}>💬</span>
+            <MessageCircle size={40} color="#555" strokeWidth={1.5} />
             <p style={{ fontFamily: "'Cinzel', serif", fontSize: 18, color: "#fff" }}>Select a conversation</p>
             <p style={S.muted}>Choose a group chat or direct message</p>
           </div>
@@ -1990,7 +1990,7 @@ function PrayerRequests({ profile }) {
                 <div style={{ width: 36, height: 36, borderRadius: "50%", background: "rgba(255,102,0,0.15)", display: "flex", alignItems: "center", justifyContent: "center", color: "#FF6600", fontSize: 16 }}>{p.anonymous ? "🙏" : (p.author_name || "?")[0].toUpperCase()}</div>
                 <div>
                   <span style={S.postAuthor}>{p.author_name || "Member"}</span>
-                  {p.pinned && <span style={{ ...S.badge, marginLeft: 8, fontSize: 10 }}>📌 Pinned</span>}
+                  {p.pinned && <span style={{ ...S.badge, marginLeft: 8, fontSize: 10 }}><Pin size={10} style={{ verticalAlign: "-1px", marginRight: 2 }} /> Pinned</span>}
                   <span style={S.postTime}>{new Date(p.created_at).toLocaleDateString()}</span>
                 </div>
               </div>
@@ -2333,7 +2333,7 @@ function ForgeChallenge({ profile }) {
     <div>
       {streak > 0 && (
         <div className="streak-badge" style={{ marginBottom: 16 }}>
-          <span style={{ fontSize: 18 }}>🔥</span>
+          <Flame size={18} color="#FF6600" strokeWidth={1.75} />
           <div><div style={{ fontFamily: "'Cinzel', serif", fontSize: 18, color: '#FF6600', lineHeight: 1 }}>{streak}</div><div style={{ fontSize: 9, color: '#888', letterSpacing: '0.1em', textTransform: 'uppercase' }}>Day Streak</div></div>
         </div>
       )}
@@ -2372,7 +2372,7 @@ function ForgeChallenge({ profile }) {
       <div style={{ marginTop: 20 }}>
         {!challenge ? (
           <div style={{ ...S.card, textAlign: 'center', padding: 48 }}>
-            <span style={{ fontSize: 40, display: 'block', marginBottom: 16 }}>⚡</span>
+            <span style={{ display: 'flex', justifyContent: 'center', marginBottom: 16 }}><Zap size={40} color="#FF6600" strokeWidth={1.5} /></span>
             <h3 style={{ fontFamily: "'Cinzel', serif", fontSize: 18, color: '#fff', marginBottom: 8 }}>No challenge posted today.</h3>
             <p style={S.muted}>{profile.role === 'admin' ? 'Use AI Generate to schedule a week.' : 'Check back soon.'}</p>
           </div>
@@ -2519,7 +2519,7 @@ function ForgeWOD({ profile }) {
     <div>
       {streak > 0 && (
         <div className="streak-badge" style={{ marginBottom: 16 }}>
-          <span style={{ fontSize: 18 }}>🔥</span>
+          <Flame size={18} color="#FF6600" strokeWidth={1.75} />
           <div><div style={{ fontFamily: "'Cinzel', serif", fontSize: 18, color: '#FF6600', lineHeight: 1 }}>{streak}</div><div style={{ fontSize: 9, color: '#888', letterSpacing: '0.1em', textTransform: 'uppercase' }}>Day Streak</div></div>
         </div>
       )}
