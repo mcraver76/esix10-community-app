@@ -5,6 +5,7 @@ import {
   MessageCircle, Menu, User, BarChart3, Users, BookOpen, Smartphone, Share2,
   CalendarDays, Lock, MapPin, Cross, HandHeart, Tv, Shield, Sword, PawPrint,
   Bird, Mountain, Anchor, Star, Dumbbell, Crown, Footprints, Award,
+  Zap, Megaphone, Activity, Camera, Flag, Archive,
 } from "lucide-react";
 
 // Map nav/group ids -> line icons (replaces emoji UI icons).
@@ -34,6 +35,14 @@ function LevelIcon({ level, size = 16, style }) {
   const I = LEVEL_ICONS[level?.name] || Shield;
   return <I size={size} color={level?.color} strokeWidth={1.75} style={{ flexShrink: 0, verticalAlign: "middle", marginRight: 4, ...style }} />;
 }
+
+// Consistency-badge id -> line icon.
+const BADGE_ICONS = {
+  walk_7: Footprints, walk_30: Activity, walk_100: Bird,
+  challenge_7: Zap, challenge_30: Shield, wod_7: Dumbbell, wod_30: Crown,
+  first_post: MessageCircle, active_poster: Megaphone,
+  kudos_5: Award, kudos_25: Star, prayer_warrior: HandHeart,
+};
 
 // Mobile detection hook
 function useMobile() {
@@ -886,7 +895,7 @@ function PersonalHeader({ profile }) {
             <LevelIcon level={level} size={13} /> {level.name}
           </span>
           {profile.state && localCount > 0 && (
-            <span style={{ color: "#555", fontSize: 12 }}>📍 {localCount} members in {profile.state}</span>
+            <span style={{ color: "#555", fontSize: 12 }}><MapPin size={11} style={{ verticalAlign: "-1px", marginRight: 2 }} /> {localCount} members in {profile.state}</span>
           )}
         </div>
       </div>
@@ -1072,7 +1081,7 @@ function Feed({ profile, activeGroup, isNewMember }) {
       )}
       <div className="verse-banner" style={{ marginBottom: 20 }}>
         <div style={{ display: "flex", alignItems: "flex-start", gap: 12 }}>
-          <span style={{ fontSize: 20 }}>✝️</span>
+          <Cross size={20} color="#FF6600" strokeWidth={1.75} style={{ flexShrink: 0 }} />
           <div>
             <span style={{ ...S.eyebrow, marginBottom: 4 }}>Verse of the Day</span>
             <p style={{ fontFamily: "'Cinzel', serif", fontSize: 14, fontStyle: "italic", color: "#fff", lineHeight: 1.7, marginBottom: 4 }}>"{verse.text}"</p>
@@ -1110,7 +1119,7 @@ function Feed({ profile, activeGroup, isNewMember }) {
               <div>
                 <input ref={photoRef} type="file" accept="image/*" style={{ display: "none" }} onChange={handlePhotoSelect} />
                 <button onClick={() => photoRef.current.click()} style={{ background: "none", border: "1px solid rgba(255,255,255,0.1)", borderRadius: 6, padding: "8px 14px", color: "#888", cursor: "pointer", fontSize: 13, display: "flex", alignItems: "center", gap: 6 }}>
-                  📷 Photo
+                  <Camera size={15} /> Photo
                 </button>
               </div>
               <button style={S.btn} onClick={submitPost} disabled={posting || uploading || !body.trim()}>{uploading ? "Uploading..." : posting ? "Posting..." : "Post"}</button>
@@ -1150,7 +1159,7 @@ function Feed({ profile, activeGroup, isNewMember }) {
                         👊
                       </button>
                       <button onClick={() => flagPost(post.id)} style={{ background: "none", border: "none", cursor: "pointer", color: "#555", fontSize: 11, padding: "4px 8px", borderRadius: 4 }} title="Flag this post">
-                        🚩
+                        <Flag size={13} />
                       </button>
                     </>
                   )}
@@ -1267,7 +1276,7 @@ function Events({ profile }) {
                 <h3 style={{ fontFamily: "'Cinzel', serif", fontSize: 18, fontWeight: 400, color: "#fff", marginBottom: 6 }}>{ev.title}</h3>
                 <div style={S.flex}>
                   {ev.event_date && <span style={S.muted}>📅 {new Date(ev.event_date).toLocaleDateString("en-US", { weekday: "long", month: "long", day: "numeric", hour: "2-digit", minute: "2-digit" })}</span>}
-                  {ev.location && <span style={S.muted}>📍 {ev.location}</span>}
+                  {ev.location && <span style={S.muted}><MapPin size={11} style={{ verticalAlign: "-1px", marginRight: 2 }} /> {ev.location}</span>}
                   <span style={S.badge}>{GROUPS.find(g => g.id === ev.group_id)?.label || "All Groups"}</span>
                 </div>
               </div>
@@ -1427,10 +1436,10 @@ function Members({ profile }) {
               </button>
             ))}
             <button onClick={() => setShowFlags(!showFlags)} style={{ ...S.btnSm, background: flags.length > 0 ? "#ff4444" : "rgba(255,255,255,0.1)", color: "#fff" }}>
-              🚩 {flags.length > 0 ? flags.length : ""} Flagged
+              <Flag size={13} style={{ verticalAlign: "-2px", marginRight: 3 }} /> {flags.length > 0 ? flags.length : ""} Flagged
             </button>
             <button onClick={() => setShowRemoved(!showRemoved)} style={{ ...S.btnSm, background: removed.length > 0 ? "rgba(136,136,136,0.3)" : "rgba(255,255,255,0.1)", color: "#fff" }}>
-              🗂 {removed.length > 0 ? removed.length : ""} Removed
+              <Archive size={13} style={{ verticalAlign: "-2px", marginRight: 3 }} /> {removed.length > 0 ? removed.length : ""} Removed
             </button>
           </div>
         )}
@@ -1520,7 +1529,7 @@ function Members({ profile }) {
                     <div>
                       <div style={{ color: "#fff", fontFamily: "'Cinzel', serif", fontSize: 15 }}>{formatName(m.full_name)}</div>
                       <div style={S.muted}>{profile.role === "admin" ? m.email : ""}</div>
-                      {(m.city || m.state) && <div style={{ color: "#FF6600", fontSize: 12, marginTop: 2 }}>📍 {[m.city, m.state].filter(Boolean).join(", ")}</div>}
+                      {(m.city || m.state) && <div style={{ color: "#FF6600", fontSize: 12, marginTop: 2 }}><MapPin size={11} style={{ verticalAlign: "-1px", marginRight: 2 }} /> {[m.city, m.state].filter(Boolean).join(", ")}</div>}
                     </div>
                   </div>
                   <div style={S.flex}>
@@ -1551,10 +1560,10 @@ function Members({ profile }) {
                   {m.role === "moderator" && <span style={{ ...S.badge, background: "rgba(192,154,47,0.25)", color: "#C09A2F", fontSize: 10 }}>Mod</span>}
                 </div>
                 {profile.role === "admin" && <div style={{ ...S.muted, fontSize: 12 }}>{m.email}</div>}
-                {(m.city || m.state) && <div style={{ color: "#FF6600", fontSize: 12, marginTop: 2 }}>📍 {[m.city, m.state].filter(Boolean).join(", ")}</div>}
+                {(m.city || m.state) && <div style={{ color: "#FF6600", fontSize: 12, marginTop: 2 }}><MapPin size={11} style={{ verticalAlign: "-1px", marginRight: 2 }} /> {[m.city, m.state].filter(Boolean).join(", ")}</div>}
                 <div style={{ marginTop: 6 }}><Badges userId={m.id} size="small" /></div>
                 {m.id !== profile.id && (
-                  <button onClick={() => flagMember(m)} style={{ background: "none", border: "none", cursor: "pointer", color: "#555", fontSize: 11, padding: "4px 0", marginTop: 4 }} title="Report this member">🚩 Report</button>
+                  <button onClick={() => flagMember(m)} style={{ background: "none", border: "none", cursor: "pointer", color: "#555", fontSize: 11, padding: "4px 0", marginTop: 4 }} title="Report this member"><Flag size={12} style={{ verticalAlign: "-2px", marginRight: 3 }} /> Report</button>
                 )}
                 {profile.role === "admin" && m.id !== profile.id && (
                   <div style={{ display: "flex", gap: 8, marginTop: 10, flexWrap: "wrap" }}>
@@ -1881,7 +1890,7 @@ function Messages({ profile, members, onRead }) {
       )}
       <div style={{ padding: "10px 12px", borderTop: "1px solid rgba(255,255,255,0.05)", display: "flex", gap: 8, alignItems: "center" }}>
         <input ref={msgPhotoRef} type="file" accept="image/*" style={{ display: "none" }} onChange={e => { const f = e.target.files[0]; if (f && f.size <= 5*1024*1024) { setPhotoFile(f); setPhotoPreview(URL.createObjectURL(f)); } else if (f) alert("Max 5MB"); }} />
-        <button onClick={() => msgPhotoRef.current.click()} style={{ background: "none", border: "1px solid rgba(255,255,255,0.08)", borderRadius: 8, padding: "8px 10px", color: "#888", cursor: "pointer", fontSize: 16, flexShrink: 0 }}>📷</button>
+        <button onClick={() => msgPhotoRef.current.click()} style={{ background: "none", border: "1px solid rgba(255,255,255,0.08)", borderRadius: 8, padding: "8px 10px", color: "#888", cursor: "pointer", fontSize: 16, flexShrink: 0 }}><Camera size={16} /></button>
         <input style={{ ...S.input, flex: 1, fontSize: 14, padding: "10px 14px" }} placeholder="Type a message..." value={body} onChange={e => setBody(e.target.value)} onKeyDown={e => { if (e.key === "Enter" && !e.shiftKey) { e.preventDefault(); send(); }}} />
         <button style={{ ...S.btn, padding: "10px 16px", flexShrink: 0 }} onClick={send} disabled={posting || uploading || (!body.trim() && !photoFile)}>{uploading ? "⏳" : "Send"}</button>
       </div>
@@ -4040,7 +4049,7 @@ function Badges({ userId, size = "normal" }) {
     <div style={{ display: "flex", gap: 6, flexWrap: "wrap" }}>
       {earned.map(b => (
         <div key={b.id} title={`${b.label} — ${b.desc}`} style={{ display: "flex", alignItems: "center", gap: 4, background: "rgba(255,102,0,0.08)", border: "1px solid rgba(255,102,0,0.2)", borderRadius: 20, padding, cursor: "default" }}>
-          <span style={{ fontSize: iconSize }}>{b.icon}</span>
+          {(() => { const I = BADGE_ICONS[b.id] || Star; return <I size={iconSize} color="#FF6600" strokeWidth={1.75} />; })()}
           {size !== "small" && <span style={{ color: "#FF6600", fontSize: 11, letterSpacing: "0.05em" }}>{b.label}</span>}
         </div>
       ))}
