@@ -4144,6 +4144,7 @@ export default function App() {
       <nav style={{ ...S.nav, height: isMobile ? 60 : 72, padding: isMobile ? "0 12px" : "0 32px" }}>
         <img src="https://esix10.com/wp-content/uploads/2026/06/esix10logo.png" alt="ESix10" style={{ height: isMobile ? 60 : 88, width: "auto", objectFit: "contain" }} />
         <div style={S.navRight}>
+          <button onClick={() => window.location.reload()} style={{ background: "none", border: "none", color: "#888", fontSize: 18, cursor: "pointer", padding: "4px 6px", lineHeight: 1, display: "flex", alignItems: "center" }} title="Refresh">↻</button>
           <span style={{ ...S.badge, fontSize: 10 }}>
             {(profile.group_ids && profile.group_ids.length > 1) 
               ? profile.group_ids.map(id => GROUPS.find(g => g.id === id)?.icon).join(" ")
