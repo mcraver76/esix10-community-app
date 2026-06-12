@@ -570,6 +570,9 @@ function AuthScreen({ onAuth }) {
         if (error) throw error;
         if (data.user) {
           await supabase.from("profiles").upsert({ id: data.user.id, email, full_name: name, username: username.toLowerCase().replace(/[^a-z0-9_]/g, ""), role: email === ADMIN_EMAIL ? "admin" : "member" });
+          if (email !== ADMIN_EMAIL) {
+            fetch("/api/send-email", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ to: email, name, type: "signup" }) }).catch(e => console.error("signup email failed", e));
+          }
           setMsg("Account created! Check your email to confirm, then log in.");
           setMode("login");
         }

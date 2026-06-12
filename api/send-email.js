@@ -37,6 +37,13 @@ export default async function handler(req) {
         body: `Your profile has been approved, ${first}. You now have full access to the ESix10 Community — the feed, prayer, The Forge, messages, and more.`,
         cta: 'Enter the Community',
       },
+      signup: {
+        subject: 'We received your ESix10 application',
+        heading: 'Application Received',
+        body: `Thanks for joining, ${first}. Your profile is being reviewed by an admin — you'll get an email here the moment you're approved (usually within 24–48 hours). In the meantime, you can sign in and start exploring the community.`,
+        cta: 'Sign In & Look Around',
+        note: 'Add noreply@esix10.com to your contacts and check your spam or junk folder, so your approval email does not get missed.',
+      },
     };
 
     const t = templates[type] || templates.approval;
@@ -51,6 +58,7 @@ export default async function handler(req) {
           <div style="padding:8px 32px 32px;">
             <h1 style="color:#ffffff;font-size:22px;font-weight:normal;text-align:center;margin:16px 0;">${t.heading}</h1>
             <p style="color:#cccccc;font-size:15px;line-height:1.7;text-align:center;">${t.body}</p>
+            ${t.note ? `<div style="background:rgba(255,102,0,0.08);border:1px solid rgba(255,102,0,0.2);border-radius:8px;padding:14px 18px;margin:20px 0;"><p style="color:#FFB066;font-size:13px;line-height:1.6;margin:0;text-align:center;">📬 ${t.note}</p></div>` : ''}
             <div style="text-align:center;margin:28px 0;">
               <a href="${APP_URL}" style="display:inline-block;background:#FF6600;color:#ffffff;text-decoration:none;padding:13px 32px;border-radius:8px;font-size:13px;letter-spacing:1.5px;text-transform:uppercase;">${t.cta}</a>
             </div>
