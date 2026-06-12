@@ -4,7 +4,7 @@ import {
   LayoutGrid, Newspaper, Swords, Sparkles, Gem, Flame, HeartHandshake,
   MessageCircle, Menu, User, BarChart3, Users, BookOpen, Smartphone, Share2,
   CalendarDays, Lock, MapPin, Cross, HandHeart, Tv, Shield, Sword, PawPrint,
-  Bird, Mountain, Anchor, Star, Dumbbell, Crown,
+  Bird, Mountain, Anchor, Star, Dumbbell, Crown, Footprints, Award,
 } from "lucide-react";
 
 // Map nav/group ids -> line icons (replaces emoji UI icons).
@@ -27,6 +27,13 @@ const AVATAR_ICONS = {
   eagle: Bird, mountain: Mountain, anchor: Anchor, star: Star, fist: Dumbbell,
   pray: HandHeart, crown: Crown,
 };
+
+// Level rank -> line icon.
+const LEVEL_ICONS = { Recruit: Shield, Soldier: Swords, Warrior: Flame, Guardian: PawPrint, Iron: Crown };
+function LevelIcon({ level, size = 16, style }) {
+  const I = LEVEL_ICONS[level?.name] || Shield;
+  return <I size={size} color={level?.color} strokeWidth={1.75} style={{ flexShrink: 0, verticalAlign: "middle", marginRight: 4, ...style }} />;
+}
 
 // Mobile detection hook
 function useMobile() {
@@ -190,7 +197,7 @@ function LevelBadgeForUser({ profile, fontSize = 10 }) {
 
   return (
     <span className="level-badge" style={{ background: `${level.color}20`, color: level.color, border: `1px solid ${level.color}40`, fontSize }}>
-      {level.icon} {level.name}
+      <LevelIcon level={level} size={Number(fontSize) + 2} /> {level.name}
     </span>
   );
 }
@@ -876,7 +883,7 @@ function PersonalHeader({ profile }) {
         </h2>
         <div style={{ display: "flex", alignItems: "center", gap: 8, flexWrap: "wrap" }}>
           <span className="level-badge" style={{ background: `${level.color}20`, color: level.color, border: `1px solid ${level.color}40`, fontSize: 11 }}>
-            {level.icon} {level.name}
+            <LevelIcon level={level} size={13} /> {level.name}
           </span>
           {profile.state && localCount > 0 && (
             <span style={{ color: "#555", fontSize: 12 }}>📍 {localCount} members in {profile.state}</span>
@@ -899,7 +906,7 @@ function PersonalHeader({ profile }) {
       <div style={{ display: "flex", gap: 8, overflowX: "auto", paddingBottom: 4, WebkitOverflowScrolling: "touch" }}>
         {walkStreak > 0 && (
           <div style={{ background: "rgba(255,102,0,0.06)", border: "1px solid rgba(255,102,0,0.15)", borderRadius: 10, padding: "10px 16px", flexShrink: 0, textAlign: "center", minWidth: 80 }}>
-            <div style={{ fontSize: 20, marginBottom: 2 }}>🔥</div>
+            <div style={{ marginBottom: 2, display: "flex", justifyContent: "center" }}><Flame size={20} color="#FF6600" strokeWidth={1.75} /></div>
             <div style={{ fontFamily: "'Cinzel', serif", fontSize: 18, color: "#FF6600", lineHeight: 1 }}>{walkStreak}</div>
             <div style={{ color: "#555", fontSize: 10, letterSpacing: "0.08em", textTransform: "uppercase", marginTop: 2 }}>Streak</div>
           </div>
@@ -907,21 +914,21 @@ function PersonalHeader({ profile }) {
 
         {kudosCount > 0 && (
           <div style={{ background: "rgba(255,102,0,0.06)", border: "1px solid rgba(255,102,0,0.15)", borderRadius: 10, padding: "10px 16px", flexShrink: 0, textAlign: "center", minWidth: 80 }}>
-            <div style={{ fontSize: 20, marginBottom: 2 }}>👊</div>
+            <div style={{ marginBottom: 2, display: "flex", justifyContent: "center" }}><Award size={20} color="#FF6600" strokeWidth={1.75} /></div>
             <div style={{ fontFamily: "'Cinzel', serif", fontSize: 18, color: "#FF6600", lineHeight: 1 }}>{kudosCount}</div>
             <div style={{ color: "#555", fontSize: 10, letterSpacing: "0.08em", textTransform: "uppercase", marginTop: 2 }}>Kudos</div>
           </div>
         )}
 
         <div style={{ background: "rgba(255,102,0,0.06)", border: "1px solid rgba(255,102,0,0.15)", borderRadius: 10, padding: "10px 16px", flexShrink: 0, textAlign: "center", minWidth: 80 }}>
-          <div style={{ fontSize: 20, marginBottom: 2 }}>{level.icon}</div>
+          <div style={{ marginBottom: 2, display: "flex", justifyContent: "center" }}><LevelIcon level={level} size={20} style={{ marginRight: 0 }} /></div>
           <div style={{ fontFamily: "'Cinzel', serif", fontSize: 14, color: level.color, lineHeight: 1 }}>{level.name}</div>
           <div style={{ color: "#555", fontSize: 10, letterSpacing: "0.08em", textTransform: "uppercase", marginTop: 2 }}>{xp} XP</div>
         </div>
 
         {stats?.totalMiles > 0 && (
           <div style={{ background: "rgba(255,102,0,0.06)", border: "1px solid rgba(255,102,0,0.15)", borderRadius: 10, padding: "10px 16px", flexShrink: 0, textAlign: "center", minWidth: 80 }}>
-            <div style={{ fontSize: 20, marginBottom: 2 }}>🛣️</div>
+            <div style={{ marginBottom: 2, display: "flex", justifyContent: "center" }}><Footprints size={20} color="#FF6600" strokeWidth={1.75} /></div>
             <div style={{ fontFamily: "'Cinzel', serif", fontSize: 18, color: "#FF6600", lineHeight: 1 }}>{stats.totalMiles.toFixed(1)}</div>
             <div style={{ color: "#555", fontSize: 10, letterSpacing: "0.08em", textTransform: "uppercase", marginTop: 2 }}>Miles</div>
           </div>
@@ -4314,7 +4321,7 @@ function ProfileLevelSummary({ profile }) {
     <div style={{ ...S.card, marginBottom: 16, marginTop: 20, background: `linear-gradient(135deg, ${lvl.color}15, rgba(22,27,34,0.98))`, border: `1px solid ${lvl.color}30` }}>
       <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 12 }}>
         <div>
-          <span className="level-badge" style={{ background: `${lvl.color}20`, color: lvl.color, border: `1px solid ${lvl.color}40`, fontSize: 13, padding: "4px 14px" }}>{lvl.icon} {lvl.name}</span>
+          <span className="level-badge" style={{ background: `${lvl.color}20`, color: lvl.color, border: `1px solid ${lvl.color}40`, fontSize: 13, padding: "4px 14px", display: "inline-flex", alignItems: "center" }}><LevelIcon level={lvl} size={14} /> {lvl.name}</span>
           <div style={{ color: "#888", fontSize: 12, marginTop: 6 }}>{xp} XP total{nextLvl ? ` · ${Math.max(nextLvl.min - xp, 0)} XP to ${nextLvl.name}` : " · Max Level"}</div>
           {stats?.updatedAt && <div style={{ color: "#444", fontSize: 11, marginTop: 4 }}>Stats updated {new Date(stats.updatedAt).toLocaleString()}</div>}
         </div>
