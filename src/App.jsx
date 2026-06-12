@@ -315,8 +315,8 @@ const S = {
   badge: { background: "rgba(255,102,0,0.15)", color: "#FF6600", padding: "4px 12px", borderRadius: 20, fontSize: 12, fontWeight: 600, letterSpacing: "0.1em", textTransform: "uppercase" },
   btn: { background: "linear-gradient(135deg, #FF6600, #E55A00)", color: "#fff", border: "none", borderRadius: 8, boxShadow: "0 2px 12px rgba(255,102,0,0.25)", padding: "10px 24px", fontFamily: "'Lato', sans-serif", fontSize: 12, letterSpacing: "0.15em", textTransform: "uppercase", cursor: "pointer", transition: "background 0.2s" },
   btnGhost: { background: "transparent", color: "#AAAAAA", border: "1px solid rgba(255,255,255,0.15)", borderRadius: 8, padding: "10px 24px", fontFamily: "'Lato', sans-serif", fontSize: 12, letterSpacing: "0.15em", textTransform: "uppercase", cursor: "pointer" },
-  btnSm: { background: "linear-gradient(135deg, #FF6600, #E55A00)", color: "#fff", border: "none", borderRadius: 6, boxShadow: "0 2px 8px rgba(255,102,0,0.2)", padding: "8px 16px", fontFamily: "'Lato', sans-serif", fontSize: 11, letterSpacing: "0.12em", textTransform: "uppercase", cursor: "pointer" },
-  btnDanger: { background: "transparent", color: "#ff4444", border: "1px solid #ff4444", borderRadius: 3, padding: "6px 12px", fontSize: 11, cursor: "pointer" },
+  btnSm: { background: "linear-gradient(135deg, #FF6600, #E55A00)", color: "#fff", border: "none", borderRadius: 8, boxShadow: "0 2px 8px rgba(255,102,0,0.2)", padding: "8px 16px", fontFamily: "'Lato', sans-serif", fontSize: 11, letterSpacing: "0.12em", textTransform: "uppercase", cursor: "pointer" },
+  btnDanger: { background: "transparent", color: "#ff4444", border: "1px solid #ff4444", borderRadius: 8, padding: "6px 12px", fontSize: 11, cursor: "pointer" },
   page: { paddingTop: 90, maxWidth: 1100, margin: "0 auto", padding: "90px 24px 60px" },
   card: { background: "linear-gradient(145deg, rgba(22,27,36,0.98), rgba(16,20,28,0.98))", border: "1px solid rgba(255,255,255,0.07)", borderRadius: 12, padding: 24, transition: "border-color 0.2s" },
   input: { width: "100%", background: "rgba(255,255,255,0.04)", border: "1px solid rgba(255,255,255,0.08)", borderRadius: 8, padding: "12px 16px", color: "#fff", fontFamily: "'Lato', sans-serif", fontSize: 15, outline: "none", boxSizing: "border-box" },
@@ -339,8 +339,8 @@ const S = {
   postAuthor: { fontFamily: "'Cinzel', serif", fontSize: 14, fontWeight: 600, color: "#fff" },
   postTime: { fontSize: 11, color: "#555", marginLeft: 8 },
   postBody: { color: "#CCCCCC", fontSize: 15, lineHeight: 1.7, marginTop: 10 },
-  tab: (active) => ({ padding: "10px 20px", background: active ? "#FF6600" : "transparent", color: active ? "#fff" : "#888", border: active ? "none" : "1px solid rgba(255,255,255,0.1)", borderRadius: 3, cursor: "pointer", fontFamily: "'Lato',sans-serif", fontSize: 11, letterSpacing: "0.12em", textTransform: "uppercase" }),
-  groupCard: (selected) => ({ border: selected ? "2px solid #FF6600" : "1px solid rgba(255,255,255,0.08)", borderRadius: 6, padding: "24px 20px", cursor: "pointer", background: selected ? "rgba(255,102,0,0.08)" : "rgba(26,26,26,0.6)", textAlign: "center", transition: "all 0.2s" }),
+  tab: (active) => ({ padding: "10px 20px", background: active ? "#FF6600" : "transparent", color: active ? "#fff" : "#888", border: active ? "none" : "1px solid rgba(255,255,255,0.1)", borderRadius: 8, cursor: "pointer", fontFamily: "'Lato',sans-serif", fontSize: 11, letterSpacing: "0.12em", textTransform: "uppercase" }),
+  groupCard: (selected) => ({ border: selected ? "2px solid #FF6600" : "1px solid rgba(255,255,255,0.08)", borderRadius: 12, padding: "24px 20px", cursor: "pointer", background: selected ? "rgba(255,102,0,0.08)" : "rgba(26,26,26,0.6)", textAlign: "center", transition: "all 0.2s" }),
 };
 
 // ─── SQL Setup Instructions ────────────────────────────────────────────────────
@@ -516,7 +516,7 @@ function PendingScreen({ profile, onSignOut }) {
   return (
     <div style={{ minHeight: "100vh", background: "#0a0a0a", display: "flex", alignItems: "center", justifyContent: "center", padding: 24 }}>
       <div style={{ maxWidth: 480, width: "100%", textAlign: "center" }}>
-        <img src="https://esix10.com/wp-content/uploads/2026/06/esix10logo.png" alt="ESix10" style={{ height: 134, width: "auto", objectFit: "contain", marginBottom: 8 }} />
+        <img src="/esix10logo.png" alt="ESix10" style={{ height: 134, width: "auto", objectFit: "contain", marginBottom: 8 }} />
         <span style={{ color: "#FF6600", fontSize: 10, display: "block", letterSpacing: "0.35em", textTransform: "uppercase", marginBottom: 32 }}>Community</span>
         <div style={{ ...S.card, textAlign: "left" }}>
           <div style={{ textAlign: "center", marginBottom: 24 }}>
@@ -587,7 +587,7 @@ function AuthScreen({ onAuth }) {
     <div style={{ minHeight: "100vh", background: "#0a0a0a", display: "flex", alignItems: "center", justifyContent: "center", padding: 24 }}>
       <div style={{ width: "100%", maxWidth: 420 }}>
         <div style={{ textAlign: "center", marginBottom: 40 }}>
-          <img src="https://esix10.com/wp-content/uploads/2026/06/esix10logo.png" alt="ESix10" style={{ height: 144, width: "auto", objectFit: "contain", marginBottom: 8 }} />
+          <img src="/esix10logo.png" alt="ESix10" style={{ height: 144, width: "auto", objectFit: "contain", marginBottom: 8 }} />
           <span style={{ color: "#FF6600", fontSize: 10, display: "block", letterSpacing: "0.35em", textTransform: "uppercase" }}>Community</span>
           <div style={{ width: 40, height: 2, background: "#FF6600", margin: "16px auto" }} />
           <p style={S.grey}>Prepared. Equipped. Unshaken.</p>
@@ -3710,7 +3710,7 @@ function WelcomeModal({ profile, onClose }) {
   return (
     <div style={{ position: "fixed", inset: 0, background: "rgba(0,0,0,0.92)", zIndex: 500, display: "flex", alignItems: "center", justifyContent: "center", padding: 24 }}>
       <div style={{ maxWidth: 480, width: "100%", textAlign: "center" }} className="fade-up">
-        <img src="https://esix10.com/wp-content/uploads/2026/06/esix10logo.png" alt="ESix10" style={{ height: 80, width: "auto", objectFit: "contain", marginBottom: 16 }} />
+        <img src="/esix10logo.png" alt="ESix10" style={{ height: 80, width: "auto", objectFit: "contain", marginBottom: 16 }} />
         
         <div style={{ marginBottom: 24 }}>
           <span style={{ ...S.eyebrow, display: "block", marginBottom: 8 }}>{group?.label} — {group?.subtitle}</span>
@@ -4619,7 +4619,7 @@ export default function App() {
 
       {/* NAV */}
       <nav style={{ ...S.nav, height: isMobile ? 60 : 72, padding: isMobile ? "0 12px" : "0 32px" }}>
-        <img src="https://esix10.com/wp-content/uploads/2026/06/esix10logo.png" alt="ESix10" style={{ height: isMobile ? 60 : 88, width: "auto", objectFit: "contain" }} />
+        <img src="/esix10logo.png" alt="ESix10" style={{ height: isMobile ? 60 : 88, width: "auto", objectFit: "contain" }} />
         <div style={S.navRight}>
           <button onClick={() => window.location.reload()} style={{ background: "none", border: "none", color: "#888", fontSize: 18, cursor: "pointer", padding: "4px 6px", lineHeight: 1, display: "flex", alignItems: "center" }} title="Refresh">↻</button>
           <span style={{ ...S.badge, fontSize: 10 }}>

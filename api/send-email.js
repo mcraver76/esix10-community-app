@@ -20,7 +20,7 @@ export default async function handler(req) {
 
   const FROM = process.env.RESEND_FROM || 'ESix10 Community <onboarding@resend.dev>';
   const APP_URL = process.env.APP_URL || 'https://esix10-community-app.vercel.app';
-  const LOGO = 'https://esix10.com/wp-content/uploads/2026/06/esix10logo.png';
+  const LOGO = 'https://community.esix10.com/esix10logo.png';
 
   try {
     const { to, name, type } = await req.json();
