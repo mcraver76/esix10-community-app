@@ -1267,6 +1267,15 @@ function Members({ profile }) {
     setMembers(data || []);
   }
 
+  async function flagMember(m) {
+    if (!requireApproved(profile)) return;
+    if (m.id === profile.id) return;
+    const reason = window.prompt(`Report ${formatName(m.full_name)} to the admins. What's the issue? (optional)`);
+    if (reason === null) return;
+    await supabase.from("member_flags").insert({ flagged_user_id: m.id, flagged_by: profile.id, reason: reason || "No reason provided" });
+    alert("Member reported. An admin will review it shortly. Thank you.");
+  }
+
   async function sendKudosMember(toUserId) {
     if (!requireApproved(profile)) return;
     await supabase.from("kudos").insert({ from_user_id: profile.id, to_user_id: toUserId });
@@ -1505,6 +1514,9 @@ function Members({ profile }) {
                 {profile.role === "admin" && <div style={{ ...S.muted, fontSize: 12 }}>{m.email}</div>}
                 {(m.city || m.state) && <div style={{ color: "#FF6600", fontSize: 12, marginTop: 2 }}>📍 {[m.city, m.state].filter(Boolean).join(", ")}</div>}
                 <div style={{ marginTop: 6 }}><Badges userId={m.id} size="small" /></div>
+                {m.id !== profile.id && (
+                  <button onClick={() => flagMember(m)} style={{ background: "none", border: "none", cursor: "pointer", color: "#555", fontSize: 11, padding: "4px 0", marginTop: 4 }} title="Report this member">🚩 Report</button>
+                )}
                 {profile.role === "admin" && m.id !== profile.id && (
                   <div style={{ display: "flex", gap: 8, marginTop: 10, flexWrap: "wrap" }}>
                     <button style={{ ...S.btnSm, fontSize: 10, padding: "6px 12px" }} onClick={() => updateRole(m.id, m.role === "admin" ? "member" : "admin")}>
@@ -4427,18 +4439,28 @@ function AdminDashboard({ profile }) {
   const [flags, setFlags] = useState([]);
   const [pendingEvents, setPendingEvents] = useState([]);
   const [pendingRecs, setPendingRecs] = useState([]);
+  const [memberFlags, setMemberFlags] = useState([]);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => { loadAll(); }, []);
 
   async function loadAll() {
     setLoading(true);
-    const [m, f, e, r] = await Promise.all([
+    const [m, f, e, r, mf] = await Promise.all([
       supabase.from("profiles").select("*").eq("status", "pending").order("created_at", { ascending: true }),
       supabase.from("post_flags").select("*, posts(body, user_id, group_id)").eq("reviewed", false).order("created_at", { ascending: false }),
       supabase.from("events").select("*").eq("approved", false).order("created_at", { ascending: false }),
       supabase.from("local_recommendations").select("*, profiles(username, full_name)").eq("approved", false).order("created_at", { ascending: false }),
+      supabase.from("member_flags").select("*").eq("reviewed", false).order("created_at", { ascending: false }),
     ]);
+    const flagRows = mf.data || [];
+    const ids = [...new Set(flagRows.flatMap(x => [x.flagged_user_id, x.flagged_by]))];
+    const nameMap = {};
+    if (ids.length) {
+      const { data: profs } = await supabase.from("profiles").select("id, full_name, username").in("id", ids);
+      (profs || []).forEach(p => { nameMap[p.id] = p; });
+    }
+    setMemberFlags(flagRows.map(x => ({ ...x, reported: nameMap[x.flagged_user_id], reporter: nameMap[x.flagged_by] })));
     setPendingMembers(m.data || []);
     setFlags(f.data || []);
     setPendingEvents(e.data || []);
@@ -4482,8 +4504,17 @@ function AdminDashboard({ profile }) {
     await supabase.from("local_recommendations").delete().eq("id", id);
     loadAll();
   }
+  async function removeFlaggedMember(flag) {
+    await supabase.from("profiles").update({ status: "removed" }).eq("id", flag.flagged_user_id);
+    await supabase.from("member_flags").update({ reviewed: true }).eq("id", flag.id);
+    loadAll();
+  }
+  async function dismissMemberFlag(id) {
+    await supabase.from("member_flags").update({ reviewed: true }).eq("id", id);
+    loadAll();
+  }
 
-  const total = pendingMembers.length + flags.length + pendingEvents.length + pendingRecs.length;
+  const total = pendingMembers.length + flags.length + pendingEvents.length + pendingRecs.length + memberFlags.length;
 
   const Section = ({ title, icon, count, children }) => (
     <div style={{ ...S.card, marginTop: 16 }}>
@@ -4534,6 +4565,19 @@ function AdminDashboard({ profile }) {
             actions={<>
               <button style={S.btnDanger} onClick={() => removeFlaggedPost(f.id, f.post_id)}>Remove Post</button>
               <button style={S.btnGhost} onClick={() => dismissFlag(f.id)}>Dismiss</button>
+            </>}
+          />
+        ))}
+      </Section>
+
+      <Section title="Flagged Members" icon="🚩" count={memberFlags.length}>
+        {memberFlags.map(mf => (
+          <Row key={mf.id}
+            main={mf.reported ? formatName(mf.reported.full_name) : "(unknown member)"}
+            sub={`Reason: ${mf.reason || "—"} · reported by ${mf.reporter ? formatName(mf.reporter.full_name) : "—"}`}
+            actions={<>
+              <button style={S.btnDanger} onClick={() => removeFlaggedMember(mf)}>Remove Member</button>
+              <button style={S.btnGhost} onClick={() => dismissMemberFlag(mf.id)}>Dismiss</button>
             </>}
           />
         ))}
