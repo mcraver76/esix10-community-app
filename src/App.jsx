@@ -1144,11 +1144,16 @@ function Events({ profile }) {
 
   async function createEvent() {
     setLoading(true);
-    await supabase.from("events").insert({ ...form, created_by: profile.id });
+    await supabase.from("events").insert({ ...form, created_by: profile.id, approved: profile.role === "admin" });
     setShowForm(false);
     setForm({ title: "", description: "", group_id: "all", event_date: "", location: "" });
     loadEvents();
     setLoading(false);
+  }
+
+  async function approveEvent(id) {
+    await supabase.from("events").update({ approved: true }).eq("id", id);
+    loadEvents();
   }
 
   async function deleteEvent(id) {
@@ -1160,16 +1165,15 @@ function Events({ profile }) {
     <div>
       <div style={S.flexBetween}>
         <h2 style={{ ...S.h2, margin: 0 }}>Upcoming Events</h2>
-        {profile.role === "admin" && (
-          <button style={S.btn} onClick={() => setShowForm(!showForm)}>
-            {showForm ? "Cancel" : "+ Add Event"}
-          </button>
-        )}
+        <button style={S.btn} onClick={() => setShowForm(!showForm)}>
+          {showForm ? "Cancel" : "+ Add Event"}
+        </button>
       </div>
 
       {showForm && (
         <div style={{ ...S.card, marginTop: 20 }}>
           <span style={S.eyebrow}>New Event</span>
+          {profile.role !== "admin" && <p style={{ ...S.muted, marginTop: 6, marginBottom: 4 }}>Your event will be reviewed by an admin before it goes live.</p>}
           <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 16, marginBottom: 16 }}>
             <div>
               <label style={S.label}>Title</label>
@@ -1214,9 +1218,15 @@ function Events({ profile }) {
                   <span style={S.badge}>{GROUPS.find(g => g.id === ev.group_id)?.label || "All Groups"}</span>
                 </div>
               </div>
-              {profile.role === "admin" && (
-                <button style={S.btnDanger} onClick={() => deleteEvent(ev.id)}>Remove</button>
-              )}
+              <div style={S.flex}>
+                {ev.approved === false && <span style={{ ...S.badge, background: "rgba(252,196,25,0.15)", color: "#fcc419", border: "1px solid rgba(252,196,25,0.3)" }}>Pending</span>}
+                {profile.role === "admin" && ev.approved === false && (
+                  <button style={S.btn} onClick={() => approveEvent(ev.id)}>Approve</button>
+                )}
+                {(profile.role === "admin" || ev.created_by === profile.id) && (
+                  <button style={S.btnDanger} onClick={() => deleteEvent(ev.id)}>Remove</button>
+                )}
+              </div>
             </div>
             {ev.description && <p style={{ ...S.postBody, marginTop: 10 }}>{ev.description}</p>}
           </div>
