@@ -5,7 +5,7 @@ import {
   MessageCircle, Menu, User, BarChart3, Users, BookOpen, Smartphone, Share2,
   CalendarDays, Lock, MapPin, Cross, HandHeart, Tv, Shield, Sword, PawPrint,
   Bird, Mountain, Anchor, Star, Dumbbell, Crown, Footprints, Award,
-  Zap, Megaphone, Activity, Camera, Flag, Archive,
+  Zap, Megaphone, Activity, Camera, Flag, Archive, Hourglass, Medal,
 } from "lucide-react";
 
 // Map nav/group ids -> line icons (replaces emoji UI icons).
@@ -4210,10 +4210,10 @@ function StatsDashboard({ profile }) {
 
   const sortedLeaderboard = [...leaderboard].sort((a, b) => (b[leaderboardMetric] || 0) - (a[leaderboardMetric] || 0)).slice(0, 10);
   const METRICS = [
-    { id: "xp", label: "XP", icon: "⭐" },
-    { id: "walkCount", label: "Walks", icon: "🚶" },
-    { id: "kudosCount", label: "Kudos", icon: "👊" },
-    { id: "postCount", label: "Posts", icon: "📋" },
+    { id: "xp", label: "XP", icon: Star },
+    { id: "walkCount", label: "Walks", icon: Footprints },
+    { id: "kudosCount", label: "Kudos", icon: Award },
+    { id: "postCount", label: "Posts", icon: Newspaper },
   ];
 
   if (loading) return <p style={{ ...S.muted, textAlign: "center", padding: 60 }}>Loading stats...</p>;
@@ -4226,18 +4226,18 @@ function StatsDashboard({ profile }) {
       {myStats && (
         <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(110px, 1fr))", gap: 10, marginBottom: 24 }}>
           {[
-            { label: "Total XP", value: myStats.xp, icon: "⭐" },
-            { label: "Walk Streak", value: myStats.walkStreak, icon: "🔥" },
-            { label: "Total Miles", value: myStats.totalMiles, icon: "🚶" },
-            { label: "Walks Logged", value: myStats.walkCount, icon: "📅" },
-            { label: "Challenges", value: myStats.challengeCount, icon: "⚡" },
-            { label: "WODs", value: myStats.wodCount, icon: "🏋️" },
-            { label: "Posts", value: myStats.postCount, icon: "📋" },
-            { label: "Kudos Received", value: myStats.kudosCount, icon: "👊" },
-            { label: "Prayers Shared", value: myStats.prayerCount, icon: "🙏" },
+            { label: "Total XP", value: myStats.xp, icon: Star },
+            { label: "Walk Streak", value: myStats.walkStreak, icon: Flame },
+            { label: "Total Miles", value: myStats.totalMiles, icon: Footprints },
+            { label: "Walks Logged", value: myStats.walkCount, icon: CalendarDays },
+            { label: "Challenges", value: myStats.challengeCount, icon: Zap },
+            { label: "WODs", value: myStats.wodCount, icon: Dumbbell },
+            { label: "Posts", value: myStats.postCount, icon: Newspaper },
+            { label: "Kudos Received", value: myStats.kudosCount, icon: Award },
+            { label: "Prayers Shared", value: myStats.prayerCount, icon: HeartHandshake },
           ].map(s => (
             <div key={s.label} style={{ background: "rgba(255,102,0,0.06)", border: "1px solid rgba(255,102,0,0.15)", borderRadius: 10, padding: "14px 12px", textAlign: "center" }}>
-              <div style={{ fontSize: 22, marginBottom: 4 }}>{s.icon}</div>
+              <div style={{ marginBottom: 4, display: "flex", justifyContent: "center" }}><s.icon size={22} color="#FF6600" strokeWidth={1.75} /></div>
               <div style={{ fontFamily: "'Cinzel', serif", fontSize: 20, color: "#FF6600", lineHeight: 1 }}>{s.value}</div>
               <div style={{ color: "#888", fontSize: 10, letterSpacing: "0.08em", textTransform: "uppercase", marginTop: 4 }}>{s.label}</div>
             </div>
@@ -4258,7 +4258,7 @@ function StatsDashboard({ profile }) {
           <div style={{ display: "flex", gap: 6, flexWrap: "wrap" }}>
             {METRICS.map(m => (
               <button key={m.id} onClick={() => setLeaderboardMetric(m.id)} style={{ ...S.tab(leaderboardMetric === m.id), padding: "6px 12px", fontSize: 11 }}>
-                {m.icon} {m.label}
+                <m.icon size={13} style={{ verticalAlign: "-2px", marginRight: 3 }} /> {m.label}
               </button>
             ))}
           </div>
@@ -4268,7 +4268,7 @@ function StatsDashboard({ profile }) {
           {sortedLeaderboard.map((m, idx) => (
             <div key={m.id} style={{ display: "flex", alignItems: "center", gap: 12, padding: "10px 0", borderBottom: idx < sortedLeaderboard.length - 1 ? "1px solid rgba(255,255,255,0.05)" : "none" }}>
               <div style={{ width: 28, textAlign: "center", fontFamily: "'Cinzel', serif", fontSize: 16, color: idx === 0 ? "#C09A2F" : idx === 1 ? "#AAAAAA" : idx === 2 ? "#FF6600" : "#555" }}>
-                {idx === 0 ? "🥇" : idx === 1 ? "🥈" : idx === 2 ? "🥉" : idx + 1}
+                {idx < 3 ? <Medal size={18} color={idx === 0 ? "#C09A2F" : idx === 1 ? "#AAAAAA" : "#FF6600"} strokeWidth={1.75} /> : idx + 1}
               </div>
               <Avatar profile={m} size={36} />
               <div style={{ flex: 1 }}>
@@ -4286,18 +4286,18 @@ function StatsDashboard({ profile }) {
           <span style={S.eyebrow}>Community Overview</span>
           <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(110px, 1fr))", gap: 10, marginTop: 8 }}>
             {[
-              { label: "Total Members", value: communityStats.totalMembers, icon: "👥" },
-              { label: "Pending", value: communityStats.pendingMembers, icon: "⏳" },
-              { label: "Cached Profiles", value: communityStats.profileStatsRows, icon: "📊" },
-              { label: "Total XP", value: communityStats.totalXp, icon: "⭐" },
-              { label: "Total Posts", value: communityStats.totalPosts, icon: "📋" },
-              { label: "Total Walks", value: communityStats.totalWalks, icon: "🚶" },
-              { label: "Total Miles", value: communityStats.totalMiles.toFixed(1), icon: "🛣️" },
-              { label: "Prayer Requests", value: communityStats.totalPrayers, icon: "🙏" },
-              { label: "Kudos", value: communityStats.totalKudos, icon: "👊" },
+              { label: "Total Members", value: communityStats.totalMembers, icon: Users },
+              { label: "Pending", value: communityStats.pendingMembers, icon: Hourglass },
+              { label: "Cached Profiles", value: communityStats.profileStatsRows, icon: BarChart3 },
+              { label: "Total XP", value: communityStats.totalXp, icon: Star },
+              { label: "Total Posts", value: communityStats.totalPosts, icon: Newspaper },
+              { label: "Total Walks", value: communityStats.totalWalks, icon: Footprints },
+              { label: "Total Miles", value: communityStats.totalMiles.toFixed(1), icon: Footprints },
+              { label: "Prayer Requests", value: communityStats.totalPrayers, icon: HeartHandshake },
+              { label: "Kudos", value: communityStats.totalKudos, icon: Award },
             ].map(s => (
               <div key={s.label} style={{ background: "rgba(192,154,47,0.06)", border: "1px solid rgba(192,154,47,0.15)", borderRadius: 10, padding: "14px 12px", textAlign: "center" }}>
-                <div style={{ fontSize: 22, marginBottom: 4 }}>{s.icon}</div>
+                <div style={{ marginBottom: 4, display: "flex", justifyContent: "center" }}><s.icon size={22} color="#C09A2F" strokeWidth={1.75} /></div>
                 <div style={{ fontFamily: "'Cinzel', serif", fontSize: 20, color: "#C09A2F", lineHeight: 1 }}>{s.value}</div>
                 <div style={{ color: "#888", fontSize: 10, letterSpacing: "0.08em", textTransform: "uppercase", marginTop: 4 }}>{s.label}</div>
               </div>
