@@ -1297,6 +1297,10 @@ function Members({ profile }) {
 
   async function approve(id) {
     await supabase.from("profiles").update({ status: "approved" }).eq("id", id);
+    const m = members.find(x => x.id === id);
+    if (m?.email) {
+      fetch("/api/send-email", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ to: m.email, name: m.full_name, type: "approval" }) }).catch(e => console.error("approval email failed", e));
+    }
     loadMembers();
   }
 
