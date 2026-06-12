@@ -346,7 +346,7 @@ input:focus, textarea:focus, select:focus { outline: none; border-color: rgba(25
 .xp-bar { height: 4px; border-radius: 2px; background: rgba(255,255,255,0.06); overflow: hidden; }
 .xp-fill { height: 100%; border-radius: 2px; background: linear-gradient(90deg, #FF6600, #C09A2F); transition: width 0.8s ease; }
 .forge-hero { background: linear-gradient(135deg, rgba(255,102,0,0.12) 0%, rgba(10,10,10,0.8) 60%); border: 1px solid rgba(255,102,0,0.2); border-radius: 12px; padding: 28px 24px; margin-bottom: 20px; position: relative; overflow: hidden; }
-.forge-hero::before { content: "🔥"; position: absolute; right: 20px; top: 50%; transform: translateY(-50%); font-size: 64px; opacity: 0.15; }
+.forge-hero::before { content: ""; }
 .streak-fire { animation: pulse 1.5s infinite; display: inline-block; }
 @keyframes celebrate { 0%{transform:scale(1)} 50%{transform:scale(1.3)} 100%{transform:scale(1)} }
 .celebrate { animation: celebrate 0.5s ease; }
