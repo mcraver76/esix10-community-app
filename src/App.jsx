@@ -6,6 +6,7 @@ import {
   CalendarDays, Lock, MapPin, Cross, HandHeart, Tv, Shield, Sword, PawPrint,
   Bird, Mountain, Anchor, Star, Dumbbell, Crown, Footprints, Award,
   Zap, Megaphone, Activity, Camera, Flag, Archive, Hourglass, Medal,
+  NotebookPen, Unlock, CheckCircle2,
 } from "lucide-react";
 
 // Map nav/group ids -> line icons (replaces emoji UI icons).
@@ -2187,22 +2188,22 @@ function ForgeWalk({ profile }) {
     <div>
       <div style={{ display: 'flex', gap: 16, marginBottom: 24, flexWrap: 'wrap' }}>
         <div className="streak-badge">
-          <span style={{ fontSize: 20 }}>🔥</span>
+          <Flame size={20} color="#FF6600" strokeWidth={1.75} />
           <div><div style={{ fontFamily: "'Cinzel', serif", fontSize: 22, color: '#FF6600', lineHeight: 1 }}>{streak}</div><div style={{ fontSize: 10, color: '#888', letterSpacing: '0.1em', textTransform: 'uppercase' }}>Day Streak</div></div>
         </div>
         <div style={{ background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.08)', borderRadius: 20, padding: '6px 16px', display: 'flex', alignItems: 'center', gap: 8 }}>
-          <span style={{ fontSize: 16 }}>🚶</span>
+          <Footprints size={18} color="#aaa" strokeWidth={1.75} />
           <div><div style={{ fontFamily: "'Cinzel', serif", fontSize: 22, color: '#fff', lineHeight: 1 }}>{totalToday}</div><div style={{ fontSize: 10, color: '#888', letterSpacing: '0.1em', textTransform: 'uppercase' }}>Walked Today</div></div>
         </div>
       </div>
       {todayWalk ? (
         <div style={{ ...S.card, borderTop: '3px solid #51cf66', textAlign: 'center', padding: 32 }}>
-          <div style={{ fontSize: 40, marginBottom: 12 }}>✅</div>
+          <div style={{ marginBottom: 12, display: "flex", justifyContent: "center" }}><CheckCircle2 size={40} color="#51cf66" strokeWidth={1.75} /></div>
           <h3 style={{ fontFamily: "'Cinzel', serif", fontSize: 20, color: '#fff', marginBottom: 8 }}>You walked today.</h3>
           <p style={{ color: '#888', fontSize: 14 }}>{todayWalk.distance_miles && `${todayWalk.distance_miles} miles`}{todayWalk.distance_miles && todayWalk.duration_minutes && ' · '}{todayWalk.duration_minutes && `${todayWalk.duration_minutes} minutes`}</p>
           {todayWalk.notes && <p style={{ color: '#AAAAAA', fontSize: 14, marginTop: 8, fontStyle: 'italic' }}>"{todayWalk.notes}"</p>}
           <div style={{ display: "flex", alignItems: "center", justifyContent: "center", gap: 8, marginTop: 16 }}>
-          <span style={{ fontSize: 22, animation: "pulse 1.5s infinite", display: "inline-block" }}>🔥</span>
+          <Flame size={22} color="#FF6600" strokeWidth={1.75} style={{ animation: "pulse 1.5s infinite" }} />
           <p style={{ color: '#FF6600', fontSize: 12, letterSpacing: '0.1em' }}>{streak} day streak — keep it going tomorrow</p>
         </div>
         </div>
@@ -2384,7 +2385,7 @@ function ForgeChallenge({ profile }) {
             <h3 style={{ fontFamily: "'Cinzel', serif", fontSize: 22, color: '#fff', marginBottom: 12 }}>{challenge.title}</h3>
             {challenge.description && <p style={{ color: '#CCCCCC', fontSize: 15, lineHeight: 1.8, marginBottom: 20 }}>{challenge.description}</p>}
             <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 20 }}>
-              <span style={{ fontSize: 18 }}>✅</span>
+              <CheckCircle2 size={18} color="#51cf66" strokeWidth={1.75} />
               <span style={{ color: '#888', fontSize: 14 }}><strong style={{ color: '#fff' }}>{completionCount}</strong> completed today</span>
             </div>
             {!completed ? (
@@ -2579,7 +2580,7 @@ function ForgeWOD({ profile }) {
             {wod.cooldown && <div style={{ marginBottom: 16 }}><span style={S.eyebrow}>Cool Down</span><p style={{ color: '#CCCCCC', fontSize: 15, lineHeight: 1.8, whiteSpace: 'pre-line' }}>{wod.cooldown}</p></div>}
             {wod.coaching_notes && <div style={{ background: 'rgba(192,154,47,0.06)', border: '1px solid rgba(192,154,47,0.15)', borderRadius: 4, padding: '12px 16px', marginBottom: 20 }}><span style={{ ...S.eyebrow, color: '#C09A2F' }}>Coaching Notes</span><p style={{ color: '#AAAAAA', fontSize: 13, lineHeight: 1.8 }}>{wod.coaching_notes}</p></div>}
             <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 16 }}>
-              <span>✅</span><span style={{ color: '#888', fontSize: 14 }}><strong style={{ color: '#fff' }}>{completionCount}</strong> completed today</span>
+              <CheckCircle2 size={16} color="#51cf66" strokeWidth={1.75} /><span style={{ color: '#888', fontSize: 14 }}><strong style={{ color: '#fff' }}>{completionCount}</strong> completed today</span>
             </div>
             {!completed ? (
               <div>
@@ -2682,10 +2683,10 @@ function TheForge({ profile }) {
   const [subTab, setSubTab] = useState('walk');
   const todayQuote = FORGE_QUOTES[new Date().getDay() % FORGE_QUOTES.length];
   const FORGE_TABS = [
-    { id: 'walk', label: 'Walk', icon: '🚶' },
-    { id: 'challenge', label: 'Challenge', icon: '⚡' },
-    { id: 'wod', label: 'WOD', icon: '🏋️' },
-    { id: 'log', label: 'My Log', icon: '📓' },
+    { id: 'walk', label: 'Walk', icon: Footprints },
+    { id: 'challenge', label: 'Challenge', icon: Zap },
+    { id: 'wod', label: 'WOD', icon: Dumbbell },
+    { id: 'log', label: 'My Log', icon: NotebookPen },
   ];
   return (
     <div>
@@ -2696,15 +2697,15 @@ function TheForge({ profile }) {
           <h2 style={{ fontFamily: "'Cinzel', serif", fontSize: 24, fontWeight: 400, color: "#fff", marginBottom: 8, lineHeight: 1.2 }}>Train. Pray. Prepare.</h2>
           <p style={{ color: "#FF6600", fontSize: 13, fontStyle: "italic", letterSpacing: "0.05em" }}>"{todayQuote}"</p>
           <div style={{ display: "flex", gap: 12, marginTop: 16, flexWrap: "wrap" }}>
-            <span style={{ background: "rgba(255,102,0,0.1)", border: "1px solid rgba(255,102,0,0.2)", borderRadius: 20, padding: "4px 12px", fontSize: 11, color: "#FF6600", letterSpacing: "0.1em" }}>🔓 Beta — Full Access Free</span>
+            <span style={{ background: "rgba(255,102,0,0.1)", border: "1px solid rgba(255,102,0,0.2)", borderRadius: 20, padding: "4px 12px", fontSize: 11, color: "#FF6600", letterSpacing: "0.1em", display: "inline-flex", alignItems: "center", gap: 5 }}><Unlock size={11} /> Beta — Full Access Free</span>
           </div>
         </div>
-        <div style={{ width: 80, height: 80, flexShrink: 0, display: "flex", alignItems: "center", justifyContent: "center", fontSize: 56, animation: "pulse 1.5s infinite" }}>🔥</div>
+        <div style={{ width: 80, height: 80, flexShrink: 0, display: "flex", alignItems: "center", justifyContent: "center", animation: "pulse 1.5s infinite" }}><Flame size={56} color="#FF6600" strokeWidth={1.5} /></div>
       </div>
       <div className="forge-tab-bar">
         {FORGE_TABS.map(t => (
           <button key={t.id} className={`forge-tab ${subTab === t.id ? 'active' : 'inactive'}`} onClick={() => setSubTab(t.id)}>
-            <span style={{ fontSize: 22, display: 'block', marginBottom: 3 }}>{t.icon}</span>
+            <span style={{ display: 'block', marginBottom: 3 }}><t.icon size={22} strokeWidth={1.75} /></span>
             {t.label}
           </button>
         ))}
