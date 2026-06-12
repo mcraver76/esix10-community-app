@@ -79,13 +79,80 @@ function getLevel(xp = 0) {
 }
 
 function getXP(profile) {
-  // Simple XP calculation from profile data
-  const posts = profile.post_count || 0;
-  const walks = profile.walk_count || 0;
-  const challenges = profile.challenge_count || 0;
-  const wods = profile.wod_count || 0;
-  const days = Math.floor((new Date() - new Date(profile.created_at || Date.now())) / 86400000);
+  // Fallback XP calculation for places that do not have cached profile_stats yet.
+  const posts = profile?.post_count || 0;
+  const walks = profile?.walk_count || 0;
+  const challenges = profile?.challenge_count || 0;
+  const wods = profile?.wod_count || 0;
+  const days = Math.floor((new Date() - new Date(profile?.created_at || Date.now())) / 86400000);
   return (posts * 5) + (walks * 10) + (challenges * 8) + (wods * 12) + Math.min(days * 2, 100);
+}
+
+function normalizeProfileStats(row) {
+  const safe = row || {};
+  return {
+    userId: safe.user_id || null,
+    postCount: safe.post_count || 0,
+    kudosCount: safe.kudos_count || 0,
+    prayerCount: safe.prayer_count || 0,
+    walkCount: safe.walk_count || 0,
+    challengeCount: safe.challenge_count || 0,
+    wodCount: safe.wod_count || 0,
+    walkStreak: safe.walk_streak || 0,
+    challengeStreak: safe.challenge_streak || 0,
+    wodStreak: safe.wod_streak || 0,
+    totalMiles: Number(safe.total_miles || 0),
+    xp: safe.xp || 0,
+    updatedAt: safe.updated_at || null,
+  };
+}
+
+function statsForBadges(stats) {
+  return {
+    postCount: stats?.postCount || 0,
+    kudosCount: stats?.kudosCount || 0,
+    prayerCount: stats?.prayerCount || 0,
+    walkStreak: stats?.walkStreak || 0,
+    challengeStreak: stats?.challengeStreak || 0,
+    wodStreak: stats?.wodStreak || 0,
+  };
+}
+
+async function fetchProfileStats(userId) {
+  if (!userId) return normalizeProfileStats(null);
+  const { data, error } = await supabase
+    .from("profile_stats")
+    .select("*")
+    .eq("user_id", userId)
+    .maybeSingle();
+
+  if (error) {
+    console.error("profile_stats fetch error:", error);
+    return normalizeProfileStats(null);
+  }
+
+  return normalizeProfileStats(data);
+}
+
+function LevelBadgeForUser({ profile, fontSize = 10 }) {
+  const [stats, setStats] = React.useState(null);
+
+  React.useEffect(() => {
+    let mounted = true;
+    fetchProfileStats(profile?.id).then(s => {
+      if (mounted) setStats(s);
+    });
+    return () => { mounted = false; };
+  }, [profile?.id]);
+
+  const xp = stats?.xp ?? getXP(profile);
+  const level = getLevel(xp);
+
+  return (
+    <span className="level-badge" style={{ background: `${level.color}20`, color: level.color, border: `1px solid ${level.color}40`, fontSize }}>
+      {level.icon} {level.name}
+    </span>
+  );
 }
 
 // ─── Consistency Badges ────────────────────────────────────────────────────
@@ -710,61 +777,61 @@ function ActivityTicker({ profile }) {
 function PersonalHeader({ profile }) {
   const [localCount, setLocalCount] = useState(0);
   const [lastVisitSummary, setLastVisitSummary] = useState(null);
-  const [kudosCount, setKudosCount] = useState(0);
-  const [walkStreak, setWalkStreak] = useState(0);
+  const [stats, setStats] = useState(null);
 
-  useEffect(() => { loadPersonalData(); }, []);
+  useEffect(() => { loadPersonalData(); }, [profile?.id, profile?.state]);
 
   async function loadPersonalData() {
-    // Local member count
+    const cachedStats = await fetchProfileStats(profile.id);
+    setStats(cachedStats);
+
     if (profile.state) {
-      const { count } = await supabase.from("profiles").select("*", { count: "exact", head: true }).eq("state", profile.state).eq("status", "approved");
+      const { count } = await supabase
+        .from("profiles")
+        .select("*", { count: "exact", head: true })
+        .eq("state", profile.state)
+        .eq("status", "approved");
+
       setLocalCount(count || 0);
     }
 
-    // Kudos count
-    const { count: kCount } = await supabase.from("kudos").select("*", { count: "exact", head: true }).eq("to_user_id", profile.id);
-    setKudosCount(kCount || 0);
-
-    // Walk streak
-    const { data: walks } = await supabase.from("forge_walks").select("date").eq("user_id", profile.id).order("date", { ascending: false }).limit(30);
-    if (walks) {
-      let streak = 0;
-      let checkDate = new Date();
-      for (let i = 0; i < 30; i++) {
-        const d = localDateStr(checkDate);
-        if (walks.find(w => w.date === d)) { streak++; checkDate.setDate(checkDate.getDate() - 1); }
-        else break;
-      }
-      setWalkStreak(streak);
-    }
-
-    // Since last visit
     const lastVisit = localStorage.getItem(`esix10_lastvisit_${profile.id}`);
     if (lastVisit) {
-      const { count: newPosts } = await supabase.from("posts").select("*", { count: "exact", head: true }).gt("created_at", lastVisit).in("group_id", profile.group_ids || [profile.group_id]);
-      const { count: newPrayers } = await supabase.from("prayers").select("*", { count: "exact", head: true }).gt("created_at", lastVisit).eq("group_id", profile.group_id);
+      const { count: newPosts } = await supabase
+        .from("posts")
+        .select("*", { count: "exact", head: true })
+        .gt("created_at", lastVisit)
+        .in("group_id", profile.group_ids || [profile.group_id]);
+
+      const { count: newPrayers } = await supabase
+        .from("prayers")
+        .select("*", { count: "exact", head: true })
+        .gt("created_at", lastVisit)
+        .eq("group_id", profile.group_id);
+
       if (newPosts > 0 || newPrayers > 0) {
         setLastVisitSummary({ posts: newPosts || 0, prayers: newPrayers || 0 });
       }
     }
+
     localStorage.setItem(`esix10_lastvisit_${profile.id}`, new Date().toISOString());
   }
 
   const hour = new Date().getHours();
   const greeting = hour < 12 ? "Good morning" : hour < 17 ? "Good afternoon" : "Good evening";
   const firstName = profile.full_name?.split(" ")[0] || profile.username || "Warrior";
-  const xp = getXP(profile);
+  const xp = stats?.xp ?? getXP(profile);
   const level = getLevel(xp);
+  const walkStreak = stats?.walkStreak || 0;
+  const kudosCount = stats?.kudosCount || 0;
 
   return (
     <div style={{ marginBottom: 20, animation: "fadeIn 0.4s ease" }}>
-      {/* Greeting */}
       <div style={{ marginBottom: 16 }}>
         <h2 style={{ fontFamily: "'Cinzel', serif", fontSize: 22, fontWeight: 400, color: "#fff", marginBottom: 2 }}>
           {greeting}, {firstName}.
         </h2>
-        <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+        <div style={{ display: "flex", alignItems: "center", gap: 8, flexWrap: "wrap" }}>
           <span className="level-badge" style={{ background: `${level.color}20`, color: level.color, border: `1px solid ${level.color}40`, fontSize: 11 }}>
             {level.icon} {level.name}
           </span>
@@ -774,7 +841,6 @@ function PersonalHeader({ profile }) {
         </div>
       </div>
 
-      {/* Since last visit */}
       {lastVisitSummary && (lastVisitSummary.posts > 0 || lastVisitSummary.prayers > 0) && (
         <div style={{ background: "linear-gradient(135deg, rgba(255,102,0,0.08), rgba(192,154,47,0.06))", border: "1px solid rgba(255,102,0,0.2)", borderRadius: 10, padding: "10px 16px", marginBottom: 12, display: "flex", alignItems: "center", gap: 10 }}>
           <span style={{ fontSize: 16 }}>👁</span>
@@ -787,7 +853,6 @@ function PersonalHeader({ profile }) {
         </div>
       )}
 
-      {/* Personal stats strip */}
       <div style={{ display: "flex", gap: 8, overflowX: "auto", paddingBottom: 4, WebkitOverflowScrolling: "touch" }}>
         {walkStreak > 0 && (
           <div style={{ background: "rgba(255,102,0,0.06)", border: "1px solid rgba(255,102,0,0.15)", borderRadius: 10, padding: "10px 16px", flexShrink: 0, textAlign: "center", minWidth: 80 }}>
@@ -796,6 +861,7 @@ function PersonalHeader({ profile }) {
             <div style={{ color: "#555", fontSize: 10, letterSpacing: "0.08em", textTransform: "uppercase", marginTop: 2 }}>Streak</div>
           </div>
         )}
+
         {kudosCount > 0 && (
           <div style={{ background: "rgba(255,102,0,0.06)", border: "1px solid rgba(255,102,0,0.15)", borderRadius: 10, padding: "10px 16px", flexShrink: 0, textAlign: "center", minWidth: 80 }}>
             <div style={{ fontSize: 20, marginBottom: 2 }}>👊</div>
@@ -803,11 +869,21 @@ function PersonalHeader({ profile }) {
             <div style={{ color: "#555", fontSize: 10, letterSpacing: "0.08em", textTransform: "uppercase", marginTop: 2 }}>Kudos</div>
           </div>
         )}
+
         <div style={{ background: "rgba(255,102,0,0.06)", border: "1px solid rgba(255,102,0,0.15)", borderRadius: 10, padding: "10px 16px", flexShrink: 0, textAlign: "center", minWidth: 80 }}>
           <div style={{ fontSize: 20, marginBottom: 2 }}>{level.icon}</div>
           <div style={{ fontFamily: "'Cinzel', serif", fontSize: 14, color: level.color, lineHeight: 1 }}>{level.name}</div>
           <div style={{ color: "#555", fontSize: 10, letterSpacing: "0.08em", textTransform: "uppercase", marginTop: 2 }}>{xp} XP</div>
         </div>
+
+        {stats?.totalMiles > 0 && (
+          <div style={{ background: "rgba(255,102,0,0.06)", border: "1px solid rgba(255,102,0,0.15)", borderRadius: 10, padding: "10px 16px", flexShrink: 0, textAlign: "center", minWidth: 80 }}>
+            <div style={{ fontSize: 20, marginBottom: 2 }}>🛣️</div>
+            <div style={{ fontFamily: "'Cinzel', serif", fontSize: 18, color: "#FF6600", lineHeight: 1 }}>{stats.totalMiles.toFixed(1)}</div>
+            <div style={{ color: "#555", fontSize: 10, letterSpacing: "0.08em", textTransform: "uppercase", marginTop: 2 }}>Miles</div>
+          </div>
+        )}
+
         {profile.state && localCount > 1 && (
           <div style={{ background: "rgba(255,102,0,0.06)", border: "1px solid rgba(255,102,0,0.15)", borderRadius: 10, padding: "10px 16px", flexShrink: 0, textAlign: "center", minWidth: 80 }}>
             <div style={{ fontSize: 20, marginBottom: 2 }}>📍</div>
@@ -2628,7 +2704,7 @@ function LocalChapter({ profile }) {
                   <div style={{ color: "#fff", fontFamily: "'Cinzel', serif", fontSize: 14 }}>{m.username ? `@${m.username}` : formatName(m.full_name)}</div>
                   <div style={{ color: "#555", fontSize: 12, marginTop: 2 }}>{m.city && <span>📍 {m.city} · </span>}<span>{GROUPS.find(g => g.id === m.group_id)?.label}</span></div>
                 </div>
-                {(() => { const lvl = getLevel(getXP(m)); return <span className="level-badge" style={{ background: `${lvl.color}20`, color: lvl.color, border: `1px solid ${lvl.color}40`, fontSize: 10 }}>{lvl.icon}</span>; })()}
+                <LevelBadgeForUser profile={m} fontSize={10} />
               </div>
             ))}
           </div>
@@ -3852,53 +3928,25 @@ function ShareESix10({ profile, onClose }) {
 
 function Badges({ userId, size = "normal" }) {
   const [stats, setStats] = React.useState(null);
-  React.useEffect(() => { loadStats(); }, [userId]);
-  async function loadStats() {
-    const [
-      { count: postCount },
-      { count: kudosCount },
-      { count: prayerCount },
-      { data: walks },
-      { data: challengeCompletions },
-      { data: wodCompletions },
-    ] = await Promise.all([
-      supabase.from("posts").select("*", { count: "exact", head: true }).eq("user_id", userId),
-      supabase.from("kudos").select("*", { count: "exact", head: true }).eq("to_user_id", userId),
-      supabase.from("prayers").select("*", { count: "exact", head: true }).eq("user_id", userId),
-      supabase.from("forge_walks").select("date").eq("user_id", userId).order("date", { ascending: false }).limit(100),
-      supabase.from("forge_challenge_completions").select("challenge_id, forge_challenges(scheduled_date)").eq("user_id", userId),
-      supabase.from("forge_wod_completions").select("wod_id, forge_wods(scheduled_date)").eq("user_id", userId),
-    ]);
 
-    function calcStreak(dateSet) {
-      let s = 0;
-      let checkDate = new Date();
-      for (let i = 0; i < 100; i++) {
-        const d = localDateStr(checkDate);
-        if (dateSet.has(d)) { s++; checkDate.setDate(checkDate.getDate() - 1); }
-        else break;
-      }
-      return s;
+  React.useEffect(() => {
+    let mounted = true;
+    async function loadStats() {
+      const cached = await fetchProfileStats(userId);
+      if (mounted) setStats(cached);
     }
+    loadStats();
+    return () => { mounted = false; };
+  }, [userId]);
 
-    const walkDates = new Set((walks || []).map(w => w.date));
-    const challengeDates = new Set((challengeCompletions || []).map(c => c.forge_challenges?.scheduled_date).filter(Boolean));
-    const wodDates = new Set((wodCompletions || []).map(w => w.forge_wods?.scheduled_date).filter(Boolean));
-
-    setStats({
-      postCount: postCount || 0,
-      kudosCount: kudosCount || 0,
-      prayerCount: prayerCount || 0,
-      walkStreak: calcStreak(walkDates),
-      challengeStreak: calcStreak(challengeDates),
-      wodStreak: calcStreak(wodDates),
-    });
-  }
   if (!stats) return null;
-  const earned = getEarnedBadges(stats);
+
+  const earned = getEarnedBadges(statsForBadges(stats));
   if (earned.length === 0) return null;
+
   const iconSize = size === "small" ? 16 : 22;
   const padding = size === "small" ? "3px 8px" : "6px 12px";
+
   return (
     <div style={{ display: "flex", gap: 6, flexWrap: "wrap" }}>
       {earned.map(b => (
@@ -3913,10 +3961,17 @@ function Badges({ userId, size = "normal" }) {
 
 function KudosCount({ userId }) {
   const [count, setCount] = React.useState(0);
+
   React.useEffect(() => {
-    supabase.from("kudos").select("*", { count: "exact", head: true }).eq("to_user_id", userId).then(({ count }) => setCount(count || 0));
+    let mounted = true;
+    fetchProfileStats(userId).then(stats => {
+      if (mounted) setCount(stats.kudosCount || 0);
+    });
+    return () => { mounted = false; };
   }, [userId]);
+
   if (count === 0) return null;
+
   return (
     <div style={{ display: "flex", alignItems: "center", gap: 10, background: "rgba(255,102,0,0.06)", border: "1px solid rgba(255,102,0,0.15)", borderRadius: 10, padding: "10px 16px", marginBottom: 16, marginTop: 8 }}>
       <span style={{ fontSize: 24 }}>👊</span>
@@ -3937,95 +3992,121 @@ function StatsDashboard({ profile }) {
   const [loading, setLoading] = useState(true);
   const isAdmin = profile.role === "admin";
 
-  useEffect(() => { loadAll(); }, []);
+  useEffect(() => { loadAll(); }, [profile?.id, profile?.group_id, profile?.role]);
 
   async function loadAll() {
     setLoading(true);
-    await Promise.all([loadMyStats(), loadLeaderboard(), isAdmin ? loadCommunityStats() : Promise.resolve()]);
+    await Promise.all([
+      loadMyStats(),
+      loadLeaderboard(),
+      isAdmin ? loadCommunityStats() : Promise.resolve()
+    ]);
     setLoading(false);
   }
 
   async function loadMyStats() {
-    const [
-      { count: postCount },
-      { count: kudosCount },
-      { count: prayerCount },
-      { count: walkCount },
-      { count: challengeCount },
-      { count: wodCount },
-      { data: walks },
-    ] = await Promise.all([
-      supabase.from("posts").select("*", { count: "exact", head: true }).eq("user_id", profile.id),
-      supabase.from("kudos").select("*", { count: "exact", head: true }).eq("to_user_id", profile.id),
-      supabase.from("prayers").select("*", { count: "exact", head: true }).eq("user_id", profile.id),
-      supabase.from("forge_walks").select("*", { count: "exact", head: true }).eq("user_id", profile.id),
-      supabase.from("forge_challenge_completions").select("*", { count: "exact", head: true }).eq("user_id", profile.id),
-      supabase.from("forge_wod_completions").select("*", { count: "exact", head: true }).eq("user_id", profile.id),
-      supabase.from("forge_walks").select("date").eq("user_id", profile.id).order("date", { ascending: false }).limit(100),
-    ]);
-    const walkDates = new Set((walks || []).map(w => w.date));
-    let walkStreak = 0;
-    let checkDate = new Date();
-    for (let i = 0; i < 100; i++) {
-      const d = localDateStr(checkDate);
-      if (walkDates.has(d)) { walkStreak++; checkDate.setDate(checkDate.getDate() - 1); }
-      else break;
-    }
-    const totalMiles = (walks || []).reduce((sum, w) => sum + (parseFloat(w.distance_miles) || 0), 0);
+    const stats = await fetchProfileStats(profile.id);
     setMyStats({
-      postCount: postCount || 0,
-      kudosCount: kudosCount || 0,
-      prayerCount: prayerCount || 0,
-      walkCount: walkCount || 0,
-      challengeCount: challengeCount || 0,
-      wodCount: wodCount || 0,
-      walkStreak,
-      totalMiles: totalMiles.toFixed(1),
-      xp: getXP(profile),
+      postCount: stats.postCount,
+      kudosCount: stats.kudosCount,
+      prayerCount: stats.prayerCount,
+      walkCount: stats.walkCount,
+      challengeCount: stats.challengeCount,
+      wodCount: stats.wodCount,
+      walkStreak: stats.walkStreak,
+      challengeStreak: stats.challengeStreak,
+      wodStreak: stats.wodStreak,
+      totalMiles: stats.totalMiles.toFixed(1),
+      xp: stats.xp,
+      updatedAt: stats.updatedAt,
     });
   }
 
   async function loadLeaderboard() {
     const myGroups = profile.group_ids && profile.group_ids.length > 0 ? profile.group_ids : [profile.group_id];
-    let q = supabase.from("profiles").select("*").eq("status", "approved");
+
+    let q = supabase
+      .from("profiles")
+      .select("*")
+      .eq("status", "approved");
+
     if (profile.role !== "admin") {
       q = q.or(myGroups.map(g => `group_id.eq.${g}`).join(","));
     }
-    const { data: members } = await q;
-    if (!members) { setLeaderboard([]); return; }
 
-    // Get walk counts and kudos for each member
-    const enriched = await Promise.all(members.map(async m => {
-      const [{ count: walkCount }, { count: kudosCount }, { count: postCount }] = await Promise.all([
-        supabase.from("forge_walks").select("*", { count: "exact", head: true }).eq("user_id", m.id),
-        supabase.from("kudos").select("*", { count: "exact", head: true }).eq("to_user_id", m.id),
-        supabase.from("posts").select("*", { count: "exact", head: true }).eq("user_id", m.id),
-      ]);
-      return { ...m, walkCount: walkCount || 0, kudosCount: kudosCount || 0, postCount: postCount || 0, xp: getXP(m) };
-    }));
+    const { data: members, error: memberError } = await q;
+    if (memberError) {
+      console.error("Leaderboard profiles error:", memberError);
+      setLeaderboard([]);
+      return;
+    }
+
+    const memberIds = (members || []).map(m => m.id);
+    if (memberIds.length === 0) {
+      setLeaderboard([]);
+      return;
+    }
+
+    const { data: statRows, error: statsError } = await supabase
+      .from("profile_stats")
+      .select("*")
+      .in("user_id", memberIds);
+
+    if (statsError) {
+      console.error("Leaderboard profile_stats error:", statsError);
+    }
+
+    const statsByUser = new Map((statRows || []).map(row => [row.user_id, normalizeProfileStats(row)]));
+
+    const enriched = (members || []).map(m => {
+      const stats = statsByUser.get(m.id) || normalizeProfileStats(null);
+      return {
+        ...m,
+        postCount: stats.postCount,
+        kudosCount: stats.kudosCount,
+        prayerCount: stats.prayerCount,
+        walkCount: stats.walkCount,
+        challengeCount: stats.challengeCount,
+        wodCount: stats.wodCount,
+        walkStreak: stats.walkStreak,
+        totalMiles: stats.totalMiles,
+        xp: stats.xp || getXP(m),
+      };
+    });
+
     setLeaderboard(enriched);
   }
 
   async function loadCommunityStats() {
     const [
       { count: totalMembers },
-      { count: totalPosts },
-      { count: totalWalks },
-      { count: totalPrayers },
       { count: pendingMembers },
+      { count: profileStatsRows },
+      { data: statsRows },
     ] = await Promise.all([
       supabase.from("profiles").select("*", { count: "exact", head: true }).eq("status", "approved"),
-      supabase.from("posts").select("*", { count: "exact", head: true }),
-      supabase.from("forge_walks").select("*", { count: "exact", head: true }),
-      supabase.from("prayers").select("*", { count: "exact", head: true }),
       supabase.from("profiles").select("*", { count: "exact", head: true }).eq("status", "pending"),
+      supabase.from("profile_stats").select("*", { count: "exact", head: true }),
+      supabase.from("profile_stats").select("post_count, walk_count, prayer_count, kudos_count, challenge_count, wod_count, total_miles, xp"),
     ]);
+
+    const totals = (statsRows || []).reduce((acc, row) => {
+      acc.totalPosts += row.post_count || 0;
+      acc.totalWalks += row.walk_count || 0;
+      acc.totalPrayers += row.prayer_count || 0;
+      acc.totalKudos += row.kudos_count || 0;
+      acc.totalChallenges += row.challenge_count || 0;
+      acc.totalWods += row.wod_count || 0;
+      acc.totalMiles += Number(row.total_miles || 0);
+      acc.totalXp += row.xp || 0;
+      return acc;
+    }, { totalPosts: 0, totalWalks: 0, totalPrayers: 0, totalKudos: 0, totalChallenges: 0, totalWods: 0, totalMiles: 0, totalXp: 0 });
+
     setCommunityStats({
       totalMembers: totalMembers || 0,
-      totalPosts: totalPosts || 0,
-      totalWalks: totalWalks || 0,
-      totalPrayers: totalPrayers || 0,
       pendingMembers: pendingMembers || 0,
+      profileStatsRows: profileStatsRows || 0,
+      ...totals,
     });
   }
 
@@ -4044,7 +4125,6 @@ function StatsDashboard({ profile }) {
       <span style={S.eyebrow}>Stats Dashboard</span>
       <h2 style={{ ...S.h2, marginBottom: 20 }}>Your Progress</h2>
 
-      {/* Personal stats grid */}
       {myStats && (
         <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(110px, 1fr))", gap: 10, marginBottom: 24 }}>
           {[
@@ -4067,7 +4147,6 @@ function StatsDashboard({ profile }) {
         </div>
       )}
 
-      {/* My badges */}
       <div style={{ marginBottom: 24 }}>
         <span style={S.eyebrow}>Earned Badges</span>
         <div style={{ ...S.card, marginTop: 8 }}>
@@ -4075,9 +4154,8 @@ function StatsDashboard({ profile }) {
         </div>
       </div>
 
-      {/* Leaderboard */}
       <div style={{ marginBottom: 24 }}>
-        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 12 }}>
+        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 12, gap: 12, flexWrap: "wrap" }}>
           <span style={S.eyebrow}>Leaderboard</span>
           <div style={{ display: "flex", gap: 6, flexWrap: "wrap" }}>
             {METRICS.map(m => (
@@ -4097,6 +4175,7 @@ function StatsDashboard({ profile }) {
               <Avatar profile={m} size={36} />
               <div style={{ flex: 1 }}>
                 <div style={{ color: m.id === profile.id ? "#FF6600" : "#fff", fontSize: 14 }}>{displayName(m)}{m.id === profile.id ? " (You)" : ""}</div>
+                <div style={{ marginTop: 4 }}><Badges userId={m.id} size="small" /></div>
               </div>
               <div style={{ fontFamily: "'Cinzel', serif", fontSize: 16, color: "#FF6600" }}>{m[leaderboardMetric] || 0}</div>
             </div>
@@ -4104,7 +4183,6 @@ function StatsDashboard({ profile }) {
         </div>
       </div>
 
-      {/* Admin community stats */}
       {isAdmin && communityStats && (
         <div>
           <span style={S.eyebrow}>Community Overview</span>
@@ -4112,9 +4190,13 @@ function StatsDashboard({ profile }) {
             {[
               { label: "Total Members", value: communityStats.totalMembers, icon: "👥" },
               { label: "Pending", value: communityStats.pendingMembers, icon: "⏳" },
+              { label: "Cached Profiles", value: communityStats.profileStatsRows, icon: "📊" },
+              { label: "Total XP", value: communityStats.totalXp, icon: "⭐" },
               { label: "Total Posts", value: communityStats.totalPosts, icon: "📋" },
               { label: "Total Walks", value: communityStats.totalWalks, icon: "🚶" },
+              { label: "Total Miles", value: communityStats.totalMiles.toFixed(1), icon: "🛣️" },
               { label: "Prayer Requests", value: communityStats.totalPrayers, icon: "🙏" },
+              { label: "Kudos", value: communityStats.totalKudos, icon: "👊" },
             ].map(s => (
               <div key={s.label} style={{ background: "rgba(192,154,47,0.06)", border: "1px solid rgba(192,154,47,0.15)", borderRadius: 10, padding: "14px 12px", textAlign: "center" }}>
                 <div style={{ fontSize: 22, marginBottom: 4 }}>{s.icon}</div>
@@ -4125,6 +4207,38 @@ function StatsDashboard({ profile }) {
           </div>
         </div>
       )}
+    </div>
+  );
+}
+
+
+function ProfileLevelSummary({ profile }) {
+  const [stats, setStats] = React.useState(null);
+
+  React.useEffect(() => {
+    let mounted = true;
+    fetchProfileStats(profile?.id).then(s => {
+      if (mounted) setStats(s);
+    });
+    return () => { mounted = false; };
+  }, [profile?.id]);
+
+  const xp = stats?.xp ?? getXP(profile);
+  const lvl = getLevel(xp);
+  const nextLvl = LEVELS[LEVELS.indexOf(lvl) + 1];
+  const progress = nextLvl ? ((xp - lvl.min) / (nextLvl.min - lvl.min)) * 100 : 100;
+
+  return (
+    <div style={{ ...S.card, marginBottom: 16, marginTop: 20, background: `linear-gradient(135deg, ${lvl.color}15, rgba(22,27,34,0.98))`, border: `1px solid ${lvl.color}30` }}>
+      <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 12 }}>
+        <div>
+          <span className="level-badge" style={{ background: `${lvl.color}20`, color: lvl.color, border: `1px solid ${lvl.color}40`, fontSize: 13, padding: "4px 14px" }}>{lvl.icon} {lvl.name}</span>
+          <div style={{ color: "#888", fontSize: 12, marginTop: 6 }}>{xp} XP total{nextLvl ? ` · ${Math.max(nextLvl.min - xp, 0)} XP to ${nextLvl.name}` : " · Max Level"}</div>
+          {stats?.updatedAt && <div style={{ color: "#444", fontSize: 11, marginTop: 4 }}>Stats updated {new Date(stats.updatedAt).toLocaleString()}</div>}
+        </div>
+        <Avatar profile={profile} size={56} />
+      </div>
+      <div className="xp-bar"><div className="xp-fill" style={{ width: `${Math.min(Math.max(progress, 0), 100)}%` }} /></div>
     </div>
   );
 }
@@ -4170,24 +4284,7 @@ function Profile({ profile, onUpdate, onSignOut }) {
       <div style={{ marginBottom: 16 }}>
         <Badges userId={profile.id} />
       </div>
-      {(() => {
-        const xp = getXP(profile);
-        const lvl = getLevel(xp);
-        const nextLvl = LEVELS[LEVELS.indexOf(lvl) + 1];
-        const progress = nextLvl ? ((xp - lvl.min) / (nextLvl.min - lvl.min)) * 100 : 100;
-        return (
-          <div style={{ ...S.card, marginBottom: 16, marginTop: 20, background: `linear-gradient(135deg, ${lvl.color}15, rgba(22,27,34,0.98))`, border: `1px solid ${lvl.color}30` }}>
-            <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 12 }}>
-              <div>
-                <span className="level-badge" style={{ background: `${lvl.color}20`, color: lvl.color, border: `1px solid ${lvl.color}40`, fontSize: 13, padding: "4px 14px" }}>{lvl.icon} {lvl.name}</span>
-                <div style={{ color: "#888", fontSize: 12, marginTop: 6 }}>{xp} XP total{nextLvl ? ` · ${nextLvl.min - xp} XP to ${nextLvl.name}` : " · Max Level"}</div>
-              </div>
-              <Avatar profile={profile} size={56} />
-            </div>
-            <div className="xp-bar"><div className="xp-fill" style={{ width: `${progress}%` }} /></div>
-          </div>
-        );
-      })()}
+      <ProfileLevelSummary profile={profile} />
       <div style={{ ...S.card, marginTop: 0 }}>
 
         {/* AVATAR SECTION */}
@@ -4492,7 +4589,7 @@ export default function App() {
           </span>
           {isAdmin && !isMobile && <span style={{ ...S.badge, background: "rgba(255,102,0,0.3)", color: "#FF6600" }}>Admin</span>}
           <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
-            {!isMobile && (() => { const lvl = getLevel(getXP(profile)); return <span className="level-badge" style={{ background: `${lvl.color}20`, color: lvl.color, border: `1px solid ${lvl.color}40`, fontSize: 10 }}>{lvl.icon} {lvl.name}</span>; })()}
+            {!isMobile && <LevelBadgeForUser profile={profile} fontSize={10} />}
             <Avatar profile={profile} size={36} onClick={() => setTab("profile")} />
           </div>
         </div>
@@ -4611,4 +4708,3 @@ export default function App() {
     </div>
   );
 }
-*
