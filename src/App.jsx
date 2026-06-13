@@ -1691,6 +1691,16 @@ function Messages({ profile, members, onRead }) {
   const [photoFile, setPhotoFile] = useState(null);
   const [photoPreview, setPhotoPreview] = useState(null);
   const [uploading, setUploading] = useState(false);
+  const [lightbox, setLightbox] = useState(null);
+  async function flagChatMessage(msg) {
+    if (!requireApproved(profile)) return;
+    if (msg.user_id === profile.id) return;
+    const what = msg.photo_url ? "photo" : "message";
+    const reason = window.prompt(`Report this chat ${what} to the admins. What's the issue? (optional)`);
+    if (reason === null) return;
+    await supabase.from("member_flags").insert({ flagged_user_id: msg.user_id, flagged_by: profile.id, reason: `[chat ${what}] ${reason || (msg.body || "").slice(0, 80) || "no reason given"}` });
+    alert("Reported. An admin will review it shortly. Thank you.");
+  }
   const [showNewDM, setShowNewDM] = useState(false);
   const [dmSearch, setDmSearch] = useState("");
   const [showNewGroup, setShowNewGroup] = useState(false);
@@ -1971,18 +1981,34 @@ function Messages({ profile, members, onRead }) {
                 <div style={{ fontSize: 10, color: "#8A8A8A", marginBottom: 3, textAlign: isOwn ? "right" : "left" }}>
                   {senderName} · {new Date(msg.created_at).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })}
                 </div>
-                <div style={{ background: isOwn ? "rgba(255,102,0,0.15)" : "rgba(255,255,255,0.05)", border: isOwn ? "1px solid rgba(255,102,0,0.2)" : "1px solid rgba(255,255,255,0.06)", borderRadius: 8, padding: "8px 12px", color: "#fff", fontSize: 14, lineHeight: 1.6, wordBreak: "break-word" }}>
-                  {msg.body}
-                </div>
-                {(isOwn || profile.role === "admin") && (
-                  <button style={{ background: "none", border: "none", cursor: "pointer", fontSize: 10, color: "#8A8A8A", marginTop: 2, textAlign: isOwn ? "right" : "left", display: "block", width: "100%" }} onClick={() => deleteMessage(msg.id)}>delete</button>
+                {msg.body && (
+                  <div style={{ background: isOwn ? "rgba(255,102,0,0.15)" : "rgba(255,255,255,0.05)", border: isOwn ? "1px solid rgba(255,102,0,0.2)" : "1px solid rgba(255,255,255,0.06)", borderRadius: 8, padding: "8px 12px", color: "#fff", fontSize: 14, lineHeight: 1.6, wordBreak: "break-word" }}>
+                    {msg.body}
+                  </div>
                 )}
+                {msg.photo_url && (
+                  <img src={msg.photo_url} alt="shared photo" onClick={() => setLightbox(msg.photo_url)} style={{ marginTop: 6, maxWidth: 220, maxHeight: 220, borderRadius: 8, objectFit: "cover", cursor: "pointer", display: "block", marginLeft: isOwn ? "auto" : 0 }} />
+                )}
+                <div style={{ display: "flex", gap: 12, justifyContent: isOwn ? "flex-end" : "flex-start", marginTop: 2 }}>
+                  {(isOwn || profile.role === "admin") && (
+                    <button style={{ background: "none", border: "none", cursor: "pointer", fontSize: 10, color: "#8A8A8A" }} onClick={() => deleteMessage(msg.id)}>delete</button>
+                  )}
+                  {!isOwn && (
+                    <button style={{ background: "none", border: "none", cursor: "pointer", fontSize: 10, color: "#8A8A8A" }} onClick={() => flagChatMessage(msg)}>⚑ report</button>
+                  )}
+                </div>
               </div>
             </div>
           );
         })}
         <div ref={bottomRef} />
       </div>
+      {lightbox && (
+        <div onClick={() => setLightbox(null)} style={{ position: "fixed", inset: 0, background: "rgba(0,0,0,0.92)", zIndex: 9999, display: "flex", alignItems: "center", justifyContent: "center", cursor: "zoom-out" }}>
+          <img src={lightbox} alt="full size" style={{ maxWidth: "92vw", maxHeight: "92vh", borderRadius: 8 }} />
+          <button onClick={() => setLightbox(null)} style={{ position: "fixed", top: 20, right: 24, background: "rgba(255,255,255,0.12)", border: "none", color: "#fff", fontSize: 22, width: 44, height: 44, borderRadius: "50%", cursor: "pointer" }}>✕</button>
+        </div>
+      )}
       {photoPreview && (
         <div style={{ padding: "8px 12px 0", position: "relative", display: "inline-block", marginLeft: 12 }}>
           <img src={photoPreview} alt="preview" style={{ maxHeight: 100, maxWidth: 160, borderRadius: 8, objectFit: "cover" }} />
