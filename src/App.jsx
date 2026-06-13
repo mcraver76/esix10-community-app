@@ -618,10 +618,14 @@ function AuthScreen({ onAuth }) {
       } else {
         if (!ageConfirmed) { setError("You must confirm you are 18 or older to join."); setLoading(false); return; }
         if (!agreed) { setError("You must agree to the Community Standards to join."); setLoading(false); return; }
+        const cleanU = username.toLowerCase().replace(/[^a-z0-9_]/g, "");
+        if (cleanU.length < 3) { setError("Pick a username — at least 3 letters, numbers, or underscores."); setLoading(false); return; }
+        const { data: taken } = await supabase.from("profiles").select("id").ilike("username", cleanU).maybeSingle();
+        if (taken) { setError(`"${cleanU}" is already taken — try another username.`); setLoading(false); return; }
         const { data, error } = await supabase.auth.signUp({ email, password, options: { data: { full_name: name } } });
         if (error) throw error;
         if (data.user) {
-          await supabase.from("profiles").upsert({ id: data.user.id, email, full_name: name, username: username.toLowerCase().replace(/[^a-z0-9_]/g, ""), role: email === ADMIN_EMAIL ? "admin" : "member" });
+          await supabase.from("profiles").upsert({ id: data.user.id, email, full_name: name, username: cleanU, role: email === ADMIN_EMAIL ? "admin" : "member" });
           if (email !== ADMIN_EMAIL) {
             fetch("/api/send-email", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ to: email, name, type: "signup" }) }).catch(e => console.error("signup email failed", e));
           }
@@ -1319,6 +1323,7 @@ function Events({ profile }) {
 
 function Members({ profile }) {
   const [members, setMembers] = useState([]);
+  const [expandedId, setExpandedId] = useState(null);
   const [filter, setFilter] = useState(profile.role === "admin" ? "all" : profile.group_id);
   const [stateFilter, setStateFilter] = useState("");
 
@@ -1377,6 +1382,9 @@ function Members({ profile }) {
     const u = window.prompt(`Set username for ${formatName(m.full_name)}:`, m.username || "");
     if (u === null) return;
     const clean = u.toLowerCase().replace(/[^a-z0-9_]/g, "");
+    if (!clean) { alert("Username can't be empty."); return; }
+    const { data: taken } = await supabase.from("profiles").select("id").ilike("username", clean).neq("id", m.id).maybeSingle();
+    if (taken) { alert(`"${clean}" is already taken by another member. Pick a different one.`); return; }
     await supabase.from("profiles").update({ username: clean }).eq("id", m.id);
     loadMembers();
   }
@@ -1594,16 +1602,22 @@ function Members({ profile }) {
           <div key={m.id} style={{ ...S.card, padding: "16px" }}>
             <div style={{ display: "flex", alignItems: "flex-start", gap: 12 }}>
               <div style={{ width: 48, height: 48, borderRadius: "50%", background: "rgba(255,102,0,0.15)", display: "flex", alignItems: "center", justifyContent: "center", color: "#FF7E33", fontFamily: "'Cinzel', serif", fontWeight: 600, flexShrink: 0 }}>
-                {(m.full_name || m.email || "?")[0].toUpperCase()}
+                {(m.username || m.full_name || "?")[0].toUpperCase()}
               </div>
               <div style={{ flex: 1, minWidth: 0 }}>
                 <div style={{ display: "flex", alignItems: "center", gap: 8, flexWrap: "wrap", marginBottom: 4 }}>
-                  <span style={{ color: "#fff", fontFamily: "'Cinzel', serif", fontSize: 14 }}>{formatName(m.full_name)}</span>
+                  <span onClick={() => setExpandedId(expandedId === m.id ? null : m.id)} style={{ color: "#fff", fontFamily: "'Cinzel', serif", fontSize: 14, cursor: "pointer" }} title="Tap to see name">{displayName(m)}</span>
                   <span style={{ ...S.badge, fontSize: 10 }}>{(m.group_ids && m.group_ids.length > 1 ? m.group_ids : [m.group_id]).map(id => GROUPS.find(g => g.id === id)?.label).filter(Boolean).join(" · ") || "No Group"}</span>
                   {m.role === "admin" && <span style={{ ...S.badge, background: "rgba(255,102,0,0.3)", color: "#FF7E33", fontSize: 10 }}>Admin</span>}
                   {m.role === "moderator" && <span style={{ ...S.badge, background: "rgba(192,154,47,0.25)", color: "#C09A2F", fontSize: 10 }}>Mod</span>}
                 </div>
-                {profile.role === "admin" && <div style={{ ...S.muted, fontSize: 12 }}>{m.email}</div>}
+                {expandedId === m.id && (
+                  <div style={{ ...S.muted, fontSize: 13, marginTop: 2 }}>
+                    {formatName(m.full_name)}
+                    {m.marital_status && <span> · {m.marital_status}</span>}
+                    {profile.role === "admin" && m.email && <span style={{ color: "#8A8A8A" }}> · {m.email}</span>}
+                  </div>
+                )}
                 {(m.city || m.state) && <div style={{ color: "#FF7E33", fontSize: 12, marginTop: 2 }}><MapPin size={11} style={{ verticalAlign: "-1px", marginRight: 2 }} /> {[m.city, m.state].filter(Boolean).join(", ")}</div>}
                 <div style={{ marginTop: 6 }}><Badges userId={m.id} size="small" /></div>
                 {m.id !== profile.id && (
@@ -4408,7 +4422,7 @@ function ProfileLevelSummary({ profile }) {
 }
 
 function Profile({ profile, onUpdate, onSignOut }) {
-  const [form, setForm] = useState({ full_name: profile.full_name || "", username: profile.username || "", city: profile.city || "", state: profile.state || "", bio: profile.bio || "", group_id: profile.group_id || "", group_ids: profile.group_ids || [profile.group_id].filter(Boolean) });
+  const [form, setForm] = useState({ full_name: profile.full_name || "", username: profile.username || "", city: profile.city || "", state: profile.state || "", marital_status: profile.marital_status || "", bio: profile.bio || "", group_id: profile.group_id || "", group_ids: profile.group_ids || [profile.group_id].filter(Boolean) });
   const [saving, setSaving] = useState(false);
   const [msg, setMsg] = useState("");
   const [avatarMode, setAvatarMode] = useState("preset"); // "preset" or "upload"
@@ -4423,8 +4437,15 @@ function Profile({ profile, onUpdate, onSignOut }) {
 
   async function save() {
     setSaving(true);
+    const cleanU = (form.username || "").toLowerCase().replace(/[^a-z0-9_]/g, "");
+    if (cleanU.length < 3) { setMsg("Pick a username — at least 3 letters, numbers, or underscores."); setSaving(false); setTimeout(() => setMsg(""), 5000); return; }
+    if (cleanU !== profile.username) {
+      const { data: taken } = await supabase.from("profiles").select("id").ilike("username", cleanU).neq("id", profile.id).maybeSingle();
+      if (taken) { setMsg(`"${cleanU}" is already taken — try another username.`); setSaving(false); setTimeout(() => setMsg(""), 5000); return; }
+    }
     // group is managed via request/admin approval — don't overwrite it here
     const { group_id, group_ids, ...rest } = form;
+    rest.username = cleanU;
     await supabase.from("profiles").update({ ...rest, avatar_url: currentAvatar }).eq("id", profile.id);
     setMsg("Profile saved.");
     onUpdate({ ...profile, ...rest, avatar_url: currentAvatar });
@@ -4542,13 +4563,25 @@ function Profile({ profile, onUpdate, onSignOut }) {
         </div>
         <div style={S.grid2}>
           <div style={{ marginBottom: 16 }}>
-            <label style={S.label}>City</label>
+            <label style={S.label}>City (optional)</label>
             <input style={S.input} placeholder="City" value={form.city} onChange={e => setForm({ ...form, city: e.target.value })} />
           </div>
           <div style={{ marginBottom: 16 }}>
-            <label style={S.label}>State</label>
+            <label style={S.label}>State (optional)</label>
             <input style={S.input} placeholder="State" value={form.state} onChange={e => setForm({ ...form, state: e.target.value })} />
           </div>
+        </div>
+        <div style={{ marginBottom: 16 }}>
+          <label style={S.label}>Marital Status (optional)</label>
+          <select style={S.input} value={form.marital_status || ""} onChange={e => setForm({ ...form, marital_status: e.target.value })}>
+            <option value="">Prefer not to say</option>
+            <option value="Single">Single</option>
+            <option value="In a relationship">In a relationship</option>
+            <option value="Engaged">Engaged</option>
+            <option value="Married">Married</option>
+            <option value="Divorced">Divorced</option>
+            <option value="Widowed">Widowed</option>
+          </select>
         </div>
         <div style={{ marginBottom: 16 }}>
           <label style={S.label}>Your Group</label>
