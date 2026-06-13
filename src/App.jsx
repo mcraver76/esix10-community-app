@@ -3119,8 +3119,21 @@ function PrivateGroups({ profile, allMembers }) {
   const [memberSearch, setMemberSearch] = useState('');
   const [requests, setRequests] = useState([]);
   const bottomRef = useRef();
+  const msgPhotoRef = useRef();
   const isMobile = window.innerWidth <= 768;
   const [showList, setShowList] = useState(true);
+  const [photoFile, setPhotoFile] = useState(null);
+  const [photoPreview, setPhotoPreview] = useState(null);
+  const [uploading, setUploading] = useState(false);
+  const [lightbox, setLightbox] = useState(null);
+  async function flagPGMessage(msg) {
+    if (msg.user_id === profile.id) return;
+    const what = msg.photo_url ? "photo" : "message";
+    const reason = window.prompt(`Report this ${what} to the admins. What's the issue? (optional)`);
+    if (reason === null) return;
+    await supabase.from("member_flags").insert({ flagged_user_id: msg.user_id, flagged_by: profile.id, reason: `[private group ${what}] ${reason || (msg.body || "").slice(0, 80) || "no reason given"}` });
+    alert("Reported. An admin will review it shortly.");
+  }
 
   useEffect(() => { loadGroups(); }, []);
   useEffect(() => { if (activeGroup) { loadMessages(); loadMembers(); loadRequests(); } }, [activeGroup]);
@@ -3203,11 +3216,20 @@ function PrivateGroups({ profile, allMembers }) {
 
   async function sendMessage() {
     if (!requireApproved(profile)) return;
-    if (!body.trim() || !activeGroup) return;
+    if ((!body.trim() && !photoFile) || !activeGroup) return;
     setSending(true);
+    let photoUrl = null;
+    if (photoFile) {
+      setUploading(true);
+      const ext = photoFile.name.split('.').pop();
+      const path = `${profile.id}/pg_${Date.now()}.${ext}`;
+      const { error } = await supabase.storage.from('avatars').upload(path, photoFile);
+      if (!error) { const { data } = supabase.storage.from('avatars').getPublicUrl(path); photoUrl = data.publicUrl; }
+      setUploading(false);
+    }
     const senderName = profile.username ? `@${profile.username}` : formatName(profile.full_name);
-    await supabase.from('messages').insert({ room_id: `private_${activeGroup.id}`, user_id: profile.id, body: body.trim(), sender_name: senderName });
-    setBody('');
+    await supabase.from('messages').insert({ room_id: `private_${activeGroup.id}`, user_id: profile.id, body: body.trim(), sender_name: senderName, photo_url: photoUrl });
+    setBody(''); setPhotoFile(null); setPhotoPreview(null);
     setSending(false);
     loadMessages();
   }
@@ -3389,17 +3411,41 @@ function PrivateGroups({ profile, allMembers }) {
               return (
                 <div key={msg.id} style={{ display: 'flex', flexDirection: 'column', alignItems: isOwn ? 'flex-end' : 'flex-start' }}>
                   {!isOwn && <div style={{ color: '#FF6600', fontSize: 11, marginBottom: 3, letterSpacing: '0.05em' }}>{msg.sender_name}</div>}
-                  <div style={{ background: isOwn ? 'rgba(255,102,0,0.15)' : 'rgba(255,255,255,0.05)', border: isOwn ? '1px solid rgba(255,102,0,0.2)' : '1px solid rgba(255,255,255,0.06)', borderRadius: 8, padding: '10px 14px', maxWidth: '75%', color: '#fff', fontSize: 14, lineHeight: 1.6 }}>
-                    {msg.body}
-                  </div>
+                  {msg.body && (
+                    <div style={{ background: isOwn ? 'rgba(255,102,0,0.15)' : 'rgba(255,255,255,0.05)', border: isOwn ? '1px solid rgba(255,102,0,0.2)' : '1px solid rgba(255,255,255,0.06)', borderRadius: 8, padding: '10px 14px', maxWidth: '75%', color: '#fff', fontSize: 14, lineHeight: 1.6 }}>
+                      {msg.body}
+                    </div>
+                  )}
+                  {msg.photo_url && (
+                    <img src={msg.photo_url} alt="shared photo" onClick={() => setLightbox(msg.photo_url)} style={{ marginTop: 4, maxWidth: 220, maxHeight: 220, borderRadius: 8, objectFit: 'cover', cursor: 'pointer' }} />
+                  )}
+                  {!isOwn && (
+                    <button onClick={() => flagPGMessage(msg)} style={{ background: 'none', border: 'none', cursor: 'pointer', fontSize: 10, color: '#8A8A8A', marginTop: 2 }}>⚑ report</button>
+                  )}
                 </div>
               );
             })}
             <div ref={bottomRef} />
           </div>
-          <div style={{ padding: '10px 12px', borderTop: '1px solid rgba(255,255,255,0.05)', display: 'flex', gap: 8 }}>
+          {lightbox && (
+            <div onClick={() => setLightbox(null)} style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.92)', zIndex: 9999, display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'zoom-out' }}>
+              <img src={lightbox} alt="full size" style={{ maxWidth: '92vw', maxHeight: '92vh', borderRadius: 8 }} />
+              <button onClick={() => setLightbox(null)} style={{ position: 'fixed', top: 20, right: 24, background: 'rgba(255,255,255,0.12)', border: 'none', color: '#fff', fontSize: 22, width: 44, height: 44, borderRadius: '50%', cursor: 'pointer' }}>✕</button>
+            </div>
+          )}
+          {photoPreview && (
+            <div style={{ padding: '8px 12px 0' }}>
+              <div style={{ position: 'relative', display: 'inline-block' }}>
+                <img src={photoPreview} alt="preview" style={{ maxHeight: 90, maxWidth: 140, borderRadius: 8, objectFit: 'cover' }} />
+                <button onClick={() => { setPhotoFile(null); setPhotoPreview(null); }} style={{ position: 'absolute', top: 4, right: 4, background: 'rgba(0,0,0,0.7)', border: 'none', color: '#fff', borderRadius: '50%', width: 20, height: 20, cursor: 'pointer', fontSize: 12 }}>✕</button>
+              </div>
+            </div>
+          )}
+          <div style={{ padding: '10px 12px', borderTop: '1px solid rgba(255,255,255,0.05)', display: 'flex', gap: 8, alignItems: 'center' }}>
+            <input ref={msgPhotoRef} type="file" accept="image/*" style={{ display: 'none' }} onChange={e => { const f = e.target.files[0]; if (f && f.size <= 5 * 1024 * 1024) { setPhotoFile(f); setPhotoPreview(URL.createObjectURL(f)); } else if (f) alert('Max 5MB'); }} />
+            <button onClick={() => msgPhotoRef.current.click()} style={{ background: 'none', border: '1px solid rgba(255,255,255,0.08)', borderRadius: 8, padding: '8px 10px', color: '#BBBBBB', cursor: 'pointer', flexShrink: 0 }}><Camera size={16} /></button>
             <input style={{ ...S.input, flex: 1, fontSize: 14, padding: '10px 14px' }} placeholder="Message..." value={body} onChange={e => setBody(e.target.value)} onKeyDown={e => { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); sendMessage(); }}} />
-            <button style={{ ...S.btn, padding: '10px 16px', flexShrink: 0 }} onClick={sendMessage} disabled={sending || !body.trim()}>Send</button>
+            <button style={{ ...S.btn, padding: '10px 16px', flexShrink: 0 }} onClick={sendMessage} disabled={sending || uploading || (!body.trim() && !photoFile)}>{uploading ? '...' : 'Send'}</button>
           </div>
         </>
       )}
@@ -4717,20 +4763,23 @@ function AdminDashboard({ profile }) {
   const [pendingRecs, setPendingRecs] = useState([]);
   const [memberFlags, setMemberFlags] = useState([]);
   const [groupRequests, setGroupRequests] = useState([]);
+  const [pendingPrivateGroups, setPendingPrivateGroups] = useState([]);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => { loadAll(); }, []);
 
   async function loadAll() {
     setLoading(true);
-    const [m, f, e, r, mf, gr] = await Promise.all([
+    const [m, f, e, r, mf, gr, pg] = await Promise.all([
       supabase.from("profiles").select("*").eq("status", "pending").order("created_at", { ascending: true }),
       supabase.from("post_flags").select("*, posts(body, user_id, group_id)").eq("reviewed", false).order("created_at", { ascending: false }),
       supabase.from("events").select("*").eq("approved", false).order("created_at", { ascending: false }),
       supabase.from("local_recommendations").select("*, profiles(username, full_name)").eq("approved", false).order("created_at", { ascending: false }),
       supabase.from("member_flags").select("*").eq("reviewed", false).order("created_at", { ascending: false }),
       supabase.from("profiles").select("*").not("requested_group_id", "is", null).order("requested_group_at", { ascending: true }),
+      supabase.from("private_groups").select("*, profiles(username, full_name)").eq("approved", false).order("created_at", { ascending: false }),
     ]);
+    setPendingPrivateGroups(pg.data || []);
     setGroupRequests((gr.data || []).filter(x => x.requested_group_id));
     const flagRows = mf.data || [];
     const ids = [...new Set(flagRows.flatMap(x => [x.flagged_user_id, x.flagged_by]))];
@@ -4792,6 +4841,15 @@ function AdminDashboard({ profile }) {
     await supabase.from("member_flags").update({ reviewed: true }).eq("id", id);
     loadAll();
   }
+  async function approvePrivateGroup(id) {
+    await supabase.from("private_groups").update({ approved: true }).eq("id", id);
+    loadAll();
+  }
+  async function denyPrivateGroup(id) {
+    if (!window.confirm("Deny and delete this private group request?")) return;
+    await supabase.from("private_groups").delete().eq("id", id);
+    loadAll();
+  }
   async function approveGroupChange(mem) {
     await supabase.from("profiles").update({ group_id: mem.requested_group_id, group_ids: [mem.requested_group_id], requested_group_id: null, requested_group_at: null }).eq("id", mem.id);
     loadAll();
@@ -4801,7 +4859,7 @@ function AdminDashboard({ profile }) {
     loadAll();
   }
 
-  const total = pendingMembers.length + flags.length + pendingEvents.length + pendingRecs.length + memberFlags.length + groupRequests.length;
+  const total = pendingMembers.length + flags.length + pendingEvents.length + pendingRecs.length + memberFlags.length + groupRequests.length + pendingPrivateGroups.length;
 
   const Section = ({ title, icon, count, children }) => (
     <div style={{ ...S.card, marginTop: 16 }}>
@@ -4852,6 +4910,19 @@ function AdminDashboard({ profile }) {
             actions={<>
               <button style={S.btnSm} onClick={() => approveGroupChange(m)}>Approve</button>
               <button style={S.btnDanger} onClick={() => denyGroupChange(m.id)}>Deny</button>
+            </>}
+          />
+        ))}
+      </Section>
+
+      <Section title="Pending Private Groups" icon="🔒" count={pendingPrivateGroups.length}>
+        {pendingPrivateGroups.map(g => (
+          <Row key={g.id}
+            main={g.name}
+            sub={`${g.description || "No description"} · by ${g.profiles?.username ? "@" + g.profiles.username : formatName(g.profiles?.full_name)}`}
+            actions={<>
+              <button style={S.btnSm} onClick={() => approvePrivateGroup(g.id)}>Approve</button>
+              <button style={S.btnDanger} onClick={() => denyPrivateGroup(g.id)}>Deny</button>
             </>}
           />
         ))}
