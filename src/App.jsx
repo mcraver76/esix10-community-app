@@ -979,7 +979,63 @@ function PersonalHeader({ profile }) {
   );
 }
 
-function Feed({ profile, activeGroup, isNewMember }) {
+function HomeHero({ onNavigate }) {
+  const [event, setEvent] = useState(null);
+  const [challenge, setChallenge] = useState(null);
+  const [i, setI] = useState(0);
+  const touch = useRef(null);
+  useEffect(() => {
+    (async () => {
+      const { data: ev } = await supabase.from("events").select("*").eq("approved", true).gte("event_date", new Date().toISOString()).order("event_date", { ascending: true }).limit(1);
+      if (ev && ev[0]) setEvent(ev[0]);
+      const { data: ch } = await supabase.from("challenges").select("*").eq("scheduled_date", localDateStr()).limit(1);
+      if (ch && ch[0]) setChallenge(ch[0]);
+    })();
+  }, []);
+  const verse = getTodayVerse();
+  const dev = getTodaysDevotion(new Date());
+  const slides = [
+    { eyebrow: "Word for Today", title: `"${verse.text}"`, sub: verse.ref.toUpperCase() },
+    { eyebrow: "Daily Devotion", title: dev.title, sub: dev.body, cta: { label: "Read devotion", to: "devotion" } },
+  ];
+  if (event) slides.push({ eyebrow: "Upcoming Event", title: event.title, sub: event.event_date ? new Date(event.event_date).toLocaleDateString("en-US", { weekday: "short", month: "short", day: "numeric", hour: "2-digit", minute: "2-digit" }) : "", cta: { label: "View event", to: "events" } });
+  if (challenge) slides.push({ eyebrow: "Today's Challenge", title: challenge.title, sub: challenge.description || "Take it on today.", cta: { label: "Go to The Forge", to: "forge" } });
+  useEffect(() => {
+    if (slides.length <= 1) return;
+    const t = setInterval(() => setI(p => (p + 1) % slides.length), 6500);
+    return () => clearInterval(t);
+  }, [slides.length]);
+  const idx = Math.min(i, slides.length - 1);
+  const s = slides[idx];
+  const go = (d) => setI(p => (p + d + slides.length) % slides.length);
+  return (
+    <div style={{ marginBottom: 20 }}>
+      <div
+        onTouchStart={e => { touch.current = e.touches[0].clientX; }}
+        onTouchEnd={e => { if (touch.current == null) return; const dx = e.changedTouches[0].clientX - touch.current; if (Math.abs(dx) > 40) go(dx < 0 ? 1 : -1); touch.current = null; }}
+        style={{ position: "relative", borderRadius: 18, overflow: "hidden", background: "linear-gradient(135deg,#FF6600 0%,#b8430a 48%,#1a1206 100%)", minHeight: 190 }}>
+        <img src="/esix10logo.png" alt="" style={{ position: "absolute", right: -28, bottom: -24, width: 190, opacity: 0.12, filter: "brightness(0) invert(1)", pointerEvents: "none" }} />
+        <div style={{ position: "relative", padding: "20px 22px", display: "flex", flexDirection: "column", justifyContent: "space-between", minHeight: 190, boxSizing: "border-box" }}>
+          <span style={{ fontSize: 11, fontWeight: 700, letterSpacing: "0.16em", textTransform: "uppercase", color: "#ffe9d6" }}>{s.eyebrow}</span>
+          <div>
+            <div style={{ fontFamily: "'Cinzel', serif", fontSize: 22, lineHeight: 1.32, color: "#fff", fontWeight: 600, maxWidth: 330, display: "-webkit-box", WebkitLineClamp: 3, WebkitBoxOrient: "vertical", overflow: "hidden" }}>{s.title}</div>
+            {s.sub && <div style={{ marginTop: 8, fontSize: 13, fontWeight: 500, color: "#ffd9b8", letterSpacing: "0.02em", display: "-webkit-box", WebkitLineClamp: 2, WebkitBoxOrient: "vertical", overflow: "hidden" }}>{s.sub}</div>}
+            {s.cta && <button onClick={() => onNavigate && onNavigate(s.cta.to)} style={{ marginTop: 12, background: "rgba(255,255,255,0.92)", color: "#b8430a", border: "none", borderRadius: 8, padding: "8px 16px", fontWeight: 700, fontSize: 13, cursor: "pointer" }}>{s.cta.label} →</button>}
+          </div>
+        </div>
+      </div>
+      {slides.length > 1 && (
+        <div style={{ display: "flex", gap: 6, justifyContent: "center", marginTop: 12 }}>
+          {slides.map((_, k) => (
+            <span key={k} onClick={() => setI(k)} style={{ width: k === idx ? 18 : 7, height: 7, borderRadius: 4, background: k === idx ? "#FF6600" : "rgba(255,255,255,0.25)", cursor: "pointer", transition: "width .2s" }} />
+          ))}
+        </div>
+      )}
+    </div>
+  );
+}
+
+function Feed({ profile, activeGroup, isNewMember, onNavigate }) {
   const [posts, setPosts] = useState([]);
   const [body, setBody] = useState("");
   const [loading, setLoading] = useState(false);
@@ -1108,16 +1164,7 @@ function Feed({ profile, activeGroup, isNewMember }) {
           <p style={{ color: "#FFFFFF", fontSize: 14, lineHeight: 1.7 }}>You have joined the {GROUPS.find(g => g.id === profile.group_id)?.label}. Introduce yourself, engage with the community, and stand firm. Ephesians 6:10</p>
         </div>
       )}
-      <div className="verse-banner" style={{ marginBottom: 20 }}>
-        <div style={{ display: "flex", alignItems: "flex-start", gap: 12 }}>
-          <Cross size={20} color="#FF7E33" strokeWidth={1.75} style={{ flexShrink: 0 }} />
-          <div>
-            <span style={{ ...S.eyebrow, marginBottom: 4 }}>Verse of the Day</span>
-            <p style={{ fontFamily: "'Inter', sans-serif", fontSize: 14, fontStyle: "italic", color: "#fff", lineHeight: 1.7, marginBottom: 4 }}>"{verse.text}"</p>
-            <p style={{ color: "#FF7E33", fontSize: 12, letterSpacing: "0.1em" }}>— {verse.ref}</p>
-          </div>
-        </div>
-      </div>
+      <HomeHero onNavigate={onNavigate} />
       <div style={S.card}>
         {memberGroups.length > 1 && (
           <div style={{ display: "flex", gap: 6, marginBottom: 10, flexWrap: "wrap" }}>
@@ -5371,7 +5418,7 @@ export default function App() {
               ))}
             </div>
           )}
-          <Feed profile={profile} activeGroup={feedGroup} />
+          <Feed profile={profile} activeGroup={feedGroup} onNavigate={setTab} />
         </div>
       )}
       {tab === "forge" && <TheForge profile={profile} />}
