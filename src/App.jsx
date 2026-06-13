@@ -1753,8 +1753,15 @@ function Messages({ profile, members, onRead }) {
     setCustomRooms(Object.values(roomMap));
   }
   async function loadRoomMembers(roomId) {
-    const { data } = await supabase.from("room_members").select("*, profiles(full_name, username, avatar_url)").eq("room_id", roomId);
-    setRoomMembers(data || []);
+    const { data } = await supabase.from("room_members").select("*").eq("room_id", roomId);
+    const rows = data || [];
+    const ids = rows.map(r => r.user_id);
+    const profMap = {};
+    if (ids.length) {
+      const { data: profs } = await supabase.from("profiles").select("id, full_name, username, avatar_url").in("id", ids);
+      (profs || []).forEach(p => { profMap[p.id] = p; });
+    }
+    setRoomMembers(rows.map(r => ({ ...r, profiles: profMap[r.user_id] })));
   }
   async function addRoomMember(m) {
     await supabase.from("room_members").insert({ room_id: activeRoom, user_id: m.id, added_by: profile.id });
