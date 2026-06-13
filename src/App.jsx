@@ -1049,6 +1049,78 @@ function HomeHero({ onNavigate }) {
   );
 }
 
+const FORGE_SLIDES = [
+  { eyebrow: "The Forge", title: "Comfort never built anything worth keeping.", sub: "Show up. Do the work." },
+  { eyebrow: "Discipline", title: "Motivation quits. Discipline shows up to the funeral.", sub: "Win the small things." },
+  { eyebrow: "Strength", title: "He gives strength to the weary.", sub: "Isaiah 40:29" },
+  { eyebrow: "Iron", title: "As iron sharpens iron, so one sharpens another.", sub: "Proverbs 27:17" },
+  { eyebrow: "Move", title: "Honor God with your body.", sub: "Log a walk or a workout today." },
+  { eyebrow: "Stand", title: "You weren't saved to sit down.", sub: "Take on today's challenge." },
+];
+const PRAYER_SLIDES = [
+  { eyebrow: "Prayer Wall", title: "Someone here is carrying something heavy.", sub: "Lift them up today." },
+  { eyebrow: "Stand in the Gap", title: "Pray for one person by name — right now.", sub: "Then tell them you did." },
+  { eyebrow: "Promise", title: "Cast all your anxiety on Him, because He cares for you.", sub: "1 Peter 5:7" },
+  { eyebrow: "Promise", title: "The prayer of a righteous person is powerful and effective.", sub: "James 5:16" },
+  { eyebrow: "Sacred", title: "What's shared here stays here.", sub: "This is holy ground." },
+  { eyebrow: "You're not alone", title: "You don't have to carry it by yourself.", sub: "Post a request — we've got you." },
+];
+const MEMBER_SLIDES = [
+  { eyebrow: "The Movement", title: "One family. Three houses. One foundation.", sub: "Brotherhood · Sisterhood · Family" },
+  { eyebrow: "Welcome", title: "New here? You belong.", sub: "Say hello in the Feed." },
+  { eyebrow: "Connect", title: "Tap any member to see their story.", sub: "Reach out. Build something real." },
+  { eyebrow: "Foundation", title: "We don't all look the same. We stand on the same Rock.", sub: "Ephesians 6:10" },
+  { eyebrow: "Respect", title: "Real people. Real respect.", sub: "Treat everyone like family." },
+  { eyebrow: "Grow", title: "Who needs this community?", sub: "Bring them in." },
+];
+const CHAT_SLIDES = [
+  { eyebrow: "Chat", title: "Sharpen each other — don't tear each other down.", sub: "Proverbs 27:17" },
+  { eyebrow: "Keep it sacred", title: "What's said here, stays here.", sub: "Trust is built on confidence." },
+  { eyebrow: "Your crew", title: "Start a casual group with your buddies.", sub: "Tap Group to create one." },
+  { eyebrow: "Safe space", title: "Need something private and regulated?", sub: "Request a Private Group." },
+  { eyebrow: "In season", title: "A word in season — how good it is!", sub: "Proverbs 15:23" },
+  { eyebrow: "Keep it clean", title: "See something off? Flag it.", sub: "We protect this house." },
+];
+const EVENT_SLIDES = [
+  { eyebrow: "Events", title: "Show up in person.", sub: "Community is built face to face." },
+  { eyebrow: "Gather", title: "Not neglecting to meet together.", sub: "Hebrews 10:25" },
+  { eyebrow: "Find your next", title: "See what's coming up.", sub: "Then put it on your calendar." },
+  { eyebrow: "Host", title: "Got an event? Submit it.", sub: "Admins review and post it." },
+  { eyebrow: "Together", title: "Iron sharpens iron — most of all in person.", sub: "Be there." },
+];
+
+function TabCarousel({ slides }) {
+  const [i, setI] = useState(0);
+  const touch = useRef(null);
+  useEffect(() => {
+    if (!slides || slides.length <= 1) return;
+    const t = setInterval(() => setI(p => (p + 1) % slides.length), 6500);
+    return () => clearInterval(t);
+  }, [slides]);
+  if (!slides || !slides.length) return null;
+  const idx = i % slides.length;
+  const s = slides[idx];
+  const go = (d) => setI(p => (p + d + slides.length) % slides.length);
+  return (
+    <div style={{ marginBottom: 20 }}>
+      <div
+        onTouchStart={e => { touch.current = e.touches[0].clientX; }}
+        onTouchEnd={e => { if (touch.current == null) return; const dx = e.changedTouches[0].clientX - touch.current; if (Math.abs(dx) > 40) go(dx < 0 ? 1 : -1); touch.current = null; }}
+        style={{ position: "relative", borderRadius: 18, overflow: "hidden", background: "linear-gradient(135deg,#FF6600 0%,#b8430a 48%,#1a1206 100%)", minHeight: 148 }}>
+        <img src="/esix10logo.png" alt="" style={{ position: "absolute", right: -24, bottom: -20, width: 150, opacity: 0.12, filter: "brightness(0) invert(1)", pointerEvents: "none" }} />
+        <div key={idx} style={{ position: "relative", padding: "18px 20px", minHeight: 148, display: "flex", flexDirection: "column", justifyContent: "space-between", boxSizing: "border-box", animation: "fadeIn 0.45s ease" }}>
+          <span style={{ fontSize: 11, fontWeight: 700, letterSpacing: "0.16em", textTransform: "uppercase", color: "#ffe9d6" }}>{s.eyebrow}</span>
+          <div>
+            <div style={{ fontFamily: "'Cinzel', serif", fontSize: 20, lineHeight: 1.3, color: "#fff", fontWeight: 600, maxWidth: 340 }}>{s.title}</div>
+            {s.sub && <div style={{ marginTop: 6, fontSize: 13, fontWeight: 500, color: "#ffd9b8" }}>{s.sub}</div>}
+          </div>
+        </div>
+      </div>
+      {slides.length > 1 && <div style={{ display: "flex", gap: 6, justifyContent: "center", marginTop: 10 }}>{slides.map((_, k) => <span key={k} onClick={() => setI(k)} style={{ width: k === idx ? 16 : 6, height: 6, borderRadius: 3, background: k === idx ? "#FF6600" : "rgba(255,255,255,0.25)", cursor: "pointer", transition: "width .2s" }} />)}</div>}
+    </div>
+  );
+}
+
 function Feed({ profile, activeGroup, isNewMember, onNavigate }) {
   const [posts, setPosts] = useState([]);
   const [body, setBody] = useState("");
@@ -1325,6 +1397,7 @@ function Events({ profile }) {
 
   return (
     <div>
+      <TabCarousel slides={EVENT_SLIDES} />
       <div style={S.flexBetween}>
         <h2 style={{ ...S.h2, margin: 0 }}>Upcoming Events</h2>
         <button style={S.btn} onClick={() => setShowForm(!showForm)}>
@@ -1594,6 +1667,7 @@ function Members({ profile }) {
 
   return (
     <div>
+      <TabCarousel slides={MEMBER_SLIDES} />
       <div style={{ marginBottom: 8 }}>
         <h2 style={{ ...S.h2, margin: "0 0 12px 0" }}>
           {profile.role === "admin" ? `Members (${filtered.length})` : `${myGroup?.label} (${filtered.length})`}
@@ -1953,6 +2027,7 @@ function Messages({ profile, members, onRead }) {
 
   const ROOM_LIST = (
     <div style={{ width: isMobileChat ? "100%" : 220, borderRight: isMobileChat ? "none" : "1px solid rgba(255,255,255,0.05)", flexShrink: 0, overflowY: "auto", height: isMobileChat ? "calc(100vh - 200px)" : "auto" }}>
+      {isMobileChat && <div style={{ padding: "12px 12px 0" }}><TabCarousel slides={CHAT_SLIDES} /></div>}
       <div style={{ padding: "16px 12px 8px" }}>
         <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 12 }}>
           <p style={{ ...S.eyebrow, margin: 0 }}>Chats</p>
@@ -2191,7 +2266,8 @@ function Messages({ profile, members, onRead }) {
       {ROOM_LIST}
       <div style={{ flex: 1, display: "flex", flexDirection: "column" }}>
         {!activeRoom ? (
-          <div style={{ flex: 1, display: "flex", alignItems: "center", justifyContent: "center", flexDirection: "column", gap: 12 }}>
+          <div style={{ flex: 1, overflowY: "auto", padding: "24px 20px", display: "flex", alignItems: "center", justifyContent: "center", flexDirection: "column", gap: 14 }}>
+            <div style={{ width: "100%", maxWidth: 520 }}><TabCarousel slides={CHAT_SLIDES} /></div>
             <MessageCircle size={40} color="#555" strokeWidth={1.5} />
             <p style={{ fontFamily: "'Inter', sans-serif", fontSize: 18, color: "#fff" }}>Select a conversation</p>
             <p style={S.muted}>Choose a group chat or direct message</p>
@@ -2242,6 +2318,7 @@ function PrayerRequests({ profile }) {
 
   return (
     <div>
+      <TabCarousel slides={PRAYER_SLIDES} />
       <span style={S.eyebrow}>Prayer Requests</span>
       <h2 style={{ ...S.h2, marginBottom: 20 }}>Lift Each Other Up</h2>
       <div style={S.card}>
@@ -3000,6 +3077,7 @@ function TheForge({ profile }) {
   return (
     <div>
       <style>{FORGE_CSS}</style>
+      <TabCarousel slides={FORGE_SLIDES} />
       <div className="forge-hero" style={{ display: "flex", alignItems: "center", gap: 16 }}>
         <div style={{ flex: 1 }}>
           <span style={{ ...S.eyebrow, marginBottom: 6 }}>The Forge</span>
