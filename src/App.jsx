@@ -2453,6 +2453,7 @@ function Devotion({ profile }) {
             <span style={{ ...S.badge, marginBottom: 8, display: "inline-block", background: "rgba(192,154,47,0.2)", color: "#C09A2F" }}>{viewDate.toLocaleDateString("en-US", { weekday: "long", month: "long", day: "numeric" })}</span>
             <h3 style={{ fontFamily: "'Inter', sans-serif", fontSize: 20, fontWeight: 400, color: "#fff", marginBottom: 8 }}>{viewDevotion.title}</h3>
             <div style={{ background: "rgba(255,102,0,0.06)", border: "1px solid rgba(255,102,0,0.15)", borderRadius: 4, padding: "12px 16px", marginBottom: 12 }}><p style={{ color: "#fff", fontFamily: "'Inter', sans-serif", fontSize: 14, fontStyle: "italic", lineHeight: 1.7 }}>"{viewDevotion.verse}"</p><p style={{ color: "#FF7E33", fontSize: 12, marginTop: 4, letterSpacing: "0.1em" }}>— {viewDevotion.ref}</p></div>
+            <span style={{ ...S.eyebrow, display: "block", marginBottom: 6 }}>Reflection</span>
             <p style={{ ...S.postBody }}>{viewDevotion.body}</p>
           </div>
         )}
@@ -2461,6 +2462,7 @@ function Devotion({ profile }) {
             <span style={{ ...S.badge, marginBottom: 8, display: "inline-block" }}>Today — {today.toLocaleDateString("en-US", { weekday: "long", month: "long", day: "numeric" })}</span>
             <h3 style={{ fontFamily: "'Inter', sans-serif", fontSize: 20, fontWeight: 400, color: "#fff", marginBottom: 8 }}>{todaysDevotion.title}</h3>
             <div style={{ background: "rgba(255,102,0,0.06)", border: "1px solid rgba(255,102,0,0.15)", borderRadius: 4, padding: "12px 16px", marginBottom: 12 }}><p style={{ color: "#fff", fontFamily: "'Inter', sans-serif", fontSize: 14, fontStyle: "italic", lineHeight: 1.7 }}>"{todaysDevotion.verse}"</p><p style={{ color: "#FF7E33", fontSize: 12, marginTop: 4, letterSpacing: "0.1em" }}>— {todaysDevotion.ref}</p></div>
+            <span style={{ ...S.eyebrow, display: "block", marginBottom: 6 }}>Reflection</span>
             <p style={{ ...S.postBody }}>{todaysDevotion.body}</p>
           </div>
         )}
