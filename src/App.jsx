@@ -1198,13 +1198,13 @@ function Feed({ profile, activeGroup, isNewMember }) {
               </div>
               <p style={S.postBody}>{post.body}</p>
               {post.photo_url && (
-                (post.photo_approved !== false || post.user_id === profile?.id || profile?.role === "admin") ? (
+                (post.photo_approved !== false || post.user_id === profile?.id || isStaff(profile)) ? (
                   <div style={{ marginTop: 12, borderRadius: 10, overflow: "hidden", position: "relative" }}>
                     <img src={post.photo_url} alt="post" style={{ width: "100%", maxHeight: 320, objectFit: "cover", display: "block" }} />
                     {post.photo_approved === false && (
                       <div style={{ position: "absolute", top: 8, left: 8, background: "rgba(0,0,0,0.7)", color: "#FF7E33", fontSize: 11, padding: "3px 8px", borderRadius: 6 }}>⏳ Pending approval</div>
                     )}
-                    {profile?.role === "admin" && post.photo_approved === false && (
+                    {isStaff(profile) && post.photo_approved === false && (
                       <button onClick={() => approvePhoto(post.id)} style={{ position: "absolute", bottom: 8, right: 8, ...S.btnSm, fontSize: 11, padding: "6px 12px", background: "#51cf66" }}>✓ Approve photo</button>
                     )}
                   </div>
@@ -1649,7 +1649,7 @@ function Members({ profile }) {
                 {m.id !== profile.id && (
                   <button onClick={() => flagMember(m)} style={{ background: "none", border: "none", cursor: "pointer", color: "#8A8A8A", fontSize: 11, padding: "4px 0", marginTop: 4 }} title="Report this member"><Flag size={12} style={{ verticalAlign: "-2px", marginRight: 3 }} /> Report</button>
                 )}
-                {profile.role === "admin" && m.avatar_pending && (
+                {isStaff(profile) && m.avatar_pending && (
                   <div style={{ marginTop: 8, display: "flex", alignItems: "center", gap: 8, flexWrap: "wrap", background: "rgba(255,102,0,0.06)", border: "1px solid rgba(255,102,0,0.2)", borderRadius: 8, padding: 8 }}>
                     <img src={m.avatar_pending} alt="pending photo" style={{ width: 44, height: 44, borderRadius: "50%", objectFit: "cover", border: "2px solid #FF6600" }} />
                     <span style={{ color: "#FF7E33", fontSize: 12 }}>New profile photo — pending</span>
@@ -3275,6 +3275,12 @@ function PrivateGroups({ profile, allMembers }) {
     loadMembers();
   }
 
+  async function toggleModerator(m) {
+    const newRole = m.role === 'moderator' ? 'member' : 'moderator';
+    await supabase.from('private_group_members').update({ role: newRole }).eq('group_id', activeGroup.id).eq('user_id', m.user_id);
+    loadMembers();
+  }
+
   async function sendMessage() {
     if (!requireApproved(profile)) return;
     if ((!body.trim() && !photoFile) || !activeGroup) return;
@@ -3309,6 +3315,9 @@ function PrivateGroups({ profile, allMembers }) {
 
   const isMember = activeGroup && members.some(m => m.user_id === profile.id);
   const isCreator = activeGroup && activeGroup.created_by === profile.id;
+  const myPGRole = activeGroup ? members.find(m => m.user_id === profile.id)?.role : null;
+  const isPGMod = myPGRole === 'moderator';
+  const canManage = isCreator || isPGMod || profile.role === 'admin';
   const pendingGroups = groups.filter(g => !g.approved);
 
   // GROUP LIST VIEW
@@ -3408,7 +3417,7 @@ function PrivateGroups({ profile, allMembers }) {
           <div style={{ color: '#555', fontSize: 11 }}>{members.length} members</div>
         </div>
         <div style={{ display: 'flex', gap: 6 }}>
-          {(isCreator || profile.role === 'admin') && (
+          {canManage && (
             <button style={{ ...S.btnSm, background: 'rgba(255,102,0,0.1)', color: '#FF6600', fontSize: 11 }} onClick={() => setShowAddMember(!showAddMember)}>+ Add</button>
           )}
           {profile.role === 'admin' && (
@@ -3417,7 +3426,7 @@ function PrivateGroups({ profile, allMembers }) {
         </div>
       </div>
 
-      {showAddMember && (isCreator || profile.role === 'admin') && (
+      {showAddMember && canManage && (
         <div style={{ padding: '10px 16px', borderBottom: '1px solid rgba(255,255,255,0.05)', background: 'rgba(255,102,0,0.04)' }}>
           <input style={{ ...S.input, marginBottom: 8, fontSize: 13 }} placeholder="Search members to add..." value={memberSearch} onChange={e => setMemberSearch(e.target.value)} />
           {memberSearch.length > 1 && allMembers.filter(m => m.status === 'approved' && !members.find(x => x.user_id === m.id) && ((m.full_name||'').toLowerCase().includes(memberSearch.toLowerCase()) || (m.username||'').toLowerCase().includes(memberSearch.toLowerCase()))).slice(0,5).map(m => (
@@ -3432,7 +3441,11 @@ function PrivateGroups({ profile, allMembers }) {
             {members.map(m => (
               <span key={m.id} style={{ color: '#888', fontSize: 11, marginRight: 8 }}>
                 {m.profiles?.username ? `@${m.profiles.username}` : formatName(m.profiles?.full_name)}
-                {(isCreator || profile.role === 'admin') && m.user_id !== profile.id && (
+                {m.role === 'creator' ? ' ★' : m.role === 'moderator' ? ' (mod)' : ''}
+                {(isCreator || profile.role === 'admin') && m.role !== 'creator' && m.user_id !== profile.id && (
+                  <span onClick={() => toggleModerator(m)} style={{ color: '#C09A2F', cursor: 'pointer', marginLeft: 4 }} title={m.role === 'moderator' ? 'Remove moderator' : 'Make moderator'}>{m.role === 'moderator' ? '↓mod' : '↑mod'}</span>
+                )}
+                {canManage && m.role !== 'creator' && m.user_id !== profile.id && (
                   <span onClick={() => removeMemberFromGroup(m.user_id)} style={{ color: '#ff4444', cursor: 'pointer', marginLeft: 3 }}>✕</span>
                 )}
               </span>
@@ -3441,7 +3454,7 @@ function PrivateGroups({ profile, allMembers }) {
         </div>
       )}
 
-      {requests.length > 0 && (isCreator || profile.role === 'admin') && (
+      {requests.length > 0 && canManage && (
         <div style={{ padding: '10px 16px', borderBottom: '1px solid rgba(255,255,255,0.05)', background: 'rgba(255,102,0,0.04)' }}>
           <span style={{ color: '#FF6600', fontSize: 11, letterSpacing: '0.1em', textTransform: 'uppercase' }}>Join Requests ({requests.length})</span>
           {requests.map(r => (
