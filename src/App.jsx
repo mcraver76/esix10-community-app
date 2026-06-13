@@ -1051,8 +1051,13 @@ function Feed({ profile, activeGroup, isNewMember }) {
       }
     }
     setUploading(false);
-    await supabase.from("posts").insert({ user_id: profile.id, group_id: postTarget, body: body.trim(), photo_url: photoUrl, reactions: {} });
+    await supabase.from("posts").insert({ user_id: profile.id, group_id: postTarget, body: body.trim(), photo_url: photoUrl, photo_approved: photoUrl ? false : true, reactions: {} });
     setBody(""); setPhotoFile(null); setPhotoPreview(null); setPosting(false); loadPosts();
+  }
+
+  async function approvePhoto(id) {
+    await supabase.from("posts").update({ photo_approved: true }).eq("id", id);
+    loadPosts();
   }
 
   async function deletePost(id) {
@@ -1193,9 +1198,19 @@ function Feed({ profile, activeGroup, isNewMember }) {
               </div>
               <p style={S.postBody}>{post.body}</p>
               {post.photo_url && (
-                <div style={{ marginTop: 12, borderRadius: 10, overflow: "hidden" }}>
-                  <img src={post.photo_url} alt="post" style={{ width: "100%", maxHeight: 320, objectFit: "cover", display: "block" }} />
-                </div>
+                (post.photo_approved !== false || post.user_id === profile?.id || profile?.role === "admin") ? (
+                  <div style={{ marginTop: 12, borderRadius: 10, overflow: "hidden", position: "relative" }}>
+                    <img src={post.photo_url} alt="post" style={{ width: "100%", maxHeight: 320, objectFit: "cover", display: "block" }} />
+                    {post.photo_approved === false && (
+                      <div style={{ position: "absolute", top: 8, left: 8, background: "rgba(0,0,0,0.7)", color: "#FF7E33", fontSize: 11, padding: "3px 8px", borderRadius: 6 }}>⏳ Pending approval</div>
+                    )}
+                    {profile?.role === "admin" && post.photo_approved === false && (
+                      <button onClick={() => approvePhoto(post.id)} style={{ position: "absolute", bottom: 8, right: 8, ...S.btnSm, fontSize: 11, padding: "6px 12px", background: "#51cf66" }}>✓ Approve photo</button>
+                    )}
+                  </div>
+                ) : (
+                  <div style={{ marginTop: 12, borderRadius: 10, background: "rgba(255,255,255,0.04)", border: "1px dashed rgba(255,255,255,0.15)", padding: "28px 16px", textAlign: "center", color: "#8A8A8A", fontSize: 13 }}>📷 Photo pending admin approval</div>
+                )
               )}
               <div style={{ display: "flex", gap: 6, marginTop: 12, flexWrap: "wrap" }}>
                 {REACTIONS.map(emoji => (
@@ -1359,6 +1374,17 @@ function Members({ profile }) {
     await supabase.from("profiles").update({ status: "removed", updated_at: new Date().toISOString() }).eq("id", id);
     loadMembers();
     loadRemoved();
+  }
+
+  async function approveAvatar(m) {
+    await supabase.from("profiles").update({ avatar_url: m.avatar_pending, avatar_pending: null }).eq("id", m.id);
+    loadMembers();
+  }
+
+  async function rejectAvatar(m) {
+    if (!window.confirm("Reject this profile photo? The member keeps their current icon.")) return;
+    await supabase.from("profiles").update({ avatar_pending: null }).eq("id", m.id);
+    loadMembers();
   }
 
   async function restoreMember(id) {
@@ -1622,6 +1648,14 @@ function Members({ profile }) {
                 <div style={{ marginTop: 6 }}><Badges userId={m.id} size="small" /></div>
                 {m.id !== profile.id && (
                   <button onClick={() => flagMember(m)} style={{ background: "none", border: "none", cursor: "pointer", color: "#8A8A8A", fontSize: 11, padding: "4px 0", marginTop: 4 }} title="Report this member"><Flag size={12} style={{ verticalAlign: "-2px", marginRight: 3 }} /> Report</button>
+                )}
+                {profile.role === "admin" && m.avatar_pending && (
+                  <div style={{ marginTop: 8, display: "flex", alignItems: "center", gap: 8, flexWrap: "wrap", background: "rgba(255,102,0,0.06)", border: "1px solid rgba(255,102,0,0.2)", borderRadius: 8, padding: 8 }}>
+                    <img src={m.avatar_pending} alt="pending photo" style={{ width: 44, height: 44, borderRadius: "50%", objectFit: "cover", border: "2px solid #FF6600" }} />
+                    <span style={{ color: "#FF7E33", fontSize: 12 }}>New profile photo — pending</span>
+                    <button style={{ ...S.btnSm, fontSize: 10, padding: "6px 12px", background: "#51cf66" }} onClick={() => approveAvatar(m)}>✓ Approve</button>
+                    <button style={{ ...S.btnDanger, fontSize: 10, padding: "6px 10px" }} onClick={() => rejectAvatar(m)}>Reject</button>
+                  </div>
                 )}
                 {profile.role === "admin" && m.id !== profile.id && (
                   <div style={{ display: "flex", gap: 8, marginTop: 10, flexWrap: "wrap" }}>
@@ -4446,9 +4480,13 @@ function Profile({ profile, onUpdate, onSignOut }) {
     // group is managed via request/admin approval — don't overwrite it here
     const { group_id, group_ids, ...rest } = form;
     rest.username = cleanU;
-    await supabase.from("profiles").update({ ...rest, avatar_url: currentAvatar }).eq("id", profile.id);
-    setMsg("Profile saved.");
-    onUpdate({ ...profile, ...rest, avatar_url: currentAvatar });
+    // Uploaded photos need admin approval; preset icons / clearing don't.
+    const isPhoto = currentAvatar && currentAvatar.startsWith("http");
+    const photoPending = isPhoto && currentAvatar !== profile.avatar_url;
+    const avatarFields = photoPending ? { avatar_pending: currentAvatar } : { avatar_url: currentAvatar, avatar_pending: null };
+    await supabase.from("profiles").update({ ...rest, ...avatarFields }).eq("id", profile.id);
+    setMsg(photoPending ? "Profile saved. Your new photo is pending admin approval." : "Profile saved.");
+    onUpdate({ ...profile, ...rest, ...avatarFields });
     setSaving(false);
     setTimeout(() => setMsg(""), 3000);
   }
@@ -4550,6 +4588,9 @@ function Profile({ profile, onUpdate, onSignOut }) {
           )}
         </div>
 
+        {profile.avatar_pending && (
+          <div style={{ background: "rgba(255,102,0,0.08)", border: "1px solid rgba(255,102,0,0.25)", borderRadius: 8, padding: "10px 14px", marginBottom: 16, color: "#FF7E33", fontSize: 13 }}>⏳ Your uploaded photo is pending admin approval. Others see your current icon until it's approved.</div>
+        )}
         <div style={{ height: 1, background: "rgba(255,255,255,0.05)", marginBottom: 20 }} />
 
         <div style={{ marginBottom: 16 }}>
@@ -4574,7 +4615,7 @@ function Profile({ profile, onUpdate, onSignOut }) {
         <div style={{ marginBottom: 16 }}>
           <label style={S.label}>Marital Status (optional)</label>
           <select style={S.input} value={form.marital_status || ""} onChange={e => setForm({ ...form, marital_status: e.target.value })}>
-            <option value="">Prefer not to say</option>
+            <option value="">Select…</option>
             <option value="Single">Single</option>
             <option value="In a relationship">In a relationship</option>
             <option value="Engaged">Engaged</option>
