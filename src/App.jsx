@@ -632,6 +632,15 @@ function AuthScreen({ onAuth }) {
     setLoading(false);
   }
 
+  async function forgotPassword() {
+    if (!email.trim()) { setError("Enter your email above first, then tap “Forgot password.”"); return; }
+    setError(""); setMsg(""); setLoading(true);
+    const { error } = await supabase.auth.resetPasswordForEmail(email.trim(), { redirectTo: window.location.origin });
+    if (error) setError(error.message);
+    else setMsg("If an account exists for that email, a password reset link is on its way. Check your inbox (and spam).");
+    setLoading(false);
+  }
+
   return (
     <div style={{ minHeight: "100vh", background: "#0a0a0a", display: "flex", alignItems: "center", justifyContent: "center", padding: 24 }}>
       <div style={{ width: "100%", maxWidth: 420 }}>
@@ -706,6 +715,11 @@ function AuthScreen({ onAuth }) {
           <button style={{ ...S.btn, width: "100%", padding: "14px 24px" }} onClick={handleSubmit} disabled={loading}>
             {loading ? "Please wait..." : mode === "login" ? "Sign In" : "Create Account"}
           </button>
+          {mode === "login" && (
+            <p style={{ textAlign: "center", marginTop: 16 }}>
+              <span style={{ color: "#FF6600", fontSize: 13, cursor: "pointer", textDecoration: "underline" }} onClick={forgotPassword}>Forgot password?</span>
+            </p>
+          )}
         </div>
       </div>
     </div>
@@ -1374,6 +1388,13 @@ function Members({ profile }) {
     loadMembers();
   }
 
+  async function adminResetPassword(m) {
+    if (!m.email) { alert("This member has no email on file."); return; }
+    if (!window.confirm(`Send a password reset email to ${m.email}?\nThey'll get a link to set a new password themselves.`)) return;
+    const { error } = await supabase.auth.resetPasswordForEmail(m.email, { redirectTo: window.location.origin });
+    alert(error ? ("Could not send: " + error.message) : `Password reset email sent to ${m.email}.`);
+  }
+
   async function approve(id) {
     await supabase.from("profiles").update({ status: "approved" }).eq("id", id);
     const m = members.find(x => x.id === id);
@@ -1594,6 +1615,7 @@ function Members({ profile }) {
                     ))}
                     <button style={{ ...S.btnSm, fontSize: 10, padding: "6px 12px" }} onClick={() => adminChangeUsername(m)}>Username</button>
                     <button style={{ ...S.btnSm, fontSize: 10, padding: "6px 12px" }} onClick={() => adminChangeGroup(m)}>Group</button>
+                    <button style={{ ...S.btnSm, fontSize: 10, padding: "6px 12px" }} onClick={() => adminResetPassword(m)}>Reset PW</button>
                     <button style={{ ...S.btnDanger, fontSize: 10, padding: "6px 10px" }} onClick={() => removeMember(m.id)}>Remove</button>
                   </div>
                 )}
@@ -4787,6 +4809,46 @@ function AdminDashboard({ profile }) {
   );
 }
 
+function PasswordResetScreen({ onDone }) {
+  const [pass, setPass] = useState("");
+  const [busy, setBusy] = useState(false);
+  const [err, setErr] = useState("");
+  const [done, setDone] = useState(false);
+  async function submit() {
+    if (pass.length < 6) { setErr("Password must be at least 6 characters."); return; }
+    setBusy(true); setErr("");
+    const { error } = await supabase.auth.updateUser({ password: pass });
+    setBusy(false);
+    if (error) { setErr(error.message); return; }
+    setDone(true);
+  }
+  return (
+    <div style={{ minHeight: "100vh", background: "#0a0a0a", display: "flex", alignItems: "center", justifyContent: "center", padding: 24 }}>
+      <div style={{ width: "100%", maxWidth: 420 }}>
+        <div style={{ textAlign: "center", marginBottom: 32 }}>
+          <img src="/esix10logo.png" alt="ESix10" style={{ height: 120, width: "auto", objectFit: "contain" }} />
+        </div>
+        <div style={S.card}>
+          <h2 style={{ ...S.h2, marginTop: 0 }}>Set a New Password</h2>
+          {done ? (
+            <>
+              <p style={S.success}>Password updated. You're all set.</p>
+              <button style={{ ...S.btn, width: "100%", padding: "14px 24px", marginTop: 12 }} onClick={onDone}>Continue to ESix10</button>
+            </>
+          ) : (
+            <>
+              <p style={{ color: "#AAAAAA", fontSize: 14, marginBottom: 16 }}>Enter a new password for your account.</p>
+              <input style={S.input} type="password" placeholder="New password (at least 6 characters)" value={pass} onChange={e => setPass(e.target.value)} onKeyDown={e => e.key === "Enter" && submit()} />
+              {err && <p style={S.error}>{err}</p>}
+              <button style={{ ...S.btn, width: "100%", padding: "14px 24px", marginTop: 16 }} onClick={submit} disabled={busy}>{busy ? "Saving..." : "Update Password"}</button>
+            </>
+          )}
+        </div>
+      </div>
+    </div>
+  );
+}
+
 export default function App() {
   const [user, setUser] = useState(null);
   const [profile, setProfile] = useState(null);
@@ -4800,6 +4862,7 @@ export default function App() {
   const [unreadCount, setUnreadCount] = useState(0);
   const [showMore, setShowMore] = useState(false);
   const [adminPending, setAdminPending] = useState(0);
+  const [recovering, setRecovering] = useState(false);
 
   useEffect(() => {
     if (!isStaff(profile)) { setAdminPending(0); return; }
@@ -4839,7 +4902,8 @@ export default function App() {
       if (data.session?.user) loadProfile(data.session.user);
       else setLoading(false);
     });
-    supabase.auth.onAuthStateChange((_, session) => {
+    supabase.auth.onAuthStateChange((event, session) => {
+      if (event === "PASSWORD_RECOVERY") setRecovering(true);
       if (session?.user) loadProfile(session.user);
       else { setUser(null); setProfile(null); setLoading(false); }
     });
@@ -4926,6 +4990,7 @@ export default function App() {
     </div>
   );
 
+  if (recovering) return <PasswordResetScreen onDone={() => setRecovering(false)} />;
   if (!user) return <AuthScreen onAuth={(u) => loadProfile(u)} />;
   if (showSetup) return <SetupModal onClose={() => { setShowSetup(false); loadProfile(user); }} />;
   if (!profile?.group_id) return <GroupSelect user={user} onSelect={(g, groups) => { setProfile({ ...profile, group_id: g, group_ids: groups }); setFeedGroup(g); }} />;
