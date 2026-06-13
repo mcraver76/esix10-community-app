@@ -109,6 +109,17 @@ const getTodayVerse = () => {
   return VERSES[day % VERSES.length];
 };
 
+const CHARGES = [
+  "You weren't saved to sit down.",
+  "Discipline is just love for your future self.",
+  "Comfort never built anything worth keeping.",
+  "The enemy doesn't fear your potential. He fears your obedience.",
+  "Kneel before God so you can stand before anything.",
+  "Faith isn't the absence of fear. It's marching anyway.",
+  "Your scars are proof you survived what was sent to bury you.",
+];
+const getTodayCharge = () => CHARGES[new Date().getDate() % CHARGES.length];
+
 // Format name as First name + Last initial
 const formatName = (fullName) => {
   if (!fullName) return "Member";
@@ -997,6 +1008,9 @@ function HomeHero({ onNavigate }) {
   const slides = [
     { eyebrow: "Word for Today", title: `"${verse.text}"`, sub: verse.ref.toUpperCase() },
     { eyebrow: "Daily Devotion", title: dev.title, sub: dev.body, cta: { label: "Read devotion", to: "devotion" } },
+    { eyebrow: "Daily Charge", title: getTodayCharge(), sub: "Steadfast. Unmovable." },
+    { eyebrow: "Stand in the Gap", title: "Someone here needs prayer today.", sub: "Lift a brother or sister up.", cta: { label: "Open Prayer Wall", to: "prayer" } },
+    { eyebrow: "The Movement", title: "Prepared. Equipped. Unshaken.", sub: "Bring someone with you.", cta: { label: "Invite & Share", to: "share" } },
   ];
   if (event) slides.push({ eyebrow: "Upcoming Event", title: event.title, sub: event.event_date ? new Date(event.event_date).toLocaleDateString("en-US", { weekday: "short", month: "short", day: "numeric", hour: "2-digit", minute: "2-digit" }) : "", cta: { label: "View event", to: "events" } });
   if (challenge) slides.push({ eyebrow: "Today's Challenge", title: challenge.title, sub: challenge.description || "Take it on today.", cta: { label: "Go to The Forge", to: "forge" } });
@@ -1015,7 +1029,7 @@ function HomeHero({ onNavigate }) {
         onTouchEnd={e => { if (touch.current == null) return; const dx = e.changedTouches[0].clientX - touch.current; if (Math.abs(dx) > 40) go(dx < 0 ? 1 : -1); touch.current = null; }}
         style={{ position: "relative", borderRadius: 18, overflow: "hidden", background: "linear-gradient(135deg,#FF6600 0%,#b8430a 48%,#1a1206 100%)", minHeight: 190 }}>
         <img src="/esix10logo.png" alt="" style={{ position: "absolute", right: -28, bottom: -24, width: 190, opacity: 0.12, filter: "brightness(0) invert(1)", pointerEvents: "none" }} />
-        <div style={{ position: "relative", padding: "20px 22px", display: "flex", flexDirection: "column", justifyContent: "space-between", minHeight: 190, boxSizing: "border-box" }}>
+        <div key={idx} style={{ position: "relative", padding: "20px 22px", display: "flex", flexDirection: "column", justifyContent: "space-between", minHeight: 190, boxSizing: "border-box", animation: "fadeIn 0.45s ease" }}>
           <span style={{ fontSize: 11, fontWeight: 700, letterSpacing: "0.16em", textTransform: "uppercase", color: "#ffe9d6" }}>{s.eyebrow}</span>
           <div>
             <div style={{ fontFamily: "'Cinzel', serif", fontSize: 22, lineHeight: 1.32, color: "#fff", fontWeight: 600, maxWidth: 330, display: "-webkit-box", WebkitLineClamp: 3, WebkitBoxOrient: "vertical", overflow: "hidden" }}>{s.title}</div>
@@ -1384,9 +1398,39 @@ function Events({ profile }) {
   );
 }
 
+function MemberProfileModal({ m, me, onClose }) {
+  const groups = (m.group_ids && m.group_ids.length ? m.group_ids : [m.group_id]).map(id => GROUPS.find(g => g.id === id)?.label).filter(Boolean);
+  return (
+    <div onClick={onClose} style={{ position: "fixed", inset: 0, background: "rgba(0,0,0,0.65)", zIndex: 9998, display: "flex", alignItems: "center", justifyContent: "center", padding: 16 }}>
+      <div onClick={e => e.stopPropagation()} style={{ background: "#161b24", border: "1px solid rgba(255,255,255,0.08)", borderRadius: 16, maxWidth: 420, width: "100%", maxHeight: "86vh", overflowY: "auto", padding: 24, position: "relative" }}>
+        <button onClick={onClose} aria-label="Close" style={{ position: "absolute", top: 12, right: 14, background: "none", border: "none", color: "#9aa4b2", fontSize: 22, cursor: "pointer", lineHeight: 1 }}>✕</button>
+        <div style={{ display: "flex", flexDirection: "column", alignItems: "center", textAlign: "center" }}>
+          <Avatar profile={m} size={92} />
+          <div style={{ fontSize: 20, fontWeight: 700, color: "#fff", marginTop: 12 }}>{m.username ? `@${m.username}` : formatName(m.full_name)}</div>
+          <div style={{ fontSize: 14, color: "#9aa4b2", marginTop: 2 }}>{formatName(m.full_name)}</div>
+          <div style={{ display: "flex", gap: 6, flexWrap: "wrap", justifyContent: "center", marginTop: 12 }}>
+            {groups.map(g => <span key={g} style={{ ...S.badge, fontSize: 10 }}>{g}</span>)}
+            {m.role === "admin" && <span style={{ ...S.badge, background: "rgba(255,102,0,0.3)", color: "#FF7E33", fontSize: 10 }}>Admin</span>}
+            {m.role === "moderator" && <span style={{ ...S.badge, background: "rgba(192,154,47,0.25)", color: "#C09A2F", fontSize: 10 }}>Mod</span>}
+          </div>
+        </div>
+        <div style={{ marginTop: 16, display: "flex", flexDirection: "column", gap: 8, fontSize: 14 }}>
+          {(m.city || m.state) && <div style={{ color: "#c8cdd6" }}><MapPin size={13} color="#FF7E33" style={{ verticalAlign: "-2px", marginRight: 6 }} />{[m.city, m.state].filter(Boolean).join(", ")}</div>}
+          {m.marital_status && <div style={{ color: "#c8cdd6" }}><span style={{ color: "#9aa4b2" }}>Status:</span> {m.marital_status}</div>}
+          {isStaff(me) && m.email && <div style={{ color: "#9aa4b2", fontSize: 13 }}>{m.email}</div>}
+        </div>
+        {m.bio && <p style={{ marginTop: 14, color: "#c8cdd6", fontSize: 14, lineHeight: 1.6, fontStyle: "italic" }}>"{m.bio}"</p>}
+        <div style={{ marginTop: 16 }}><Badges userId={m.id} /></div>
+        <ProfileLevelSummary profile={m} />
+      </div>
+    </div>
+  );
+}
+
 function Members({ profile }) {
   const [members, setMembers] = useState([]);
   const [expandedId, setExpandedId] = useState(null);
+  const [viewMember, setViewMember] = useState(null);
   const [filter, setFilter] = useState(profile.role === "admin" ? "all" : profile.group_id);
   const [stateFilter, setStateFilter] = useState("");
 
@@ -1675,12 +1719,12 @@ function Members({ profile }) {
         {approved.map(m => (
           <div key={m.id} style={{ ...S.card, padding: "16px" }}>
             <div style={{ display: "flex", alignItems: "flex-start", gap: 12 }}>
-              <div style={{ width: 48, height: 48, borderRadius: "50%", background: "rgba(255,102,0,0.15)", display: "flex", alignItems: "center", justifyContent: "center", color: "#FF7E33", fontFamily: "'Inter', sans-serif", fontWeight: 600, flexShrink: 0 }}>
-                {(m.username || m.full_name || "?")[0].toUpperCase()}
+              <div onClick={() => setViewMember(m)} style={{ cursor: "pointer", flexShrink: 0 }}>
+                <Avatar profile={m} size={48} />
               </div>
               <div style={{ flex: 1, minWidth: 0 }}>
                 <div style={{ display: "flex", alignItems: "center", gap: 8, flexWrap: "wrap", marginBottom: 4 }}>
-                  <span onClick={() => setExpandedId(expandedId === m.id ? null : m.id)} style={{ color: "#fff", fontFamily: "'Inter', sans-serif", fontSize: 14, cursor: "pointer" }} title="Tap to see name">{displayName(m)}</span>
+                  <span onClick={() => setViewMember(m)} style={{ color: "#fff", fontFamily: "'Inter', sans-serif", fontSize: 14, fontWeight: 600, cursor: "pointer" }} title="View profile">{displayName(m)}</span>
                   <span style={{ ...S.badge, fontSize: 10 }}>{(m.group_ids && m.group_ids.length > 1 ? m.group_ids : [m.group_id]).map(id => GROUPS.find(g => g.id === id)?.label).filter(Boolean).join(" · ") || "No Group"}</span>
                   {m.role === "admin" && <span style={{ ...S.badge, background: "rgba(255,102,0,0.3)", color: "#FF7E33", fontSize: 10 }}>Admin</span>}
                   {m.role === "moderator" && <span style={{ ...S.badge, background: "rgba(192,154,47,0.25)", color: "#C09A2F", fontSize: 10 }}>Mod</span>}
@@ -1723,6 +1767,7 @@ function Members({ profile }) {
           </div>
         ))}
       </div>
+      {viewMember && <MemberProfileModal m={viewMember} me={profile} onClose={() => setViewMember(null)} />}
     </div>
   );
 }
