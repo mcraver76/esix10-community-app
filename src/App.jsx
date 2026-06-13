@@ -8,6 +8,7 @@ import {
   Zap, Megaphone, Activity, Camera, Flag, Archive, Hourglass, Medal,
   NotebookPen, Unlock, CheckCircle2, Eye, Pencil, Pin,
 } from "lucide-react";
+import { getTodaysDevotion } from "./dailyDevotions";
 
 // Map nav/group ids -> line icons (replaces emoji UI icons).
 const NAV_ICONS = {
@@ -1355,6 +1356,24 @@ function Members({ profile }) {
     loadMembers();
   }
 
+  async function adminChangeUsername(m) {
+    const u = window.prompt(`Set username for ${formatName(m.full_name)}:`, m.username || "");
+    if (u === null) return;
+    const clean = u.toLowerCase().replace(/[^a-z0-9_]/g, "");
+    await supabase.from("profiles").update({ username: clean }).eq("id", m.id);
+    loadMembers();
+  }
+
+  async function adminChangeGroup(m) {
+    const opts = GROUPS.map((g, i) => `${i + 1} = ${g.label}`).join("   ");
+    const pick = window.prompt(`Move ${formatName(m.full_name)} to which group?\n${opts}\n(current: ${GROUPS.find(g => g.id === m.group_id)?.label || m.group_id})`, "");
+    if (!pick) return;
+    const g = GROUPS[parseInt(pick.trim()) - 1];
+    if (!g) { alert("Enter 1, 2, or 3."); return; }
+    await supabase.from("profiles").update({ group_id: g.id, group_ids: [g.id], requested_group_id: null, requested_group_at: null }).eq("id", m.id);
+    loadMembers();
+  }
+
   async function approve(id) {
     await supabase.from("profiles").update({ status: "approved" }).eq("id", id);
     const m = members.find(x => x.id === id);
@@ -1573,6 +1592,8 @@ function Members({ profile }) {
                         {r === "member" ? "Set Member" : r === "moderator" ? "Make Mod" : "Make Admin"}
                       </button>
                     ))}
+                    <button style={{ ...S.btnSm, fontSize: 10, padding: "6px 12px" }} onClick={() => adminChangeUsername(m)}>Username</button>
+                    <button style={{ ...S.btnSm, fontSize: 10, padding: "6px 12px" }} onClick={() => adminChangeGroup(m)}>Group</button>
                     <button style={{ ...S.btnDanger, fontSize: 10, padding: "6px 10px" }} onClick={() => removeMember(m.id)}>Remove</button>
                   </div>
                 )}
@@ -1666,6 +1687,12 @@ function Messages({ profile, members, onRead }) {
       .limit(50);
     if (error) { console.error("Messages error:", error); return; }
     setMessages(data || []);
+    // keep the open room marked read (covers messages that arrive while you're viewing it)
+    try {
+      const lr = JSON.parse(localStorage.getItem(`esix10_lastread_${profile.id}`) || "{}");
+      lr[activeRoom] = new Date().toISOString();
+      localStorage.setItem(`esix10_lastread_${profile.id}`, JSON.stringify(lr));
+    } catch(e) {}
   }
 
   async function send() {
@@ -2059,6 +2086,12 @@ function Devotion({ profile }) {
     loadDevotions();
   }
 
+  // Daily devotion auto-rotates from the library by date (same for everyone, changes each day).
+  // An admin post for *today* takes precedence (keeps reactions + comments).
+  const today = new Date();
+  const todaysDevotion = getTodaysDevotion(today);
+  const dbToday = devotions[0] && new Date(devotions[0].created_at).toDateString() === today.toDateString();
+
   return (
     <div>
       <div style={S.flexBetween}>
@@ -2077,8 +2110,15 @@ function Devotion({ profile }) {
         </div>
       )}
       <div style={{ marginTop: 20 }}>
-        {devotions.length === 0 && <div style={{ textAlign: "center", padding: 60 }}><p style={{ fontFamily: "'Cinzel', serif", fontSize: 18, color: "#fff", marginBottom: 8 }}>No devotions yet.</p>{profile.role === "admin" && <p style={S.muted}>Post the first devotion for the community.</p>}</div>}
-        {devotions.map((d, idx) => (
+        {!dbToday && (
+          <div style={{ ...S.card, marginBottom: 16, borderTop: "3px solid #FF6600" }}>
+            <span style={{ ...S.badge, marginBottom: 8, display: "inline-block" }}>Today — {today.toLocaleDateString("en-US", { weekday: "long", month: "long", day: "numeric" })}</span>
+            <h3 style={{ fontFamily: "'Cinzel', serif", fontSize: 20, fontWeight: 400, color: "#fff", marginBottom: 8 }}>{todaysDevotion.title}</h3>
+            <div style={{ background: "rgba(255,102,0,0.06)", border: "1px solid rgba(255,102,0,0.15)", borderRadius: 4, padding: "12px 16px", marginBottom: 12 }}><p style={{ color: "#fff", fontFamily: "'Cinzel', serif", fontSize: 14, fontStyle: "italic", lineHeight: 1.7 }}>"{todaysDevotion.verse}"</p><p style={{ color: "#FF6600", fontSize: 12, marginTop: 4, letterSpacing: "0.1em" }}>— {todaysDevotion.ref}</p></div>
+            <p style={{ ...S.postBody }}>{todaysDevotion.body}</p>
+          </div>
+        )}
+        {dbToday && devotions.map((d, idx) => (
           <div key={d.id} style={{ ...S.card, marginBottom: 16, borderTop: idx === 0 ? "3px solid #FF6600" : "1px solid rgba(255,255,255,0.06)" }}>
             <div style={S.flexBetween}>
               <div>
@@ -4350,12 +4390,19 @@ function Profile({ profile, onUpdate, onSignOut }) {
   const [uploading, setUploading] = useState(false);
   const [currentAvatar, setCurrentAvatar] = useState(profile.avatar_url || "");
   const fileRef = React.useRef();
+  const [groupReq, setGroupReq] = useState("");
+  const [pendingGroup, setPendingGroup] = useState(profile.requested_group_id || null);
+  const [newEmail, setNewEmail] = useState("");
+  const [newPass, setNewPass] = useState("");
+  const [acctMsg, setAcctMsg] = useState("");
 
   async function save() {
     setSaving(true);
-    await supabase.from("profiles").update({ ...form, avatar_url: currentAvatar }).eq("id", profile.id);
+    // group is managed via request/admin approval — don't overwrite it here
+    const { group_id, group_ids, ...rest } = form;
+    await supabase.from("profiles").update({ ...rest, avatar_url: currentAvatar }).eq("id", profile.id);
     setMsg("Profile saved.");
-    onUpdate({ ...profile, ...form, avatar_url: currentAvatar });
+    onUpdate({ ...profile, ...rest, avatar_url: currentAvatar });
     setSaving(false);
     setTimeout(() => setMsg(""), 3000);
   }
@@ -4373,6 +4420,39 @@ function Profile({ profile, onUpdate, onSignOut }) {
       setCurrentAvatar(data.publicUrl + "?t=" + Date.now());
     }
     setUploading(false);
+  }
+
+  async function requestGroupChange() {
+    if (!groupReq) return;
+    await supabase.from("profiles").update({ requested_group_id: groupReq, requested_group_at: new Date().toISOString() }).eq("id", profile.id);
+    setPendingGroup(groupReq);
+    setGroupReq("");
+    setMsg("Group change requested — an admin will review it.");
+    setTimeout(() => setMsg(""), 4000);
+  }
+
+  async function cancelGroupRequest() {
+    await supabase.from("profiles").update({ requested_group_id: null, requested_group_at: null }).eq("id", profile.id);
+    setPendingGroup(null);
+  }
+
+  async function changeEmail() {
+    if (!newEmail.trim()) return;
+    const { error } = await supabase.auth.updateUser({ email: newEmail.trim() });
+    if (error) { setAcctMsg("Could not update email: " + error.message); setTimeout(() => setAcctMsg(""), 6000); return; }
+    await supabase.from("profiles").update({ email: newEmail.trim() }).eq("id", profile.id);
+    setAcctMsg("Almost done — check your NEW inbox for a confirmation link to finish the email change.");
+    setNewEmail("");
+    setTimeout(() => setAcctMsg(""), 8000);
+  }
+
+  async function changePassword() {
+    if (newPass.length < 6) { setAcctMsg("Password must be at least 6 characters."); setTimeout(() => setAcctMsg(""), 5000); return; }
+    const { error } = await supabase.auth.updateUser({ password: newPass });
+    if (error) { setAcctMsg("Could not update password: " + error.message); setTimeout(() => setAcctMsg(""), 6000); return; }
+    setAcctMsg("Password updated.");
+    setNewPass("");
+    setTimeout(() => setAcctMsg(""), 5000);
   }
 
   return (
@@ -4446,29 +4526,30 @@ function Profile({ profile, onUpdate, onSignOut }) {
           </div>
         </div>
         <div style={{ marginBottom: 16 }}>
-          <label style={S.label}>Your Groups</label>
-          <div style={{ display: "flex", gap: 8, flexWrap: "wrap", marginTop: 4 }}>
-            {GROUPS.map(g => {
-              const currentGroups = form.group_ids || [form.group_id];
-              const isSelected = currentGroups.includes(g.id);
-              return (
-                <div key={g.id} onClick={() => {
-                  let newGroups = currentGroups.includes(g.id) 
-                    ? currentGroups.filter(x => x !== g.id)
-                    : [...currentGroups, g.id];
-                  if (newGroups.length === 0) newGroups = [g.id];
-                  const primary = newGroups.includes("brotherhood") ? "brotherhood" : newGroups.includes("sisterhood") ? "sisterhood" : "family";
-                  setForm({ ...form, group_id: primary, group_ids: newGroups });
-                }}
-                style={{ background: isSelected ? "rgba(255,102,0,0.15)" : "rgba(255,255,255,0.03)", border: isSelected ? "2px solid #FF6600" : "1px solid rgba(255,255,255,0.08)", borderRadius: 8, padding: "10px 16px", cursor: "pointer", display: "flex", alignItems: "center", gap: 8 }}>
-                  <NavIcon id={g.id} size={16} color={isSelected ? "#FF6600" : "#888"} />
-                  <span style={{ color: isSelected ? "#FF6600" : "#888", fontSize: 13 }}>{g.label}</span>
-                  {isSelected && <span style={{ color: "#FF6600", fontSize: 12 }}>✓</span>}
-                </div>
-              );
-            })}
+          <label style={S.label}>Your Group</label>
+          <div style={{ display: "flex", gap: 8, flexWrap: "wrap", marginTop: 4, marginBottom: 12 }}>
+            {((profile.group_ids && profile.group_ids.length) ? profile.group_ids : [profile.group_id]).filter(Boolean).map(gid => (
+              <div key={gid} style={{ background: "rgba(255,102,0,0.12)", border: "1px solid rgba(255,102,0,0.3)", borderRadius: 8, padding: "10px 16px", display: "flex", alignItems: "center", gap: 8 }}>
+                <NavIcon id={gid} size={16} color="#FF6600" />
+                <span style={{ color: "#FF6600", fontSize: 13 }}>{GROUPS.find(g => g.id === gid)?.label || gid}</span>
+              </div>
+            ))}
           </div>
-          <p style={{ color: "#555", fontSize: 11, marginTop: 8 }}>Brotherhood and Sisterhood cannot be selected together.</p>
+          {pendingGroup ? (
+            <div style={{ background: "rgba(255,255,255,0.04)", border: "1px solid rgba(255,255,255,0.1)", borderRadius: 8, padding: "12px 16px" }}>
+              <p style={{ color: "#fff", fontSize: 13, marginBottom: 8 }}>Pending: request to join <strong style={{ color: "#FF6600" }}>{GROUPS.find(g => g.id === pendingGroup)?.label}</strong> — waiting on admin approval.</p>
+              <button style={{ ...S.btnGhost, padding: "6px 14px", fontSize: 12 }} onClick={cancelGroupRequest}>Cancel Request</button>
+            </div>
+          ) : (
+            <div style={{ display: "flex", gap: 8, flexWrap: "wrap", alignItems: "center" }}>
+              <select style={{ ...S.input, maxWidth: 240 }} value={groupReq} onChange={e => setGroupReq(e.target.value)}>
+                <option value="">Request a different group…</option>
+                {GROUPS.filter(g => !(((profile.group_ids && profile.group_ids.length) ? profile.group_ids : [profile.group_id]).includes(g.id))).map(g => <option key={g.id} value={g.id}>{g.label}</option>)}
+              </select>
+              <button style={{ ...S.btn, padding: "10px 18px" }} disabled={!groupReq} onClick={requestGroupChange}>Submit Request</button>
+            </div>
+          )}
+          <p style={{ color: "#555", fontSize: 11, marginTop: 8 }}>Group changes are reviewed and approved by an admin.</p>
         </div>
         <div style={{ marginBottom: 20 }}>
           <label style={S.label}>Bio</label>
@@ -4478,6 +4559,25 @@ function Profile({ profile, onUpdate, onSignOut }) {
         <div style={S.flex}>
           <button style={S.btn} onClick={save} disabled={saving}>{saving ? "Saving..." : "Save Profile"}</button>
           <button style={S.btnGhost} onClick={onSignOut}>Sign Out</button>
+        </div>
+      </div>
+
+      {/* Account & Login — self-service email/password */}
+      <div style={{ ...S.card, marginTop: 16 }}>
+        <span style={S.eyebrow}>Account &amp; Login</span>
+        <div style={{ marginTop: 12, marginBottom: 16 }}>
+          <label style={S.label}>Change Email</label>
+          <input style={S.input} type="email" placeholder={profile.email || "new@email.com"} value={newEmail} onChange={e => setNewEmail(e.target.value)} />
+          <p style={{ color: "#555", fontSize: 11, marginTop: 4 }}>You'll get a confirmation link at the new address to finish the change.</p>
+        </div>
+        <div style={{ marginBottom: 16 }}>
+          <label style={S.label}>Change Password</label>
+          <input style={S.input} type="password" placeholder="New password (at least 6 characters)" value={newPass} onChange={e => setNewPass(e.target.value)} />
+        </div>
+        {acctMsg && <p style={S.success}>{acctMsg}</p>}
+        <div style={S.flex}>
+          <button style={S.btnGhost} disabled={!newEmail} onClick={changeEmail}>Update Email</button>
+          <button style={S.btnGhost} disabled={!newPass} onClick={changePassword}>Update Password</button>
         </div>
       </div>
     </div>
@@ -4491,19 +4591,22 @@ function AdminDashboard({ profile }) {
   const [pendingEvents, setPendingEvents] = useState([]);
   const [pendingRecs, setPendingRecs] = useState([]);
   const [memberFlags, setMemberFlags] = useState([]);
+  const [groupRequests, setGroupRequests] = useState([]);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => { loadAll(); }, []);
 
   async function loadAll() {
     setLoading(true);
-    const [m, f, e, r, mf] = await Promise.all([
+    const [m, f, e, r, mf, gr] = await Promise.all([
       supabase.from("profiles").select("*").eq("status", "pending").order("created_at", { ascending: true }),
       supabase.from("post_flags").select("*, posts(body, user_id, group_id)").eq("reviewed", false).order("created_at", { ascending: false }),
       supabase.from("events").select("*").eq("approved", false).order("created_at", { ascending: false }),
       supabase.from("local_recommendations").select("*, profiles(username, full_name)").eq("approved", false).order("created_at", { ascending: false }),
       supabase.from("member_flags").select("*").eq("reviewed", false).order("created_at", { ascending: false }),
+      supabase.from("profiles").select("*").not("requested_group_id", "is", null).order("requested_group_at", { ascending: true }),
     ]);
+    setGroupRequests((gr.data || []).filter(x => x.requested_group_id));
     const flagRows = mf.data || [];
     const ids = [...new Set(flagRows.flatMap(x => [x.flagged_user_id, x.flagged_by]))];
     const nameMap = {};
@@ -4564,8 +4667,16 @@ function AdminDashboard({ profile }) {
     await supabase.from("member_flags").update({ reviewed: true }).eq("id", id);
     loadAll();
   }
+  async function approveGroupChange(mem) {
+    await supabase.from("profiles").update({ group_id: mem.requested_group_id, group_ids: [mem.requested_group_id], requested_group_id: null, requested_group_at: null }).eq("id", mem.id);
+    loadAll();
+  }
+  async function denyGroupChange(id) {
+    await supabase.from("profiles").update({ requested_group_id: null, requested_group_at: null }).eq("id", id);
+    loadAll();
+  }
 
-  const total = pendingMembers.length + flags.length + pendingEvents.length + pendingRecs.length + memberFlags.length;
+  const total = pendingMembers.length + flags.length + pendingEvents.length + pendingRecs.length + memberFlags.length + groupRequests.length;
 
   const Section = ({ title, icon, count, children }) => (
     <div style={{ ...S.card, marginTop: 16 }}>
@@ -4603,6 +4714,19 @@ function AdminDashboard({ profile }) {
             actions={<>
               <button style={S.btnSm} onClick={() => approveMember(m)}>Approve</button>
               <button style={S.btnDanger} onClick={() => denyMember(m.id)}>Deny</button>
+            </>}
+          />
+        ))}
+      </Section>
+
+      <Section title="Group Change Requests" icon="🔀" count={groupRequests.length}>
+        {groupRequests.map(m => (
+          <Row key={m.id}
+            main={displayName(m)}
+            sub={`${GROUPS.find(g => g.id === m.group_id)?.label || "—"} → ${GROUPS.find(g => g.id === m.requested_group_id)?.label || m.requested_group_id}`}
+            actions={<>
+              <button style={S.btnSm} onClick={() => approveGroupChange(m)}>Approve</button>
+              <button style={S.btnDanger} onClick={() => denyGroupChange(m.id)}>Deny</button>
             </>}
           />
         ))}
@@ -4770,15 +4894,17 @@ export default function App() {
   async function checkUnread(userId) {
     try {
       const lastRead = JSON.parse(localStorage.getItem(`esix10_lastread_${userId}`) || "{}");
-      const { data: messages } = await supabase.from("messages").select("room_id, created_at").order("created_at", { ascending: false }).limit(100);
+      const { data: messages } = await supabase.from("messages").select("room_id, created_at, user_id").order("created_at", { ascending: false }).limit(200);
       if (!messages) return;
       let unread = 0;
       const rooms = [...new Set(messages.map(m => m.room_id))];
       rooms.forEach(roomId => {
         const roomMessages = messages.filter(m => m.room_id === roomId);
-        const lastMsg = roomMessages[0];
+        // only the latest message from someone OTHER than me counts — your own messages never show as unread
+        const lastFromOther = roomMessages.find(m => m.user_id !== userId);
+        if (!lastFromOther) return;
         const lastReadTime = lastRead[roomId] || "2000-01-01";
-        if (new Date(lastMsg.created_at) > new Date(lastReadTime)) unread++;
+        if (new Date(lastFromOther.created_at) > new Date(lastReadTime)) unread++;
       });
       setUnreadCount(unread);
     } catch(e) {}
