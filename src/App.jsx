@@ -9,6 +9,7 @@ import {
   NotebookPen, Unlock, CheckCircle2, Eye, Pencil, Pin,
 } from "lucide-react";
 import { getTodaysDevotion } from "./dailyDevotions";
+import { LEGAL_VERSION, LEGAL_EFFECTIVE, TERMS, PRIVACY, MOD_AGREEMENT } from "./legalContent";
 
 // Map nav/group ids -> line icons (replaces emoji UI icons).
 const NAV_ICONS = {
@@ -81,7 +82,7 @@ const GROUPS = [
   { id: "family", label: "Family", subtitle: "Rooted. Together. Unbreakable.", icon: "◈", color: "#FF7E33" },
 ];
 
-const ADMIN_EMAIL = "michael@esix10.com";
+const ADMIN_EMAIL = "admin@esix10.com";
 
 const REACTIONS = ["🔥", "💪", "🙏", "❤️", "✝️"];
 
@@ -625,7 +626,7 @@ function AuthScreen({ onAuth }) {
         const { data, error } = await supabase.auth.signUp({ email, password, options: { data: { full_name: name } } });
         if (error) throw error;
         if (data.user) {
-          await supabase.from("profiles").upsert({ id: data.user.id, email, full_name: name, username: cleanU, role: email === ADMIN_EMAIL ? "admin" : "member" });
+          await supabase.from("profiles").upsert({ id: data.user.id, email, full_name: name, username: cleanU, role: email === ADMIN_EMAIL ? "admin" : "member", terms_accepted_at: new Date().toISOString(), terms_version: LEGAL_VERSION });
           if (email !== ADMIN_EMAIL) {
             fetch("/api/send-email", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ to: email, name, type: "signup" }) }).catch(e => console.error("signup email failed", e));
           }
@@ -684,7 +685,7 @@ function AuthScreen({ onAuth }) {
                   <input type="checkbox" checked={agreed} onChange={e => setAgreed(e.target.checked)} style={{ marginTop: 3, accentColor: "#FF6600", width: 16, height: 16, flexShrink: 0 }} />
                   <div>
                     <p style={{ color: "#FFFFFF", fontSize: 13, lineHeight: 1.7 }}>
-                      I have read and agree to the <span style={{ color: "#FF7E33", cursor: "pointer", textDecoration: "underline" }} onClick={() => setShowTerms(!showTerms)}>ESix10 Community Standards</span>.
+                      I have read and agree to the <span style={{ color: "#FF7E33", cursor: "pointer", textDecoration: "underline" }} onClick={() => setShowTerms(!showTerms)}>ESix10 Community Standards</span>, Terms of Use, and Privacy Policy.
                     </p>
                     {showTerms && (
                       <div style={{ marginTop: 12, padding: 12, background: "rgba(0,0,0,0.3)", borderRadius: 4 }}>
@@ -5097,6 +5098,64 @@ function PasswordResetScreen({ onDone }) {
   );
 }
 
+function LegalDoc({ sections }) {
+  return (
+    <div>
+      {sections.map((s, i) => (
+        <div key={i} style={{ marginBottom: 16 }}>
+          <div style={{ color: "#FF7E33", fontFamily: "'Cinzel', serif", fontSize: 15, marginBottom: 4 }}>{s.h}</div>
+          {s.p && <p style={{ color: "#CCCCCC", fontSize: 14, lineHeight: 1.7 }}>{s.p}</p>}
+        </div>
+      ))}
+    </div>
+  );
+}
+
+function LegalAndPrivacy({ onBack }) {
+  const [view, setView] = useState("terms");
+  return (
+    <div style={{ maxWidth: 720 }}>
+      <button style={{ ...S.btnGhost, marginBottom: 16 }} onClick={onBack}>← Back</button>
+      <h2 style={S.h2}>Legal &amp; Privacy</h2>
+      <p style={S.muted}>Effective {LEGAL_EFFECTIVE}</p>
+      <div style={{ display: "flex", gap: 8, margin: "16px 0", flexWrap: "wrap" }}>
+        <button style={S.tab(view === "terms")} onClick={() => setView("terms")}>Terms of Use</button>
+        <button style={S.tab(view === "privacy")} onClick={() => setView("privacy")}>Privacy Policy</button>
+        <button style={S.tab(view === "mod")} onClick={() => setView("mod")}>Moderator Agreement</button>
+      </div>
+      <div style={S.card}>
+        <LegalDoc sections={view === "terms" ? TERMS : view === "privacy" ? PRIVACY : MOD_AGREEMENT} />
+      </div>
+    </div>
+  );
+}
+
+function AgreementGate({ title, intro, sections, agreeLabel, onAgree, onDecline }) {
+  const [checked, setChecked] = useState(false);
+  const [saving, setSaving] = useState(false);
+  return (
+    <div style={{ minHeight: "100vh", background: "#0d1117", display: "flex", justifyContent: "center", padding: "28px 16px", boxSizing: "border-box" }}>
+      <div style={{ maxWidth: 640, width: "100%" }}>
+        <div style={{ textAlign: "center", marginBottom: 16 }}>
+          <h1 style={{ ...S.h2, marginBottom: 4 }}>{title}</h1>
+          {intro && <p style={S.muted}>{intro}</p>}
+        </div>
+        <div style={{ ...S.card, maxHeight: "55vh", overflowY: "auto", marginBottom: 16 }}>
+          <LegalDoc sections={sections} />
+        </div>
+        <label style={{ display: "flex", gap: 10, alignItems: "flex-start", cursor: "pointer", marginBottom: 14 }}>
+          <input type="checkbox" checked={checked} onChange={e => setChecked(e.target.checked)} style={{ marginTop: 3, accentColor: "#FF6600", width: 18, height: 18, flexShrink: 0 }} />
+          <span style={{ color: "#fff", fontSize: 14, lineHeight: 1.5 }}>{agreeLabel}</span>
+        </label>
+        <div style={{ display: "flex", gap: 10, flexWrap: "wrap" }}>
+          <button style={{ ...S.btn, opacity: checked && !saving ? 1 : 0.4 }} disabled={!checked || saving} onClick={async () => { setSaving(true); await onAgree(); setSaving(false); }}>{saving ? "Saving…" : "I Agree"}</button>
+          <button style={S.btnGhost} onClick={onDecline}>Decline &amp; Sign Out</button>
+        </div>
+      </div>
+    </div>
+  );
+}
+
 export default function App() {
   const [user, setUser] = useState(null);
   const [profile, setProfile] = useState(null);
@@ -5242,6 +5301,26 @@ export default function App() {
   if (!user) return <AuthScreen onAuth={(u) => loadProfile(u)} />;
   if (showSetup) return <SetupModal onClose={() => { setShowSetup(false); loadProfile(user); }} />;
   if (!profile?.group_id) return <GroupSelect user={user} onSelect={(g, groups) => { setProfile({ ...profile, group_id: g, group_ids: groups }); setFeedGroup(g); }} />;
+  if (profile && profile.terms_version !== LEGAL_VERSION) return (
+    <AgreementGate
+      title="Terms of Use & Privacy"
+      intro={`Please read and accept to continue. Effective ${LEGAL_EFFECTIVE}.`}
+      sections={[...TERMS, { h: "— Privacy Policy —", p: "" }, ...PRIVACY]}
+      agreeLabel="I have read and agree to the Terms of Use and Privacy Policy."
+      onAgree={async () => { const ts = new Date().toISOString(); await supabase.from("profiles").update({ terms_accepted_at: ts, terms_version: LEGAL_VERSION }).eq("id", profile.id); setProfile({ ...profile, terms_accepted_at: ts, terms_version: LEGAL_VERSION }); }}
+      onDecline={signOut}
+    />
+  );
+  if (isStaff(profile) && !profile.mod_agreement_at) return (
+    <AgreementGate
+      title="Moderator Agreement"
+      intro="You have moderator access. Please read and accept before continuing."
+      sections={MOD_AGREEMENT}
+      agreeLabel="I have read and agree to the Moderator Agreement."
+      onAgree={async () => { const ts = new Date().toISOString(); await supabase.from("profiles").update({ mod_agreement_at: ts }).eq("id", profile.id); setProfile({ ...profile, mod_agreement_at: ts }); }}
+      onDecline={signOut}
+    />
+  );
   if (showWelcome && profile?.group_id) return <WelcomeModal profile={profile} onClose={() => setShowWelcome(false)} />;
   if (showShare) return <ShareESix10 profile={profile} onClose={() => setShowShare(false)} />;
 
@@ -5270,6 +5349,7 @@ export default function App() {
     { id: "faith", label: "Statement of Faith", icon: "✝️" },
     { id: "salvation", label: "Do You Know Him?", icon: "🙏" },
     { id: "media", label: "Media", icon: "📺" },
+    { id: "legal", label: "Legal & Privacy", icon: "📜" },
   ];
 
   const CONTENT = (
@@ -5305,6 +5385,7 @@ export default function App() {
       {tab === "social" && <SocialFeed profile={profile} />}
       {tab === "share" && <div style={{ textAlign: "center", padding: 60 }}><div style={{ fontSize: 48, marginBottom: 16 }}>📤</div><button style={S.btn} onClick={() => setShowShare(true)}>Open Share Screen</button></div>}
       {tab === "privategroups" && <PrivateGroups profile={profile} allMembers={allMembers} />}
+      {tab === "legal" && <LegalAndPrivacy onBack={() => setTab("more")} />}
       {tab === "faith" && <StatementOfFaith onBack={() => setTab("more")} />}
       {tab === "salvation" && <PlanOfSalvation onBack={() => setTab("more")} profile={profile} />}
       {tab === "profile" && <Profile profile={profile} onUpdate={setProfile} onSignOut={signOut} />}
