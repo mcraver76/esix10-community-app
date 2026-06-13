@@ -276,7 +276,7 @@ function Avatar({ profile, size = 38, onClick }) {
   }
 
   return (
-    <div style={{ ...style, background: "linear-gradient(135deg, rgba(255,102,0,0.3), rgba(192,154,47,0.2))", color: "#FF7E33", fontFamily: "'Cinzel', serif", fontSize: size * 0.4, fontWeight: 600 }} onClick={onClick}>
+    <div style={{ ...style, background: "linear-gradient(135deg, rgba(255,102,0,0.3), rgba(192,154,47,0.2))", color: "#FF7E33", fontFamily: "'Inter', sans-serif", fontSize: size * 0.4, fontWeight: 600 }} onClick={onClick}>
       {(profile?.username || profile?.full_name || "?")[0].toUpperCase()}
     </div>
   );
@@ -360,25 +360,25 @@ input:focus, textarea:focus, select:focus { outline: none; border-color: rgba(25
 
 // ─── Styles ───────────────────────────────────────────────────────────────────
 const S = {
-  app: { minHeight: "100vh", background: "#0d1117", color: "#fff", fontFamily: "'Lato', sans-serif", fontSize: 15 },
+  app: { minHeight: "100vh", background: "#0d1117", color: "#fff", fontFamily: "'Inter', sans-serif", fontSize: 15 },
   nav: { position: "fixed", top: 0, left: 0, right: 0, height: 60, background: "linear-gradient(180deg, rgba(10,12,18,0.99) 0%, rgba(13,17,23,0.97) 100%)", borderBottom: "1px solid rgba(255,102,0,0.15)", display: "flex", alignItems: "center", justifyContent: "space-between", padding: "0 16px", zIndex: 100 },
   navLogo: { fontFamily: "'Cinzel', serif", fontSize: 16, fontWeight: 600, color: "#fff", letterSpacing: "0.08em" },
   navLogoSub: { color: "#FF7E33", fontSize: 9, display: "block", letterSpacing: "0.35em", marginTop: -2 },
   navRight: { display: "flex", alignItems: "center", gap: 16 },
   badge: { background: "rgba(255,102,0,0.15)", color: "#FF7E33", padding: "4px 12px", borderRadius: 20, fontSize: 12, fontWeight: 600, letterSpacing: "0.1em", textTransform: "uppercase" },
-  btn: { background: "linear-gradient(135deg, #FF6600, #E55A00)", color: "#fff", border: "none", borderRadius: 8, boxShadow: "0 2px 12px rgba(255,102,0,0.25)", padding: "10px 24px", fontFamily: "'Lato', sans-serif", fontSize: 12, letterSpacing: "0.15em", textTransform: "uppercase", cursor: "pointer", transition: "background 0.2s" },
-  btnGhost: { background: "transparent", color: "#FFFFFF", border: "1px solid rgba(255,255,255,0.15)", borderRadius: 8, padding: "10px 24px", fontFamily: "'Lato', sans-serif", fontSize: 12, letterSpacing: "0.15em", textTransform: "uppercase", cursor: "pointer" },
-  btnSm: { background: "linear-gradient(135deg, #FF6600, #E55A00)", color: "#fff", border: "none", borderRadius: 8, boxShadow: "0 2px 8px rgba(255,102,0,0.2)", padding: "8px 16px", fontFamily: "'Lato', sans-serif", fontSize: 11, letterSpacing: "0.12em", textTransform: "uppercase", cursor: "pointer" },
+  btn: { background: "linear-gradient(135deg, #FF6600, #E55A00)", color: "#fff", border: "none", borderRadius: 8, boxShadow: "0 2px 12px rgba(255,102,0,0.25)", padding: "10px 24px", fontFamily: "'Inter', sans-serif", fontSize: 12, letterSpacing: "0.15em", textTransform: "uppercase", cursor: "pointer", transition: "background 0.2s" },
+  btnGhost: { background: "transparent", color: "#FFFFFF", border: "1px solid rgba(255,255,255,0.15)", borderRadius: 8, padding: "10px 24px", fontFamily: "'Inter', sans-serif", fontSize: 12, letterSpacing: "0.15em", textTransform: "uppercase", cursor: "pointer" },
+  btnSm: { background: "linear-gradient(135deg, #FF6600, #E55A00)", color: "#fff", border: "none", borderRadius: 8, boxShadow: "0 2px 8px rgba(255,102,0,0.2)", padding: "8px 16px", fontFamily: "'Inter', sans-serif", fontSize: 11, letterSpacing: "0.12em", textTransform: "uppercase", cursor: "pointer" },
   btnDanger: { background: "transparent", color: "#ff4444", border: "1px solid #ff4444", borderRadius: 8, padding: "6px 12px", fontSize: 11, cursor: "pointer" },
   page: { paddingTop: 90, maxWidth: 1100, margin: "0 auto", padding: "90px 24px 60px" },
   card: { background: "linear-gradient(145deg, rgba(22,27,36,0.98), rgba(16,20,28,0.98))", border: "1px solid rgba(255,255,255,0.07)", borderRadius: 12, padding: 24, transition: "border-color 0.2s" },
-  input: { width: "100%", background: "rgba(255,255,255,0.04)", border: "1px solid rgba(255,255,255,0.08)", borderRadius: 8, padding: "12px 16px", color: "#fff", fontFamily: "'Lato', sans-serif", fontSize: 15, outline: "none", boxSizing: "border-box" },
+  input: { width: "100%", background: "rgba(255,255,255,0.04)", border: "1px solid rgba(255,255,255,0.08)", borderRadius: 8, padding: "12px 16px", color: "#fff", fontFamily: "'Inter', sans-serif", fontSize: 15, outline: "none", boxSizing: "border-box" },
   label: { fontSize: 10, letterSpacing: "0.2em", textTransform: "uppercase", color: "#FF7E33", marginBottom: 6, display: "block" },
   divider: { width: 50, height: 2, background: "#FF6600", margin: "16px 0" },
   eyebrow: { fontSize: 10, letterSpacing: "0.2em", textTransform: "uppercase", color: "#FF7E33", display: "block", marginBottom: 10 },
-  h1: { fontFamily: "'Cinzel', serif", fontSize: 36, fontWeight: 400, color: "#fff", marginBottom: 8 },
-  h2: { fontFamily: "'Cinzel', serif", fontSize: 26, fontWeight: 400, color: "#fff", marginBottom: 8 },
-  h3: { fontFamily: "'Cinzel', serif", fontSize: 20, fontWeight: 400, color: "#fff", marginBottom: 8 },
+  h1: { fontFamily: "'Cinzel', serif", fontSize: 34, fontWeight: 600, color: "#fff", marginBottom: 8, letterSpacing: "0.01em" },
+  h2: { fontFamily: "'Cinzel', serif", fontSize: 24, fontWeight: 600, color: "#fff", marginBottom: 8, letterSpacing: "0.01em" },
+  h3: { fontFamily: "'Inter', sans-serif", fontSize: 20, fontWeight: 400, color: "#fff", marginBottom: 8 },
   muted: { color: "#BBBBBB", fontSize: 13 },
   grey: { color: "#FFFFFF" },
   orange: { color: "#FF7E33" },
@@ -389,10 +389,10 @@ const S = {
   grid2: { display: "grid", gridTemplateColumns: "1fr 1fr", gap: 16 },
   grid3: { display: "grid", gridTemplateColumns: "repeat(3,1fr)", gap: 16 },
   post: { background: "linear-gradient(145deg, rgba(22,27,36,0.98), rgba(16,20,28,0.98))", border: "1px solid rgba(255,255,255,0.07)", borderRadius: 12, padding: 20, marginBottom: 12, transition: "border-color 0.2s" },
-  postAuthor: { fontFamily: "'Cinzel', serif", fontSize: 14, fontWeight: 600, color: "#fff" },
+  postAuthor: { fontFamily: "'Inter', sans-serif", fontSize: 14, fontWeight: 600, color: "#fff" },
   postTime: { fontSize: 11, color: "#8A8A8A", marginLeft: 8 },
   postBody: { color: "#FFFFFF", fontSize: 15, lineHeight: 1.7, marginTop: 10 },
-  tab: (active) => ({ padding: "10px 20px", background: active ? "#FF6600" : "transparent", color: active ? "#fff" : "#888", border: active ? "none" : "1px solid rgba(255,255,255,0.1)", borderRadius: 8, cursor: "pointer", fontFamily: "'Lato',sans-serif", fontSize: 11, letterSpacing: "0.12em", textTransform: "uppercase" }),
+  tab: (active) => ({ padding: "10px 20px", background: active ? "#FF6600" : "transparent", color: active ? "#fff" : "#888", border: active ? "none" : "1px solid rgba(255,255,255,0.1)", borderRadius: 8, cursor: "pointer", fontFamily: "'Inter',sans-serif", fontSize: 11, letterSpacing: "0.12em", textTransform: "uppercase" }),
   groupCard: (selected) => ({ border: selected ? "2px solid #FF6600" : "1px solid rgba(255,255,255,0.08)", borderRadius: 12, padding: "24px 20px", cursor: "pointer", background: selected ? "rgba(255,102,0,0.08)" : "rgba(26,26,26,0.6)", textAlign: "center", transition: "all 0.2s" }),
 };
 
@@ -781,7 +781,7 @@ function GroupSelect({ user, onSelect }) {
             <div key={g.id} style={S.groupCard(selected.includes(g.id))} onClick={() => toggleGroup(g.id)}>
               <div style={{ marginBottom: 12, color: "#FF7E33", display: "flex", justifyContent: "center" }}><NavIcon id={g.id} size={32} /></div>
               {selected.includes(g.id) && <div style={{ position: "absolute", top: 12, right: 12, background: "#FF6600", borderRadius: "50%", width: 20, height: 20, display: "flex", alignItems: "center", justifyContent: "center", color: "#fff", fontSize: 12 }}>✓</div>}
-              <h3 style={{ fontFamily: "'Cinzel', serif", fontSize: 20, fontWeight: 400, color: "#fff", marginBottom: 8 }}>{g.label}</h3>
+              <h3 style={{ fontFamily: "'Inter', sans-serif", fontSize: 20, fontWeight: 400, color: "#fff", marginBottom: 8 }}>{g.label}</h3>
               <p style={{ fontSize: 13, color: "#FF7E33", letterSpacing: "0.1em", textTransform: "uppercase", fontWeight: 700 }}>{g.subtitle}</p>
             </div>
           ))}
@@ -911,7 +911,7 @@ function PersonalHeader({ profile }) {
   return (
     <div style={{ marginBottom: 20, animation: "fadeIn 0.4s ease" }}>
       <div style={{ marginBottom: 16 }}>
-        <h2 style={{ fontFamily: "'Cinzel', serif", fontSize: 22, fontWeight: 400, color: "#fff", marginBottom: 2 }}>
+        <h2 style={{ fontFamily: "'Inter', sans-serif", fontSize: 22, fontWeight: 400, color: "#fff", marginBottom: 2 }}>
           {greeting}, {firstName}.
         </h2>
         <div style={{ display: "flex", alignItems: "center", gap: 8, flexWrap: "wrap" }}>
@@ -940,7 +940,7 @@ function PersonalHeader({ profile }) {
         {walkStreak > 0 && (
           <div style={{ background: "rgba(255,102,0,0.06)", border: "1px solid rgba(255,102,0,0.15)", borderRadius: 10, padding: "10px 16px", flexShrink: 0, textAlign: "center", minWidth: 80 }}>
             <div style={{ marginBottom: 2, display: "flex", justifyContent: "center" }}><Flame size={20} color="#FF7E33" strokeWidth={1.75} /></div>
-            <div style={{ fontFamily: "'Cinzel', serif", fontSize: 18, color: "#FF7E33", lineHeight: 1 }}>{walkStreak}</div>
+            <div style={{ fontFamily: "'Inter', sans-serif", fontSize: 18, color: "#FF7E33", lineHeight: 1 }}>{walkStreak}</div>
             <div style={{ color: "#8A8A8A", fontSize: 10, letterSpacing: "0.08em", textTransform: "uppercase", marginTop: 2 }}>Streak</div>
           </div>
         )}
@@ -948,21 +948,21 @@ function PersonalHeader({ profile }) {
         {kudosCount > 0 && (
           <div style={{ background: "rgba(255,102,0,0.06)", border: "1px solid rgba(255,102,0,0.15)", borderRadius: 10, padding: "10px 16px", flexShrink: 0, textAlign: "center", minWidth: 80 }}>
             <div style={{ marginBottom: 2, display: "flex", justifyContent: "center" }}><Award size={20} color="#FF7E33" strokeWidth={1.75} /></div>
-            <div style={{ fontFamily: "'Cinzel', serif", fontSize: 18, color: "#FF7E33", lineHeight: 1 }}>{kudosCount}</div>
+            <div style={{ fontFamily: "'Inter', sans-serif", fontSize: 18, color: "#FF7E33", lineHeight: 1 }}>{kudosCount}</div>
             <div style={{ color: "#8A8A8A", fontSize: 10, letterSpacing: "0.08em", textTransform: "uppercase", marginTop: 2 }}>Kudos</div>
           </div>
         )}
 
         <div style={{ background: "rgba(255,102,0,0.06)", border: "1px solid rgba(255,102,0,0.15)", borderRadius: 10, padding: "10px 16px", flexShrink: 0, textAlign: "center", minWidth: 80 }}>
           <div style={{ marginBottom: 2, display: "flex", justifyContent: "center" }}><LevelIcon level={level} size={20} style={{ marginRight: 0 }} /></div>
-          <div style={{ fontFamily: "'Cinzel', serif", fontSize: 14, color: level.color, lineHeight: 1 }}>{level.name}</div>
+          <div style={{ fontFamily: "'Inter', sans-serif", fontSize: 14, color: level.color, lineHeight: 1 }}>{level.name}</div>
           <div style={{ color: "#8A8A8A", fontSize: 10, letterSpacing: "0.08em", textTransform: "uppercase", marginTop: 2 }}>{xp} XP</div>
         </div>
 
         {stats?.totalMiles > 0 && (
           <div style={{ background: "rgba(255,102,0,0.06)", border: "1px solid rgba(255,102,0,0.15)", borderRadius: 10, padding: "10px 16px", flexShrink: 0, textAlign: "center", minWidth: 80 }}>
             <div style={{ marginBottom: 2, display: "flex", justifyContent: "center" }}><Footprints size={20} color="#FF7E33" strokeWidth={1.75} /></div>
-            <div style={{ fontFamily: "'Cinzel', serif", fontSize: 18, color: "#FF7E33", lineHeight: 1 }}>{stats.totalMiles.toFixed(1)}</div>
+            <div style={{ fontFamily: "'Inter', sans-serif", fontSize: 18, color: "#FF7E33", lineHeight: 1 }}>{stats.totalMiles.toFixed(1)}</div>
             <div style={{ color: "#8A8A8A", fontSize: 10, letterSpacing: "0.08em", textTransform: "uppercase", marginTop: 2 }}>Miles</div>
           </div>
         )}
@@ -970,7 +970,7 @@ function PersonalHeader({ profile }) {
         {profile.state && localCount > 1 && (
           <div style={{ background: "rgba(255,102,0,0.06)", border: "1px solid rgba(255,102,0,0.15)", borderRadius: 10, padding: "10px 16px", flexShrink: 0, textAlign: "center", minWidth: 80 }}>
             <div style={{ marginBottom: 2, display: "flex", justifyContent: "center" }}><MapPin size={20} color="#FF7E33" strokeWidth={1.75} /></div>
-            <div style={{ fontFamily: "'Cinzel', serif", fontSize: 18, color: "#FF7E33", lineHeight: 1 }}>{localCount}</div>
+            <div style={{ fontFamily: "'Inter', sans-serif", fontSize: 18, color: "#FF7E33", lineHeight: 1 }}>{localCount}</div>
             <div style={{ color: "#8A8A8A", fontSize: 10, letterSpacing: "0.08em", textTransform: "uppercase", marginTop: 2 }}>{profile.state}</div>
           </div>
         )}
@@ -1104,7 +1104,7 @@ function Feed({ profile, activeGroup, isNewMember }) {
         <div style={{ background: "linear-gradient(135deg, rgba(255,102,0,0.15), rgba(192,154,47,0.1))", border: "1px solid rgba(255,102,0,0.3)", borderRadius: 6, padding: "20px 24px", marginBottom: 20, position: "relative" }}>
           <button onClick={() => setShowWelcome(false)} style={{ position: "absolute", top: 12, right: 16, background: "none", border: "none", color: "#666", cursor: "pointer", fontSize: 18 }}>x</button>
           <span style={S.eyebrow}>Welcome to ESix10</span>
-          <h3 style={{ fontFamily: "'Cinzel', serif", fontSize: 20, color: "#fff", marginBottom: 8 }}>You are in. Now stand firm.</h3>
+          <h3 style={{ fontFamily: "'Inter', sans-serif", fontSize: 20, color: "#fff", marginBottom: 8 }}>You are in. Now stand firm.</h3>
           <p style={{ color: "#FFFFFF", fontSize: 14, lineHeight: 1.7 }}>You have joined the {GROUPS.find(g => g.id === profile.group_id)?.label}. Introduce yourself, engage with the community, and stand firm. Ephesians 6:10</p>
         </div>
       )}
@@ -1113,7 +1113,7 @@ function Feed({ profile, activeGroup, isNewMember }) {
           <Cross size={20} color="#FF7E33" strokeWidth={1.75} style={{ flexShrink: 0 }} />
           <div>
             <span style={{ ...S.eyebrow, marginBottom: 4 }}>Verse of the Day</span>
-            <p style={{ fontFamily: "'Cinzel', serif", fontSize: 14, fontStyle: "italic", color: "#fff", lineHeight: 1.7, marginBottom: 4 }}>"{verse.text}"</p>
+            <p style={{ fontFamily: "'Inter', sans-serif", fontSize: 14, fontStyle: "italic", color: "#fff", lineHeight: 1.7, marginBottom: 4 }}>"{verse.text}"</p>
             <p style={{ color: "#FF7E33", fontSize: 12, letterSpacing: "0.1em" }}>— {verse.ref}</p>
           </div>
         </div>
@@ -1160,7 +1160,7 @@ function Feed({ profile, activeGroup, isNewMember }) {
         {loading && <p style={{ ...S.muted, textAlign: "center", padding: 40 }}>Loading...</p>}
         {!loading && posts.length === 0 && (
           <div style={{ textAlign: "center", padding: 60 }}>
-            <p style={{ ...S.grey, fontSize: 18, fontFamily: "'Cinzel', serif", marginBottom: 8 }}>No posts yet.</p>
+            <p style={{ ...S.grey, fontSize: 18, fontFamily: "'Inter', sans-serif", marginBottom: 8 }}>No posts yet.</p>
             <p style={S.muted}>Be the first to post in {groupName}.</p>
           </div>
         )}
@@ -1170,7 +1170,7 @@ function Feed({ profile, activeGroup, isNewMember }) {
             <div key={post.id} className="post-card" style={{ ...S.post, marginBottom: 12 }}>
               <div style={{ ...S.flexBetween, flexWrap: "wrap", gap: 6 }}>
                 <div style={S.flex}>
-                  <div style={{ width: 44, height: 44, borderRadius: "50%", background: "linear-gradient(135deg, rgba(255,102,0,0.3), rgba(192,154,47,0.2))", display: "flex", alignItems: "center", justifyContent: "center", color: "#FF7E33", fontFamily: "'Cinzel', serif", fontSize: 17, fontWeight: 600, border: "1px solid rgba(255,102,0,0.2)" }}>
+                  <div style={{ width: 44, height: 44, borderRadius: "50%", background: "linear-gradient(135deg, rgba(255,102,0,0.3), rgba(192,154,47,0.2))", display: "flex", alignItems: "center", justifyContent: "center", color: "#FF7E33", fontFamily: "'Inter', sans-serif", fontSize: 17, fontWeight: 600, border: "1px solid rgba(255,102,0,0.2)" }}>
                     {(post.profiles?.username || post.profiles?.full_name || "?")[0].toUpperCase()}
                   </div>
                   <div>
@@ -1312,7 +1312,7 @@ function Events({ profile }) {
           <div key={ev.id} style={{ ...S.post, borderLeft: "3px solid #FF6600" }}>
             <div style={S.flexBetween}>
               <div>
-                <h3 style={{ fontFamily: "'Cinzel', serif", fontSize: 18, fontWeight: 400, color: "#fff", marginBottom: 6 }}>{ev.title}</h3>
+                <h3 style={{ fontFamily: "'Inter', sans-serif", fontSize: 18, fontWeight: 400, color: "#fff", marginBottom: 6 }}>{ev.title}</h3>
                 <div style={S.flex}>
                   {ev.event_date && <span style={S.muted}>📅 {new Date(ev.event_date).toLocaleDateString("en-US", { weekday: "long", month: "long", day: "numeric", hour: "2-digit", minute: "2-digit" })}</span>}
                   {ev.location && <span style={S.muted}><MapPin size={11} style={{ verticalAlign: "-1px", marginRight: 2 }} /> {ev.location}</span>}
@@ -1597,7 +1597,7 @@ function Members({ profile }) {
         {profile.role === "admin" && pending.length > 0 && (
           <div style={{ marginBottom: 24 }}>
             <div style={{ display: "flex", alignItems: "center", gap: 12, marginBottom: 12 }}>
-              <span style={{ fontFamily: "'Cinzel', serif", fontSize: 16, color: "#fff" }}>Pending Approval</span>
+              <span style={{ fontFamily: "'Inter', sans-serif", fontSize: 16, color: "#fff" }}>Pending Approval</span>
               <span style={{ background: "#FF6600", color: "#fff", borderRadius: 20, padding: "2px 10px", fontSize: 12, fontWeight: 600 }}>{pending.length}</span>
             </div>
             {pending.map(m => (
@@ -1606,7 +1606,7 @@ function Members({ profile }) {
                   <div style={S.flex}>
                     <Avatar profile={m} size={48} />
                     <div>
-                      <div style={{ color: "#fff", fontFamily: "'Cinzel', serif", fontSize: 15 }}>{formatName(m.full_name)}</div>
+                      <div style={{ color: "#fff", fontFamily: "'Inter', sans-serif", fontSize: 15 }}>{formatName(m.full_name)}</div>
                       <div style={S.muted}>{profile.role === "admin" ? m.email : ""}</div>
                       {(m.city || m.state) && <div style={{ color: "#FF7E33", fontSize: 12, marginTop: 2 }}><MapPin size={11} style={{ verticalAlign: "-1px", marginRight: 2 }} /> {[m.city, m.state].filter(Boolean).join(", ")}</div>}
                     </div>
@@ -1628,12 +1628,12 @@ function Members({ profile }) {
         {approved.map(m => (
           <div key={m.id} style={{ ...S.card, padding: "16px" }}>
             <div style={{ display: "flex", alignItems: "flex-start", gap: 12 }}>
-              <div style={{ width: 48, height: 48, borderRadius: "50%", background: "rgba(255,102,0,0.15)", display: "flex", alignItems: "center", justifyContent: "center", color: "#FF7E33", fontFamily: "'Cinzel', serif", fontWeight: 600, flexShrink: 0 }}>
+              <div style={{ width: 48, height: 48, borderRadius: "50%", background: "rgba(255,102,0,0.15)", display: "flex", alignItems: "center", justifyContent: "center", color: "#FF7E33", fontFamily: "'Inter', sans-serif", fontWeight: 600, flexShrink: 0 }}>
                 {(m.username || m.full_name || "?")[0].toUpperCase()}
               </div>
               <div style={{ flex: 1, minWidth: 0 }}>
                 <div style={{ display: "flex", alignItems: "center", gap: 8, flexWrap: "wrap", marginBottom: 4 }}>
-                  <span onClick={() => setExpandedId(expandedId === m.id ? null : m.id)} style={{ color: "#fff", fontFamily: "'Cinzel', serif", fontSize: 14, cursor: "pointer" }} title="Tap to see name">{displayName(m)}</span>
+                  <span onClick={() => setExpandedId(expandedId === m.id ? null : m.id)} style={{ color: "#fff", fontFamily: "'Inter', sans-serif", fontSize: 14, cursor: "pointer" }} title="Tap to see name">{displayName(m)}</span>
                   <span style={{ ...S.badge, fontSize: 10 }}>{(m.group_ids && m.group_ids.length > 1 ? m.group_ids : [m.group_id]).map(id => GROUPS.find(g => g.id === id)?.label).filter(Boolean).join(" · ") || "No Group"}</span>
                   {m.role === "admin" && <span style={{ ...S.badge, background: "rgba(255,102,0,0.3)", color: "#FF7E33", fontSize: 10 }}>Admin</span>}
                   {m.role === "moderator" && <span style={{ ...S.badge, background: "rgba(192,154,47,0.25)", color: "#C09A2F", fontSize: 10 }}>Mod</span>}
@@ -1993,7 +1993,7 @@ function Messages({ profile, members, onRead }) {
           </>
         )}
         <span style={{ fontSize: 20 }}>{currentRoom?.icon}</span>
-        <span style={{ fontFamily: "'Cinzel', serif", fontSize: 15, color: "#fff", flex: 1 }}>{currentRoom?.label}</span>
+        <span style={{ fontFamily: "'Inter', sans-serif", fontSize: 15, color: "#fff", flex: 1 }}>{currentRoom?.label}</span>
         {currentRoom?.type === "custom_group" && (
           <button onClick={() => setShowGroupMembers(v => !v)} style={{ background: "none", border: "1px solid rgba(255,255,255,0.1)", borderRadius: 8, padding: "6px 12px", color: "#BBBBBB", cursor: "pointer", fontSize: 12, flexShrink: 0 }}>👥 {roomMembers.length}</button>
         )}
@@ -2101,7 +2101,7 @@ function Messages({ profile, members, onRead }) {
         {!activeRoom ? (
           <div style={{ flex: 1, display: "flex", alignItems: "center", justifyContent: "center", flexDirection: "column", gap: 12 }}>
             <MessageCircle size={40} color="#555" strokeWidth={1.5} />
-            <p style={{ fontFamily: "'Cinzel', serif", fontSize: 18, color: "#fff" }}>Select a conversation</p>
+            <p style={{ fontFamily: "'Inter', sans-serif", fontSize: 18, color: "#fff" }}>Select a conversation</p>
             <p style={S.muted}>Choose a group chat or direct message</p>
           </div>
         ) : CHAT_VIEW}
@@ -2167,7 +2167,7 @@ function PrayerRequests({ profile }) {
         {prayers.length === 0 && (
           <div style={{ textAlign: "center", padding: 40 }}>
   <div style={{ fontSize: 64, marginBottom: 16, animation: "fadeUp 1s ease" }}>🙏</div>
-            <p style={{ fontFamily: "'Cinzel', serif", fontSize: 18, color: "#fff", marginBottom: 8 }}>No prayer requests yet.</p>
+            <p style={{ fontFamily: "'Inter', sans-serif", fontSize: 18, color: "#fff", marginBottom: 8 }}>No prayer requests yet.</p>
             <p style={S.muted}>Be the first to share. This community stands with you.</p>
           </div>
         )}
@@ -2274,8 +2274,8 @@ function Devotion({ profile }) {
         {!dbToday && (
           <div style={{ ...S.card, marginBottom: 16, borderTop: "3px solid #FF6600" }}>
             <span style={{ ...S.badge, marginBottom: 8, display: "inline-block" }}>Today — {today.toLocaleDateString("en-US", { weekday: "long", month: "long", day: "numeric" })}</span>
-            <h3 style={{ fontFamily: "'Cinzel', serif", fontSize: 20, fontWeight: 400, color: "#fff", marginBottom: 8 }}>{todaysDevotion.title}</h3>
-            <div style={{ background: "rgba(255,102,0,0.06)", border: "1px solid rgba(255,102,0,0.15)", borderRadius: 4, padding: "12px 16px", marginBottom: 12 }}><p style={{ color: "#fff", fontFamily: "'Cinzel', serif", fontSize: 14, fontStyle: "italic", lineHeight: 1.7 }}>"{todaysDevotion.verse}"</p><p style={{ color: "#FF7E33", fontSize: 12, marginTop: 4, letterSpacing: "0.1em" }}>— {todaysDevotion.ref}</p></div>
+            <h3 style={{ fontFamily: "'Inter', sans-serif", fontSize: 20, fontWeight: 400, color: "#fff", marginBottom: 8 }}>{todaysDevotion.title}</h3>
+            <div style={{ background: "rgba(255,102,0,0.06)", border: "1px solid rgba(255,102,0,0.15)", borderRadius: 4, padding: "12px 16px", marginBottom: 12 }}><p style={{ color: "#fff", fontFamily: "'Inter', sans-serif", fontSize: 14, fontStyle: "italic", lineHeight: 1.7 }}>"{todaysDevotion.verse}"</p><p style={{ color: "#FF7E33", fontSize: 12, marginTop: 4, letterSpacing: "0.1em" }}>— {todaysDevotion.ref}</p></div>
             <p style={{ ...S.postBody }}>{todaysDevotion.body}</p>
           </div>
         )}
@@ -2284,8 +2284,8 @@ function Devotion({ profile }) {
             <div style={S.flexBetween}>
               <div>
                 {idx === 0 && <span style={{ ...S.badge, marginBottom: 8, display: "inline-block" }}>Today</span>}
-                <h3 style={{ fontFamily: "'Cinzel', serif", fontSize: 20, fontWeight: 400, color: "#fff", marginBottom: 8 }}>{d.title}</h3>
-                {d.scripture && <div style={{ background: "rgba(255,102,0,0.06)", border: "1px solid rgba(255,102,0,0.15)", borderRadius: 4, padding: "12px 16px", marginBottom: 12 }}><p style={{ color: "#fff", fontFamily: "'Cinzel', serif", fontSize: 14, fontStyle: "italic", lineHeight: 1.7 }}>"{d.scripture}"</p>{d.scripture_ref && <p style={{ color: "#FF7E33", fontSize: 12, marginTop: 4, letterSpacing: "0.1em" }}>— {d.scripture_ref}</p>}</div>}
+                <h3 style={{ fontFamily: "'Inter', sans-serif", fontSize: 20, fontWeight: 400, color: "#fff", marginBottom: 8 }}>{d.title}</h3>
+                {d.scripture && <div style={{ background: "rgba(255,102,0,0.06)", border: "1px solid rgba(255,102,0,0.15)", borderRadius: 4, padding: "12px 16px", marginBottom: 12 }}><p style={{ color: "#fff", fontFamily: "'Inter', sans-serif", fontSize: 14, fontStyle: "italic", lineHeight: 1.7 }}>"{d.scripture}"</p>{d.scripture_ref && <p style={{ color: "#FF7E33", fontSize: 12, marginTop: 4, letterSpacing: "0.1em" }}>— {d.scripture_ref}</p>}</div>}
               </div>
               {profile.role === "admin" && <button style={S.btnDanger} onClick={() => deleteDevotion(d.id)}>Remove</button>}
             </div>
@@ -2320,12 +2320,12 @@ function Devotion({ profile }) {
 // ─── The Forge ────────────────────────────────────────────────────────────────
 const FORGE_CSS = `
 .forge-tab-bar { display: flex; gap: 4px; margin-bottom: 24px; background: rgba(255,255,255,0.03); border-radius: 6px; padding: 4px; }
-.forge-tab { flex: 1; padding: 12px 8px; border: none; border-radius: 6px; cursor: pointer; font-family: 'Lato', sans-serif; font-size: 11px; letter-spacing: 0.1em; text-transform: uppercase; transition: all 0.2s; }
+.forge-tab { flex: 1; padding: 12px 8px; border: none; border-radius: 6px; cursor: pointer; font-family: 'Inter', sans-serif; font-size: 11px; letter-spacing: 0.1em; text-transform: uppercase; transition: all 0.2s; }
 .forge-tab.active { background: #FF6600; color: #fff; }
 .forge-tab.inactive { background: transparent; color: #666; }
 .forge-tab.inactive:hover { color: #FF6600; }
 .streak-badge { display: inline-flex; align-items: center; gap: 6px; background: linear-gradient(135deg, rgba(255,102,0,0.2), rgba(192,154,47,0.15)); border: 1px solid rgba(255,102,0,0.3); border-radius: 20px; padding: 6px 16px; }
-.complete-btn { width: 100%; padding: 16px; border: 2px solid #FF6600; border-radius: 6px; background: transparent; color: #FF6600; font-family: 'Lato', sans-serif; font-size: 13px; letter-spacing: 0.15em; text-transform: uppercase; cursor: pointer; transition: all 0.2s; }
+.complete-btn { width: 100%; padding: 16px; border: 2px solid #FF6600; border-radius: 6px; background: transparent; color: #FF6600; font-family: 'Inter', sans-serif; font-size: 13px; letter-spacing: 0.15em; text-transform: uppercase; cursor: pointer; transition: all 0.2s; }
 .complete-btn:hover, .complete-btn.done { background: #FF6600; color: #fff; }
 .beta-banner { background: linear-gradient(135deg, rgba(255,102,0,0.1), rgba(192,154,47,0.08)); border: 1px solid rgba(255,102,0,0.2); border-radius: 6px; padding: 12px 20px; margin-bottom: 20px; display: flex; align-items: center; gap: 10px; }
 `;
@@ -2390,17 +2390,17 @@ function ForgeWalk({ profile }) {
       <div style={{ display: 'flex', gap: 16, marginBottom: 24, flexWrap: 'wrap' }}>
         <div className="streak-badge">
           <Flame size={20} color="#FF7E33" strokeWidth={1.75} />
-          <div><div style={{ fontFamily: "'Cinzel', serif", fontSize: 22, color: '#FF6600', lineHeight: 1 }}>{streak}</div><div style={{ fontSize: 10, color: '#888', letterSpacing: '0.1em', textTransform: 'uppercase' }}>Day Streak</div></div>
+          <div><div style={{ fontFamily: "'Inter', sans-serif", fontSize: 22, color: '#FF6600', lineHeight: 1 }}>{streak}</div><div style={{ fontSize: 10, color: '#888', letterSpacing: '0.1em', textTransform: 'uppercase' }}>Day Streak</div></div>
         </div>
         <div style={{ background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.08)', borderRadius: 20, padding: '6px 16px', display: 'flex', alignItems: 'center', gap: 8 }}>
           <Footprints size={18} color="#aaa" strokeWidth={1.75} />
-          <div><div style={{ fontFamily: "'Cinzel', serif", fontSize: 22, color: '#fff', lineHeight: 1 }}>{totalToday}</div><div style={{ fontSize: 10, color: '#888', letterSpacing: '0.1em', textTransform: 'uppercase' }}>Walked Today</div></div>
+          <div><div style={{ fontFamily: "'Inter', sans-serif", fontSize: 22, color: '#fff', lineHeight: 1 }}>{totalToday}</div><div style={{ fontSize: 10, color: '#888', letterSpacing: '0.1em', textTransform: 'uppercase' }}>Walked Today</div></div>
         </div>
       </div>
       {todayWalk ? (
         <div style={{ ...S.card, borderTop: '3px solid #51cf66', textAlign: 'center', padding: 32 }}>
           <div style={{ marginBottom: 12, display: "flex", justifyContent: "center" }}><CheckCircle2 size={40} color="#51cf66" strokeWidth={1.75} /></div>
-          <h3 style={{ fontFamily: "'Cinzel', serif", fontSize: 20, color: '#fff', marginBottom: 8 }}>You walked today.</h3>
+          <h3 style={{ fontFamily: "'Inter', sans-serif", fontSize: 20, color: '#fff', marginBottom: 8 }}>You walked today.</h3>
           <p style={{ color: '#888', fontSize: 14 }}>{todayWalk.distance_miles && `${todayWalk.distance_miles} miles`}{todayWalk.distance_miles && todayWalk.duration_minutes && ' · '}{todayWalk.duration_minutes && `${todayWalk.duration_minutes} minutes`}</p>
           {todayWalk.notes && <p style={{ color: '#AAAAAA', fontSize: 14, marginTop: 8, fontStyle: 'italic' }}>"{todayWalk.notes}"</p>}
           <div style={{ display: "flex", alignItems: "center", justifyContent: "center", gap: 8, marginTop: 16 }}>
@@ -2411,7 +2411,7 @@ function ForgeWalk({ profile }) {
       ) : (
         <div style={S.card}>
           <span style={S.eyebrow}>Daily Walk for Sanity</span>
-          <h3 style={{ fontFamily: "'Cinzel', serif", fontSize: 20, color: '#fff', marginBottom: 8 }}>Did you walk today?</h3>
+          <h3 style={{ fontFamily: "'Inter', sans-serif", fontSize: 20, color: '#fff', marginBottom: 8 }}>Did you walk today?</h3>
           <p style={{ color: '#888', fontSize: 14, marginBottom: 24, lineHeight: 1.7 }}>One walk. Every day. Not for performance — for your mind, your body, and your soul.</p>
           <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12, marginBottom: 16 }}>
             <div><label style={S.label}>Distance (miles)</label><input style={S.input} type="number" step="0.1" placeholder="1.5" value={form.distance_miles} onChange={e => setForm({...form, distance_miles: e.target.value})} /></div>
@@ -2535,7 +2535,7 @@ function ForgeChallenge({ profile }) {
       {streak > 0 && (
         <div className="streak-badge" style={{ marginBottom: 16 }}>
           <Flame size={18} color="#FF7E33" strokeWidth={1.75} />
-          <div><div style={{ fontFamily: "'Cinzel', serif", fontSize: 18, color: '#FF6600', lineHeight: 1 }}>{streak}</div><div style={{ fontSize: 9, color: '#888', letterSpacing: '0.1em', textTransform: 'uppercase' }}>Day Streak</div></div>
+          <div><div style={{ fontFamily: "'Inter', sans-serif", fontSize: 18, color: '#FF6600', lineHeight: 1 }}>{streak}</div><div style={{ fontSize: 9, color: '#888', letterSpacing: '0.1em', textTransform: 'uppercase' }}>Day Streak</div></div>
         </div>
       )}
       <div style={S.flexBetween}>
@@ -2574,7 +2574,7 @@ function ForgeChallenge({ profile }) {
         {!challenge ? (
           <div style={{ ...S.card, textAlign: 'center', padding: 48 }}>
             <span style={{ display: 'flex', justifyContent: 'center', marginBottom: 16 }}><Zap size={40} color="#FF7E33" strokeWidth={1.5} /></span>
-            <h3 style={{ fontFamily: "'Cinzel', serif", fontSize: 18, color: '#fff', marginBottom: 8 }}>No challenge posted today.</h3>
+            <h3 style={{ fontFamily: "'Inter', sans-serif", fontSize: 18, color: '#fff', marginBottom: 8 }}>No challenge posted today.</h3>
             <p style={S.muted}>{profile.role === 'admin' ? 'Use AI Generate to schedule a week.' : 'Check back soon.'}</p>
           </div>
         ) : (
@@ -2583,7 +2583,7 @@ function ForgeChallenge({ profile }) {
               <span style={{ fontSize: 24 }}>{CATEGORY_ICONS[challenge.category]}</span>
               <span style={{ background: 'rgba(255,102,0,0.1)', border: '1px solid rgba(255,102,0,0.2)', borderRadius: 20, padding: '4px 12px', fontSize: 11, color: '#FF6600', letterSpacing: '0.1em', textTransform: 'uppercase' }}>{challenge.category}</span>
             </div>
-            <h3 style={{ fontFamily: "'Cinzel', serif", fontSize: 22, color: '#fff', marginBottom: 12 }}>{challenge.title}</h3>
+            <h3 style={{ fontFamily: "'Inter', sans-serif", fontSize: 22, color: '#fff', marginBottom: 12 }}>{challenge.title}</h3>
             {challenge.description && <p style={{ color: '#CCCCCC', fontSize: 15, lineHeight: 1.8, marginBottom: 20 }}>{challenge.description}</p>}
             <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 20 }}>
               <CheckCircle2 size={18} color="#51cf66" strokeWidth={1.75} />
@@ -2600,7 +2600,7 @@ function ForgeChallenge({ profile }) {
               </div>
             ) : (
               <div style={{ background: 'rgba(81,207,102,0.08)', border: '1px solid rgba(81,207,102,0.2)', borderRadius: 6, padding: '16px 20px', textAlign: 'center' }}>
-                <span style={{ color: '#51cf66', fontFamily: "'Cinzel', serif", fontSize: 16 }}>Challenge Complete ✓</span>
+                <span style={{ color: '#51cf66', fontFamily: "'Inter', sans-serif", fontSize: 16 }}>Challenge Complete ✓</span>
               </div>
             )}
             {completions.length > 0 && (
@@ -2721,7 +2721,7 @@ function ForgeWOD({ profile }) {
       {streak > 0 && (
         <div className="streak-badge" style={{ marginBottom: 16 }}>
           <Flame size={18} color="#FF7E33" strokeWidth={1.75} />
-          <div><div style={{ fontFamily: "'Cinzel', serif", fontSize: 18, color: '#FF6600', lineHeight: 1 }}>{streak}</div><div style={{ fontSize: 9, color: '#888', letterSpacing: '0.1em', textTransform: 'uppercase' }}>Day Streak</div></div>
+          <div><div style={{ fontFamily: "'Inter', sans-serif", fontSize: 18, color: '#FF6600', lineHeight: 1 }}>{streak}</div><div style={{ fontSize: 9, color: '#888', letterSpacing: '0.1em', textTransform: 'uppercase' }}>Day Streak</div></div>
         </div>
       )}
       <div style={S.flexBetween}>
@@ -2764,13 +2764,13 @@ function ForgeWOD({ profile }) {
         {!wod ? (
           <div style={{ ...S.card, textAlign: 'center', padding: 48 }}>
             <span style={{ fontSize: 40, display: 'block', marginBottom: 16 }}>🏋️</span>
-            <h3 style={{ fontFamily: "'Cinzel', serif", fontSize: 18, color: '#fff', marginBottom: 8 }}>No WOD today.</h3>
+            <h3 style={{ fontFamily: "'Inter', sans-serif", fontSize: 18, color: '#fff', marginBottom: 8 }}>No WOD today.</h3>
             <p style={S.muted}>{profile.role === 'admin' ? 'Use AI Generate to schedule a week.' : 'Rest day. Check back tomorrow.'}</p>
           </div>
         ) : (
           <div style={{ ...S.card, borderTop: `3px solid ${completed ? '#51cf66' : '#FF6600'}` }}>
             <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 16, flexWrap: 'wrap', gap: 8 }}>
-              <h3 style={{ fontFamily: "'Cinzel', serif", fontSize: 22, color: '#fff' }}>{wod.title}</h3>
+              <h3 style={{ fontFamily: "'Inter', sans-serif", fontSize: 22, color: '#fff' }}>{wod.title}</h3>
               <div style={S.flex}>
                 {wod.estimated_minutes && <span style={S.badge}>⏱ {wod.estimated_minutes}min</span>}
                 {wod.difficulty && <span style={{ ...S.badge, background: `${diffColor[wod.difficulty]}20`, color: diffColor[wod.difficulty] }}>{'●'.repeat(wod.difficulty)} {diffLabel[wod.difficulty]}</span>}
@@ -2794,7 +2794,7 @@ function ForgeWOD({ profile }) {
               </div>
             ) : (
               <div style={{ background: 'rgba(81,207,102,0.08)', border: '1px solid rgba(81,207,102,0.2)', borderRadius: 6, padding: '16px 20px', textAlign: 'center' }}>
-                <span style={{ color: '#51cf66', fontFamily: "'Cinzel', serif", fontSize: 16 }}>WOD Complete ✓</span>
+                <span style={{ color: '#51cf66', fontFamily: "'Inter', sans-serif", fontSize: 16 }}>WOD Complete ✓</span>
               </div>
             )}
           </div>
@@ -2845,7 +2845,7 @@ function ForgeLog({ profile }) {
         </div>
       )}
       <div style={{ marginTop: 20 }}>
-        {Object.keys(grouped).length === 0 && <div style={{ textAlign: 'center', padding: 60 }}><span style={{ fontSize: 40, display: 'block', marginBottom: 16 }}>📓</span><h3 style={{ fontFamily: "'Cinzel', serif", fontSize: 18, color: '#fff', marginBottom: 8 }}>No activity logged yet.</h3><p style={S.muted}>Start logging your walks and workouts.</p></div>}
+        {Object.keys(grouped).length === 0 && <div style={{ textAlign: 'center', padding: 60 }}><span style={{ fontSize: 40, display: 'block', marginBottom: 16 }}>📓</span><h3 style={{ fontFamily: "'Inter', sans-serif", fontSize: 18, color: '#fff', marginBottom: 8 }}>No activity logged yet.</h3><p style={S.muted}>Start logging your walks and workouts.</p></div>}
         {Object.keys(grouped).map(date => (
           <div key={date} style={{ marginBottom: 16 }}>
             <div style={{ fontSize: 11, color: '#555', letterSpacing: '0.15em', textTransform: 'uppercase', marginBottom: 8 }}>
@@ -2895,7 +2895,7 @@ function TheForge({ profile }) {
       <div className="forge-hero" style={{ display: "flex", alignItems: "center", gap: 16 }}>
         <div style={{ flex: 1 }}>
           <span style={{ ...S.eyebrow, marginBottom: 6 }}>The Forge</span>
-          <h2 style={{ fontFamily: "'Cinzel', serif", fontSize: 24, fontWeight: 400, color: "#fff", marginBottom: 8, lineHeight: 1.2 }}>Train. Pray. Prepare.</h2>
+          <h2 style={{ fontFamily: "'Inter', sans-serif", fontSize: 24, fontWeight: 400, color: "#fff", marginBottom: 8, lineHeight: 1.2 }}>Train. Pray. Prepare.</h2>
           <p style={{ color: "#FF7E33", fontSize: 13, fontStyle: "italic", letterSpacing: "0.05em" }}>"{todayQuote}"</p>
           <div style={{ display: "flex", gap: 12, marginTop: 16, flexWrap: "wrap" }}>
             <span style={{ background: "rgba(255,102,0,0.1)", border: "1px solid rgba(255,102,0,0.2)", borderRadius: 20, padding: "4px 12px", fontSize: 11, color: "#FF7E33", letterSpacing: "0.1em", display: "inline-flex", alignItems: "center", gap: 5 }}><Unlock size={11} /> Beta — Full Access Free</span>
@@ -2970,7 +2970,7 @@ function LocalChapter({ profile }) {
   if (!profile.state) return (
     <div style={{ textAlign: "center", padding: 60 }}>
       <div style={{ fontSize: 48, marginBottom: 16 }}>📍</div>
-      <h3 style={{ fontFamily: "'Cinzel', serif", fontSize: 18, color: "#fff", marginBottom: 8 }}>Add your state to your profile</h3>
+      <h3 style={{ fontFamily: "'Inter', sans-serif", fontSize: 18, color: "#fff", marginBottom: 8 }}>Add your state to your profile</h3>
       <p style={{ color: "#BBBBBB", fontSize: 14 }}>We will show you members and events in your area.</p>
     </div>
   );
@@ -2984,7 +2984,7 @@ function LocalChapter({ profile }) {
       </div>
       <div style={{ display: "flex", gap: 4, marginBottom: 20, background: "rgba(255,255,255,0.03)", borderRadius: 6, padding: 4 }}>
         {[{id:"members",label:"Members",icon:"👥"},{id:"posts",label:"Local Feed",icon:"📋"},{id:"events",label:"Events",icon:"📅"},{id:"recs",label:"Places",icon:"🗺️"}].map(t => (
-          <button key={t.id} onClick={() => setActiveTab(t.id)} style={{ flex: 1, padding: "10px 8px", border: "none", borderRadius: 4, cursor: "pointer", fontFamily: "'Lato', sans-serif", fontSize: 11, letterSpacing: "0.1em", textTransform: "uppercase", background: activeTab === t.id ? "#FF6600" : "transparent", color: activeTab === t.id ? "#fff" : "#666" }}>
+          <button key={t.id} onClick={() => setActiveTab(t.id)} style={{ flex: 1, padding: "10px 8px", border: "none", borderRadius: 4, cursor: "pointer", fontFamily: "'Inter', sans-serif", fontSize: 11, letterSpacing: "0.1em", textTransform: "uppercase", background: activeTab === t.id ? "#FF6600" : "transparent", color: activeTab === t.id ? "#fff" : "#666" }}>
             <span style={{ fontSize: 18, display: "block", marginBottom: 2 }}>{t.icon}</span>{t.label}
           </button>
         ))}
@@ -2992,13 +2992,13 @@ function LocalChapter({ profile }) {
       {loading && <p style={S.muted}>Loading...</p>}
       {!loading && activeTab === "members" && (
         <div>
-          {localMembers.length === 0 && <div style={{ textAlign: "center", padding: 40 }}><div style={{ fontSize: 40, marginBottom: 12 }}>🌱</div><h3 style={{ fontFamily: "'Cinzel', serif", fontSize: 16, color: "#fff", marginBottom: 8 }}>You are the first in {profile.state}.</h3><p style={{ color: "#BBBBBB", fontSize: 13 }}>Share the app — build your local chapter.</p></div>}
+          {localMembers.length === 0 && <div style={{ textAlign: "center", padding: 40 }}><div style={{ fontSize: 40, marginBottom: 12 }}>🌱</div><h3 style={{ fontFamily: "'Inter', sans-serif", fontSize: 16, color: "#fff", marginBottom: 8 }}>You are the first in {profile.state}.</h3><p style={{ color: "#BBBBBB", fontSize: 13 }}>Share the app — build your local chapter.</p></div>}
           <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
             {localMembers.map(m => (
               <div key={m.id} style={{ ...S.card, padding: "14px 18px", display: "flex", alignItems: "center", gap: 14 }}>
                 <Avatar profile={m} size={44} />
                 <div style={{ flex: 1 }}>
-                  <div style={{ color: "#fff", fontFamily: "'Cinzel', serif", fontSize: 14 }}>{m.username ? `@${m.username}` : formatName(m.full_name)}</div>
+                  <div style={{ color: "#fff", fontFamily: "'Inter', sans-serif", fontSize: 14 }}>{m.username ? `@${m.username}` : formatName(m.full_name)}</div>
                   <div style={{ color: "#8A8A8A", fontSize: 12, marginTop: 2 }}>{m.city && <span>📍 {m.city} · </span>}<span>{GROUPS.find(g => g.id === m.group_id)?.label}</span></div>
                 </div>
                 <LevelBadgeForUser profile={m} fontSize={10} />
@@ -3024,7 +3024,7 @@ function LocalChapter({ profile }) {
           {localEvents.map(ev => (
             <div key={ev.id} style={{ ...S.card, marginBottom: 12 }}>
               <div style={{ color: "#FF7E33", fontSize: 11, letterSpacing: "0.1em", textTransform: "uppercase", marginBottom: 6 }}>{new Date(ev.event_date).toLocaleDateString("en-US", { weekday: "long", month: "long", day: "numeric" })}</div>
-              <h3 style={{ fontFamily: "'Cinzel', serif", fontSize: 16, color: "#fff", marginBottom: 6 }}>{ev.title}</h3>
+              <h3 style={{ fontFamily: "'Inter', sans-serif", fontSize: 16, color: "#fff", marginBottom: 6 }}>{ev.title}</h3>
               {ev.location && <p style={{ color: "#BBBBBB", fontSize: 13 }}>📍 {ev.location}</p>}
               {ev.description && <p style={{ color: "#FFFFFF", fontSize: 14, marginTop: 8, lineHeight: 1.7 }}>{ev.description}</p>}
             </div>
@@ -3051,15 +3051,15 @@ function LocalChapter({ profile }) {
               <button style={S.btn} onClick={saveRec} disabled={!recForm.name}>Submit</button>
             </div>
           )}
-          {recommendations.length === 0 && !showAddRec && <div style={{ textAlign: "center", padding: 40 }}><div style={{ fontSize: 40, marginBottom: 12 }}>🗺️</div><h3 style={{ fontFamily: "'Cinzel', serif", fontSize: 16, color: "#fff", marginBottom: 8 }}>No places yet in {profile.state}</h3><p style={{ color: "#BBBBBB", fontSize: 13 }}>Know a great gym or coffee shop? Add it.</p></div>}
+          {recommendations.length === 0 && !showAddRec && <div style={{ textAlign: "center", padding: 40 }}><div style={{ fontSize: 40, marginBottom: 12 }}>🗺️</div><h3 style={{ fontFamily: "'Inter', sans-serif", fontSize: 16, color: "#fff", marginBottom: 8 }}>No places yet in {profile.state}</h3><p style={{ color: "#BBBBBB", fontSize: 13 }}>Know a great gym or coffee shop? Add it.</p></div>}
           {REC_CATEGORIES.filter(cat => recommendations.some(r => r.category === cat.id)).map(cat => (
             <div key={cat.id} style={{ marginBottom: 24 }}>
-              <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 10 }}><span style={{ fontSize: 18 }}>{cat.icon}</span><span style={{ fontFamily: "'Cinzel', serif", fontSize: 13, color: "#FF7E33", letterSpacing: "0.1em", textTransform: "uppercase" }}>{cat.label}</span></div>
+              <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 10 }}><span style={{ fontSize: 18 }}>{cat.icon}</span><span style={{ fontFamily: "'Inter', sans-serif", fontSize: 13, color: "#FF7E33", letterSpacing: "0.1em", textTransform: "uppercase" }}>{cat.label}</span></div>
               {recommendations.filter(r => r.category === cat.id).map(rec => (
                 <div key={rec.id} style={{ ...S.card, marginBottom: 8 }}>
                   <div style={{ display: "flex", alignItems: "flex-start", justifyContent: "space-between", gap: 10 }}>
                     <div style={{ flex: 1 }}>
-                      <h3 style={{ fontFamily: "'Cinzel', serif", fontSize: 15, color: "#fff", marginBottom: 4 }}>{rec.name}</h3>
+                      <h3 style={{ fontFamily: "'Inter', sans-serif", fontSize: 15, color: "#fff", marginBottom: 4 }}>{rec.name}</h3>
                       {rec.address && <p style={{ color: "#FF7E33", fontSize: 12, marginBottom: 4 }}>📍 {rec.address}, {rec.state}</p>}
                       {rec.description && <p style={{ color: "#FFFFFF", fontSize: 13, lineHeight: 1.7, marginBottom: 6 }}>{rec.description}</p>}
                       <div style={{ display: "flex", gap: 10, flexWrap: "wrap" }}>
@@ -3109,7 +3109,7 @@ function VideoPlayer({ video, onClose }) {
     <div style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.97)', zIndex: 500, display: 'flex', flexDirection: 'column' }}>
       <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '16px 20px', borderBottom: '1px solid rgba(255,255,255,0.08)' }}>
         <div>
-          <h3 style={{ fontFamily: "'Cinzel', serif", fontSize: 18, color: '#fff', margin: 0 }}>{video.title}</h3>
+          <h3 style={{ fontFamily: "'Inter', sans-serif", fontSize: 18, color: '#fff', margin: 0 }}>{video.title}</h3>
           <span style={{ color: '#FF6600', fontSize: 11, letterSpacing: '0.1em', textTransform: 'uppercase' }}>{video.category}</span>
         </div>
         <button onClick={onClose} style={{ background: 'none', border: 'none', color: '#FF6600', fontSize: 24, cursor: 'pointer' }}>✕</button>
@@ -3153,7 +3153,7 @@ function AudioPlayer({ episode }) {
           {playing ? '⏸' : '▶'}
         </button>
         <div style={{ flex: 1 }}>
-          <div style={{ color: '#fff', fontSize: 14, fontFamily: "'Cinzel', serif", marginBottom: 6 }}>{episode.title}</div>
+          <div style={{ color: '#fff', fontSize: 14, fontFamily: "'Inter', sans-serif", marginBottom: 6 }}>{episode.title}</div>
           <div style={{ background: 'rgba(255,255,255,0.06)', borderRadius: 4, height: 4, cursor: 'pointer' }}
             onClick={e => { const rect = e.currentTarget.getBoundingClientRect(); const pct = (e.clientX - rect.left) / rect.width; audioRef.current.currentTime = pct * duration; }}>
             <div style={{ width: duration ? `${(progress/duration)*100}%` : '0%', height: '100%', background: '#FF6600', borderRadius: 4, transition: 'width 0.5s' }} />
@@ -3374,7 +3374,7 @@ function PrivateGroups({ profile, allMembers }) {
               onClick={() => { setActiveGroup(g); if (isMobile) setShowList(false); }}>
               <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
                 <div>
-                  <div style={{ color: '#fff', fontFamily: "'Cinzel', serif", fontSize: 15 }}>{g.name}</div>
+                  <div style={{ color: '#fff', fontFamily: "'Inter', sans-serif", fontSize: 15 }}>{g.name}</div>
                   {g.description && <div style={{ color: '#888', fontSize: 12, marginTop: 2 }}>{g.description}</div>}
                 </div>
                 <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
@@ -3396,7 +3396,7 @@ function PrivateGroups({ profile, allMembers }) {
           <div key={g.id} style={{ ...S.card, marginBottom: 8 }}>
             <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
               <div>
-                <div style={{ color: '#fff', fontFamily: "'Cinzel', serif", fontSize: 15 }}>🔒 {g.name}</div>
+                <div style={{ color: '#fff', fontFamily: "'Inter', sans-serif", fontSize: 15 }}>🔒 {g.name}</div>
                 {g.description && <div style={{ color: '#888', fontSize: 12, marginTop: 2 }}>{g.description}</div>}
                 <div style={{ color: '#555', fontSize: 12, marginTop: 4 }}>{g.member_count || 1} members</div>
               </div>
@@ -3414,7 +3414,7 @@ function PrivateGroups({ profile, allMembers }) {
       <div style={{ padding: '12px 16px', borderBottom: '1px solid rgba(255,255,255,0.05)', display: 'flex', alignItems: 'center', gap: 12 }}>
         {isMobile && <button onClick={() => setShowList(true)} style={{ background: 'none', border: 'none', color: '#FF6600', cursor: 'pointer', fontSize: 20, padding: 0 }}>←</button>}
         <div style={{ flex: 1 }}>
-          <div style={{ fontFamily: "'Cinzel', serif", fontSize: 15, color: '#fff' }}>🔒 {activeGroup.name}</div>
+          <div style={{ fontFamily: "'Inter', sans-serif", fontSize: 15, color: '#fff' }}>🔒 {activeGroup.name}</div>
           <div style={{ color: '#555', fontSize: 11 }}>{members.length} members</div>
         </div>
         <div style={{ display: 'flex', gap: 6 }}>
@@ -3638,7 +3638,7 @@ function Media({ profile }) {
       <div style={{ display: 'flex', gap: 4, marginBottom: 24, background: 'rgba(255,255,255,0.03)', borderRadius: 6, padding: 4 }}>
         {[{id:'watch',label:'Watch',icon:'📺'},{id:'listen',label:'Listen',icon:'🎙️'},{id:'live',label:'Live',icon:'🔴'}].map(t => (
           <button key={t.id} onClick={() => setSubTab(t.id)}
-            style={{ flex: 1, padding: '10px 8px', border: 'none', borderRadius: 4, cursor: 'pointer', fontFamily: "'Lato', sans-serif", fontSize: 11, letterSpacing: '0.1em', textTransform: 'uppercase', background: subTab === t.id ? '#FF6600' : 'transparent', color: subTab === t.id ? '#fff' : '#666' }}>
+            style={{ flex: 1, padding: '10px 8px', border: 'none', borderRadius: 4, cursor: 'pointer', fontFamily: "'Inter', sans-serif", fontSize: 11, letterSpacing: '0.1em', textTransform: 'uppercase', background: subTab === t.id ? '#FF6600' : 'transparent', color: subTab === t.id ? '#fff' : '#666' }}>
             <span style={{ fontSize: 20, display: 'block', marginBottom: 2 }}>{t.icon}</span>{t.label}
           </button>
         ))}
@@ -3689,7 +3689,7 @@ function Media({ profile }) {
           {!loading && filteredVideos.length === 0 && (
             <div style={{ textAlign: 'center', padding: 60 }}>
               <div style={{ fontSize: 48, marginBottom: 16 }}>📺</div>
-              <h3 style={{ fontFamily: "'Cinzel', serif", fontSize: 18, color: '#fff', marginBottom: 8 }}>No videos yet.</h3>
+              <h3 style={{ fontFamily: "'Inter', sans-serif", fontSize: 18, color: '#fff', marginBottom: 8 }}>No videos yet.</h3>
               <p style={S.muted}>{profile.role === 'admin' ? 'Upload your first video above.' : 'Content coming soon.'}</p>
             </div>
           )}
@@ -3705,7 +3705,7 @@ function Media({ profile }) {
                 </div>
                 <div style={{ padding: '14px 16px' }}>
                   <div style={{ color: '#FF6600', fontSize: 10, letterSpacing: '0.15em', textTransform: 'uppercase', marginBottom: 4 }}>{v.category}</div>
-                  <h3 style={{ fontFamily: "'Cinzel', serif", fontSize: 15, fontWeight: 400, color: '#fff', marginBottom: 4 }}>{v.title}</h3>
+                  <h3 style={{ fontFamily: "'Inter', sans-serif", fontSize: 15, fontWeight: 400, color: '#fff', marginBottom: 4 }}>{v.title}</h3>
                   {v.description && <p style={{ color: '#888', fontSize: 12, lineHeight: 1.6 }}>{v.description.slice(0, 80)}{v.description.length > 80 ? '...' : ''}</p>}
                   {profile.role === 'admin' && <button style={{ ...S.btnDanger, marginTop: 8, fontSize: 11, padding: '4px 10px' }} onClick={e => { e.stopPropagation(); supabase.from('media_videos').delete().eq('id', v.id).then(loadMedia); }}>Delete</button>}
                 </div>
@@ -3736,7 +3736,7 @@ function Media({ profile }) {
               </label>
             </div>
           )}
-          {audio.length === 0 && <div style={{ textAlign: 'center', padding: 60 }}><div style={{ fontSize: 48, marginBottom: 16 }}>🎙️</div><h3 style={{ fontFamily: "'Cinzel', serif", fontSize: 18, color: '#fff', marginBottom: 8 }}>No episodes yet.</h3><p style={S.muted}>{profile.role === 'admin' ? 'Upload your first episode above.' : 'Episodes coming soon.'}</p></div>}
+          {audio.length === 0 && <div style={{ textAlign: 'center', padding: 60 }}><div style={{ fontSize: 48, marginBottom: 16 }}>🎙️</div><h3 style={{ fontFamily: "'Inter', sans-serif", fontSize: 18, color: '#fff', marginBottom: 8 }}>No episodes yet.</h3><p style={S.muted}>{profile.role === 'admin' ? 'Upload your first episode above.' : 'Episodes coming soon.'}</p></div>}
           <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
             {audio.map(ep => (
               <div key={ep.id} style={S.card}>
@@ -3744,7 +3744,7 @@ function Media({ profile }) {
                   <div style={{ width: 56, height: 56, borderRadius: 8, background: 'linear-gradient(135deg, rgba(255,102,0,0.3), rgba(192,154,47,0.2))', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 24, flexShrink: 0 }}>🎙️</div>
                   <div style={{ flex: 1 }}>
                     <div style={{ color: '#FF6600', fontSize: 10, letterSpacing: '0.15em', textTransform: 'uppercase', marginBottom: 4 }}>Episode {ep.episode_number}</div>
-                    <h3 style={{ fontFamily: "'Cinzel', serif", fontSize: 16, fontWeight: 400, color: '#fff', marginBottom: 4 }}>{ep.title}</h3>
+                    <h3 style={{ fontFamily: "'Inter', sans-serif", fontSize: 16, fontWeight: 400, color: '#fff', marginBottom: 4 }}>{ep.title}</h3>
                     {ep.description && <p style={{ color: '#888', fontSize: 13, lineHeight: 1.7 }}>{ep.description}</p>}
                   </div>
                 </div>
@@ -3787,7 +3787,7 @@ function Media({ profile }) {
             <div>
               <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 16 }}>
                 <span style={{ width: 10, height: 10, borderRadius: '50%', background: '#51cf66', animation: 'pulse 1.5s infinite', display: 'inline-block' }} />
-                <span style={{ color: '#51cf66', fontFamily: "'Cinzel', serif", fontSize: 16 }}>Live Now — {liveStream.title}</span>
+                <span style={{ color: '#51cf66', fontFamily: "'Inter', sans-serif", fontSize: 16 }}>Live Now — {liveStream.title}</span>
               </div>
               <div style={{ position: 'relative', paddingBottom: '56.25%', borderRadius: 10, overflow: 'hidden', background: '#000' }}>
                 <iframe src={`https://iframe.cloudflarestream.com/live_input/${liveStream.playback_id}?autoplay=true&primaryColor=FF6600`} style={{ position: 'absolute', top: 0, left: 0, width: '100%', height: '100%', border: 'none' }} allow="autoplay; encrypted-media" allowFullScreen />
@@ -3796,7 +3796,7 @@ function Media({ profile }) {
           ) : (
             <div style={{ textAlign: 'center', padding: 60 }}>
               <div style={{ fontSize: 48, marginBottom: 16 }}>🔴</div>
-              <h3 style={{ fontFamily: "'Cinzel', serif", fontSize: 18, color: '#fff', marginBottom: 8 }}>No live stream right now.</h3>
+              <h3 style={{ fontFamily: "'Inter', sans-serif", fontSize: 18, color: '#fff', marginBottom: 8 }}>No live stream right now.</h3>
               {livestreams[0]?.scheduled_at && <p style={{ color: '#FF6600', fontSize: 14, marginBottom: 8 }}>Next: {new Date(livestreams[0].scheduled_at).toLocaleDateString('en-US', { weekday: 'long', month: 'long', day: 'numeric', hour: '2-digit', minute: '2-digit' })}</p>}
               <p style={S.muted}>Check the feed for announcements.</p>
             </div>
@@ -3832,23 +3832,23 @@ function StatementOfFaith({ onBack }) {
         <div key={i} style={{ ...S.card, marginBottom: 12 }}>
           <div style={{ display: "flex", alignItems: "center", gap: 10, marginBottom: 10 }}>
             <span style={{ fontSize: 20 }}>{item.icon}</span>
-            <h3 style={{ fontFamily: "'Cinzel', serif", fontSize: 16, fontWeight: 400, color: "#FF7E33", margin: 0 }}>{item.title}</h3>
+            <h3 style={{ fontFamily: "'Inter', sans-serif", fontSize: 16, fontWeight: 400, color: "#FF7E33", margin: 0 }}>{item.title}</h3>
           </div>
           <p style={{ color: "#FFFFFF", fontSize: 14, lineHeight: 1.8 }}>{item.body}</p>
         </div>
       ))}
 
       <div style={{ ...S.card, marginBottom: 12, borderTop: "3px solid #FF6600" }}>
-        <h3 style={{ fontFamily: "'Cinzel', serif", fontSize: 16, fontWeight: 400, color: "#FF7E33", marginBottom: 10 }}>What We Don't Do</h3>
+        <h3 style={{ fontFamily: "'Inter', sans-serif", fontSize: 16, fontWeight: 400, color: "#FF7E33", marginBottom: 10 }}>What We Don't Do</h3>
         <p style={{ color: "#FFFFFF", fontSize: 14, lineHeight: 1.8 }}>We do not take denominational positions on secondary theological issues where Bible-believing Christians disagree. ESix10 is not a Baptist organization, a Pentecostal organization, or any other denominational organization. We are a community of believers who stand on the essentials and extend grace on everything else.</p>
       </div>
 
       <div style={{ ...S.card, marginBottom: 12, background: "linear-gradient(135deg, rgba(255,102,0,0.08), rgba(192,154,47,0.06))", border: "1px solid rgba(255,102,0,0.2)" }}>
-        <h3 style={{ fontFamily: "'Cinzel', serif", fontSize: 16, fontWeight: 400, color: "#fff", marginBottom: 10 }}>A Word on Welcome</h3>
+        <h3 style={{ fontFamily: "'Inter', sans-serif", fontSize: 16, fontWeight: 400, color: "#fff", marginBottom: 10 }}>A Word on Welcome</h3>
         <p style={{ color: "#FFFFFF", fontSize: 14, lineHeight: 1.8, marginBottom: 12 }}>ESix10 is a faith-based organization. We are clear about what we believe and we do not apologize for it. But we are equally clear about this — everyone is welcome here.</p>
         <p style={{ color: "#FFFFFF", fontSize: 14, lineHeight: 1.8, marginBottom: 12 }}>You do not have to share our faith to walk through this door. You do not have to have it all figured out. You do not have to clean yourself up before you show up.</p>
         <p style={{ color: "#FFFFFF", fontSize: 14, lineHeight: 1.8, marginBottom: 12 }}>We will not change our standard to make anyone comfortable. But we will never use our standard as a weapon against anyone either. That is not the way of Christ and it is not the way of ESix10.</p>
-        <p style={{ color: "#fff", fontFamily: "'Cinzel', serif", fontSize: 14, fontStyle: "italic" }}>You are welcome here. Exactly as you are. Right now.</p>
+        <p style={{ color: "#fff", fontFamily: "'Inter', sans-serif", fontSize: 14, fontStyle: "italic" }}>You are welcome here. Exactly as you are. Right now.</p>
       </div>
 
       <div style={{ background: "rgba(255,102,0,0.06)", border: "1px solid rgba(255,102,0,0.15)", borderRadius: 10, padding: "16px 20px", textAlign: "center", marginBottom: 24 }}>
@@ -3924,16 +3924,16 @@ function PlanOfSalvation({ onBack, profile }) {
         <div key={i} style={{ ...S.card, marginBottom: 12 }}>
           <div style={{ display: "flex", alignItems: "center", gap: 10, marginBottom: 12 }}>
             <span style={{ fontSize: 24 }}>{item.icon}</span>
-            <h3 style={{ fontFamily: "'Cinzel', serif", fontSize: 18, fontWeight: 400, color: "#fff", margin: 0 }}>{item.step}</h3>
+            <h3 style={{ fontFamily: "'Inter', sans-serif", fontSize: 18, fontWeight: 400, color: "#fff", margin: 0 }}>{item.step}</h3>
           </div>
           <div style={{ background: "rgba(255,102,0,0.06)", border: "1px solid rgba(255,102,0,0.15)", borderRadius: 6, padding: "12px 16px", marginBottom: 12 }}>
-            <p style={{ color: "#fff", fontFamily: "'Cinzel', serif", fontSize: 14, fontStyle: "italic", lineHeight: 1.7, marginBottom: 4 }}>"{item.scripture}"</p>
+            <p style={{ color: "#fff", fontFamily: "'Inter', sans-serif", fontSize: 14, fontStyle: "italic", lineHeight: 1.7, marginBottom: 4 }}>"{item.scripture}"</p>
             <p style={{ color: "#FF7E33", fontSize: 12, letterSpacing: "0.1em" }}>— {item.ref}</p>
           </div>
           <p style={{ color: "#FFFFFF", fontSize: 14, lineHeight: 1.8, marginBottom: item.scripture2 ? 12 : 0 }}>{item.body}</p>
           {item.scripture2 && (
             <div style={{ background: "rgba(255,102,0,0.06)", border: "1px solid rgba(255,102,0,0.15)", borderRadius: 6, padding: "12px 16px" }}>
-              <p style={{ color: "#fff", fontFamily: "'Cinzel', serif", fontSize: 14, fontStyle: "italic", lineHeight: 1.7, marginBottom: 4 }}>"{item.scripture2}"</p>
+              <p style={{ color: "#fff", fontFamily: "'Inter', sans-serif", fontSize: 14, fontStyle: "italic", lineHeight: 1.7, marginBottom: 4 }}>"{item.scripture2}"</p>
               <p style={{ color: "#FF7E33", fontSize: 12, letterSpacing: "0.1em" }}>— {item.ref2}</p>
             </div>
           )}
@@ -3942,7 +3942,7 @@ function PlanOfSalvation({ onBack, profile }) {
 
       {/* Prayer Section */}
       <div style={{ ...S.card, marginBottom: 12, borderTop: prayed ? "3px solid #51cf66" : "3px solid #FF6600" }}>
-        <h3 style={{ fontFamily: "'Cinzel', serif", fontSize: 18, fontWeight: 400, color: "#fff", marginBottom: 12 }}>A Simple Prayer</h3>
+        <h3 style={{ fontFamily: "'Inter', sans-serif", fontSize: 18, fontWeight: 400, color: "#fff", marginBottom: 12 }}>A Simple Prayer</h3>
         <p style={{ color: "#FFFFFF", fontSize: 14, lineHeight: 1.8, marginBottom: 16 }}>If you are ready to make that decision right now — you can. God is not waiting on a perfect moment. He is waiting on you.</p>
 
         {!showPrayer ? (
@@ -3952,7 +3952,7 @@ function PlanOfSalvation({ onBack, profile }) {
         ) : (
           <div>
             <div style={{ background: "rgba(255,255,255,0.03)", border: "1px solid rgba(255,255,255,0.08)", borderRadius: 8, padding: 20, marginBottom: 20 }}>
-              <p style={{ color: "#fff", fontFamily: "'Cinzel', serif", fontSize: 14, fontStyle: "italic", lineHeight: 2.1 }}>
+              <p style={{ color: "#fff", fontFamily: "'Inter', sans-serif", fontSize: 14, fontStyle: "italic", lineHeight: 2.1 }}>
                 "God, I know I am a sinner. I know I cannot fix that on my own. I believe Jesus Christ died for my sins and rose from the dead. I am turning from my old life and placing my faith in Him. I receive the gift of salvation. Come into my life and make me new. Amen."
               </p>
             </div>
@@ -3963,7 +3963,7 @@ function PlanOfSalvation({ onBack, profile }) {
             ) : (
               <div style={{ background: "rgba(81,207,102,0.08)", border: "1px solid rgba(81,207,102,0.2)", borderRadius: 8, padding: 20, textAlign: "center" }}>
                 <span style={{ fontSize: 32, display: "block", marginBottom: 8 }}>🎉</span>
-                <h3 style={{ fontFamily: "'Cinzel', serif", fontSize: 20, color: "#51cf66", marginBottom: 8 }}>Welcome to the Family.</h3>
+                <h3 style={{ fontFamily: "'Inter', sans-serif", fontSize: 20, color: "#51cf66", marginBottom: 8 }}>Welcome to the Family.</h3>
                 <p style={{ color: "#FFFFFF", fontSize: 14, lineHeight: 1.8 }}>That decision is the most important one you will ever make. Heaven is celebrating right now. So are we.</p>
               </div>
             )}
@@ -3974,7 +3974,7 @@ function PlanOfSalvation({ onBack, profile }) {
       {/* Connect Section */}
       {prayed && (
         <div style={{ ...S.card, marginBottom: 24 }}>
-          <h3 style={{ fontFamily: "'Cinzel', serif", fontSize: 18, fontWeight: 400, color: "#fff", marginBottom: 8 }}>Connect With Someone Near You</h3>
+          <h3 style={{ fontFamily: "'Inter', sans-serif", fontSize: 18, fontWeight: 400, color: "#fff", marginBottom: 8 }}>Connect With Someone Near You</h3>
           <p style={{ color: "#FFFFFF", fontSize: 14, lineHeight: 1.8, marginBottom: 16 }}>You do not have to figure this out alone. Let us connect you with a real person in your area who can walk with you from here. No program. No pressure. Just a brother or sister who has been where you are.</p>
           {!connected ? (
             <div>
@@ -3988,7 +3988,7 @@ function PlanOfSalvation({ onBack, profile }) {
             </div>
           ) : (
             <div style={{ background: "rgba(255,102,0,0.08)", border: "1px solid rgba(255,102,0,0.2)", borderRadius: 8, padding: 20, textAlign: "center" }}>
-              <p style={{ color: "#FF7E33", fontFamily: "'Cinzel', serif", fontSize: 15 }}>Request sent. Someone will reach out to you soon.</p>
+              <p style={{ color: "#FF7E33", fontFamily: "'Inter', sans-serif", fontSize: 15 }}>Request sent. Someone will reach out to you soon.</p>
               <p style={{ color: "#BBBBBB", fontSize: 13, marginTop: 8 }}>In the meantime — you are already part of this community. Start here.</p>
             </div>
           )}
@@ -4037,12 +4037,12 @@ function WelcomeModal({ profile, onClose }) {
         
         <div style={{ marginBottom: 24 }}>
           <span style={{ ...S.eyebrow, display: "block", marginBottom: 8 }}>{group?.label} — {group?.subtitle}</span>
-          <h2 style={{ fontFamily: "'Cinzel', serif", fontSize: 28, fontWeight: 400, color: "#fff", marginBottom: 16 }}>{msg.headline}</h2>
+          <h2 style={{ fontFamily: "'Inter', sans-serif", fontSize: 28, fontWeight: 400, color: "#fff", marginBottom: 16 }}>{msg.headline}</h2>
           <p style={{ color: "#FFFFFF", fontSize: 15, lineHeight: 1.9, marginBottom: 24 }}>{msg.body}</p>
         </div>
 
         <div style={{ background: "rgba(255,102,0,0.08)", border: "1px solid rgba(255,102,0,0.2)", borderRadius: 10, padding: "20px 24px", marginBottom: 32 }}>
-          <p style={{ fontFamily: "'Cinzel', serif", fontSize: 14, fontStyle: "italic", color: "#fff", lineHeight: 1.8, marginBottom: 8 }}>"{msg.scripture}"</p>
+          <p style={{ fontFamily: "'Inter', sans-serif", fontSize: 14, fontStyle: "italic", color: "#fff", lineHeight: 1.8, marginBottom: 8 }}>"{msg.scripture}"</p>
           <p style={{ color: "#FF7E33", fontSize: 12, letterSpacing: "0.1em" }}>— {msg.ref}</p>
         </div>
 
@@ -4102,7 +4102,7 @@ function SocialFeed({ profile }) {
       <div style={{ display: 'flex', gap: 4, marginBottom: 20, background: 'rgba(255,255,255,0.03)', borderRadius: 6, padding: 4 }}>
         {[{id: 'instagram', label: 'Instagram', icon: '📸'}, {id: 'facebook', label: 'Facebook', icon: '📘'}].map(t => (
           <button key={t.id} onClick={() => setActiveTab(t.id)}
-            style={{ flex: 1, padding: '10px 8px', border: 'none', borderRadius: 4, cursor: 'pointer', fontFamily: "'Lato', sans-serif", fontSize: 12, letterSpacing: '0.1em', textTransform: 'uppercase', background: activeTab === t.id ? '#FF6600' : 'transparent', color: activeTab === t.id ? '#fff' : '#666' }}>
+            style={{ flex: 1, padding: '10px 8px', border: 'none', borderRadius: 4, cursor: 'pointer', fontFamily: "'Inter', sans-serif", fontSize: 12, letterSpacing: '0.1em', textTransform: 'uppercase', background: activeTab === t.id ? '#FF6600' : 'transparent', color: activeTab === t.id ? '#fff' : '#666' }}>
             <span style={{ fontSize: 18, display: 'block', marginBottom: 2 }}>{t.icon}</span>
             {t.label}
           </button>
@@ -4114,7 +4114,7 @@ function SocialFeed({ profile }) {
         <div>
           <div style={{ ...S.card, marginBottom: 16, textAlign: 'center' }}>
             <div style={{ fontSize: 40, marginBottom: 12 }}>📸</div>
-            <h3 style={{ fontFamily: "'Cinzel', serif", fontSize: 18, color: '#fff', marginBottom: 8 }}>@{IG_USERNAME}</h3>
+            <h3 style={{ fontFamily: "'Inter', sans-serif", fontSize: 18, color: '#fff', marginBottom: 8 }}>@{IG_USERNAME}</h3>
             <p style={{ color: '#888', fontSize: 14, lineHeight: 1.8, marginBottom: 20 }}>Follow ESix10 on Instagram for daily content, behind the scenes, and community highlights.</p>
             <div style={{ display: 'flex', gap: 10, justifyContent: 'center', flexWrap: 'wrap' }}>
               <a href={`https://instagram.com/${IG_USERNAME}`} target="_blank" rel="noreferrer"
@@ -4142,7 +4142,7 @@ function SocialFeed({ profile }) {
         <div>
           <div style={{ ...S.card, marginBottom: 16, textAlign: 'center' }}>
             <div style={{ fontSize: 40, marginBottom: 12 }}>📘</div>
-            <h3 style={{ fontFamily: "'Cinzel', serif", fontSize: 18, color: '#fff', marginBottom: 8 }}>ESix10 Initiative</h3>
+            <h3 style={{ fontFamily: "'Inter', sans-serif", fontSize: 18, color: '#fff', marginBottom: 8 }}>ESix10 Initiative</h3>
             <p style={{ color: '#888', fontSize: 14, lineHeight: 1.8, marginBottom: 20 }}>Like our Facebook page for updates, events, and community news.</p>
             <a href={`https://facebook.com/profile.php?id=${FB_PAGE_ID}`} target="_blank" rel="noreferrer"
               style={{ ...S.btn, textDecoration: 'none', display: 'inline-flex', alignItems: 'center', gap: 8, background: '#1877f2', boxShadow: 'none' }}>
@@ -4169,7 +4169,7 @@ function SocialFeed({ profile }) {
         <p style={{ color: '#CCCCCC', fontSize: 14, lineHeight: 1.8, marginBottom: 12 }}>
           Help grow the community — follow us on social and share with someone who needs this.
         </p>
-        <p style={{ color: '#FF6600', fontFamily: "'Cinzel', serif", fontSize: 13, fontStyle: 'italic' }}>
+        <p style={{ color: '#FF6600', fontFamily: "'Inter', sans-serif", fontSize: 13, fontStyle: 'italic' }}>
           "Iron sharpens iron." — Proverbs 27:17
         </p>
       </div>
@@ -4233,7 +4233,7 @@ function ShareESix10({ profile, onClose }) {
         <div style={{ ...S.card, marginBottom: 16 }}>
           <span style={S.eyebrow}>App Link</span>
           <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
-            <div style={{ flex: 1, background: "rgba(255,255,255,0.04)", border: "1px solid rgba(255,255,255,0.08)", borderRadius: 8, padding: "10px 14px", color: "#FF7E33", fontSize: 14, fontFamily: "'Lato', sans-serif" }}>
+            <div style={{ flex: 1, background: "rgba(255,255,255,0.04)", border: "1px solid rgba(255,255,255,0.08)", borderRadius: 8, padding: "10px 14px", color: "#FF7E33", fontSize: 14, fontFamily: "'Inter', sans-serif" }}>
               community.esix10.com
             </div>
             <button style={{ ...S.btn, padding: "10px 16px", flexShrink: 0 }} onClick={copyLink}>
@@ -4247,23 +4247,23 @@ function ShareESix10({ profile, onClose }) {
           {navigator.share && (
             <button onClick={shareNative} style={{ ...S.card, border: "1px solid rgba(255,102,0,0.2)", cursor: "pointer", textAlign: "center", padding: 16 }}>
               <div style={{ fontSize: 28, marginBottom: 6 }}>📤</div>
-              <div style={{ color: "#fff", fontSize: 13, fontFamily: "'Cinzel', serif" }}>Share</div>
+              <div style={{ color: "#fff", fontSize: 13, fontFamily: "'Inter', sans-serif" }}>Share</div>
               <div style={{ color: "#BBBBBB", fontSize: 11, marginTop: 2 }}>Native share</div>
             </button>
           )}
           <button onClick={shareSMS} style={{ ...S.card, border: "1px solid rgba(255,102,0,0.2)", cursor: "pointer", textAlign: "center", padding: 16 }}>
             <div style={{ fontSize: 28, marginBottom: 6 }}>💬</div>
-            <div style={{ color: "#fff", fontSize: 13, fontFamily: "'Cinzel', serif" }}>Text</div>
+            <div style={{ color: "#fff", fontSize: 13, fontFamily: "'Inter', sans-serif" }}>Text</div>
             <div style={{ color: "#BBBBBB", fontSize: 11, marginTop: 2 }}>Send via SMS</div>
           </button>
           <button onClick={shareFacebook} style={{ ...S.card, border: "1px solid rgba(255,102,0,0.2)", cursor: "pointer", textAlign: "center", padding: 16 }}>
             <div style={{ fontSize: 28, marginBottom: 6 }}>📘</div>
-            <div style={{ color: "#fff", fontSize: 13, fontFamily: "'Cinzel', serif" }}>Facebook</div>
+            <div style={{ color: "#fff", fontSize: 13, fontFamily: "'Inter', sans-serif" }}>Facebook</div>
             <div style={{ color: "#BBBBBB", fontSize: 11, marginTop: 2 }}>Share to page</div>
           </button>
           <button onClick={shareInstagram} style={{ ...S.card, border: "1px solid rgba(255,102,0,0.2)", cursor: "pointer", textAlign: "center", padding: 16 }}>
             <div style={{ fontSize: 28, marginBottom: 6 }}>📸</div>
-            <div style={{ color: "#fff", fontSize: 13, fontFamily: "'Cinzel', serif" }}>Instagram</div>
+            <div style={{ color: "#fff", fontSize: 13, fontFamily: "'Inter', sans-serif" }}>Instagram</div>
             <div style={{ color: "#BBBBBB", fontSize: 11, marginTop: 2 }}>Copy & post</div>
           </button>
         </div>
@@ -4335,7 +4335,7 @@ function KudosCount({ userId }) {
     <div style={{ display: "flex", alignItems: "center", gap: 10, background: "rgba(255,102,0,0.06)", border: "1px solid rgba(255,102,0,0.15)", borderRadius: 10, padding: "10px 16px", marginBottom: 16, marginTop: 8 }}>
       <span style={{ fontSize: 24 }}>👊</span>
       <div>
-        <div style={{ fontFamily: "'Cinzel', serif", fontSize: 16, color: "#fff" }}>{count} {count === 1 ? "Kudos" : "Kudos"} received</div>
+        <div style={{ fontFamily: "'Inter', sans-serif", fontSize: 16, color: "#fff" }}>{count} {count === 1 ? "Kudos" : "Kudos"} received</div>
         <div style={{ color: "#BBBBBB", fontSize: 12 }}>Anonymous encouragement from your community</div>
       </div>
     </div>
@@ -4499,7 +4499,7 @@ function StatsDashboard({ profile }) {
           ].map(s => (
             <div key={s.label} style={{ background: "rgba(255,102,0,0.06)", border: "1px solid rgba(255,102,0,0.15)", borderRadius: 10, padding: "14px 12px", textAlign: "center" }}>
               <div style={{ marginBottom: 4, display: "flex", justifyContent: "center" }}><s.icon size={22} color="#FF7E33" strokeWidth={1.75} /></div>
-              <div style={{ fontFamily: "'Cinzel', serif", fontSize: 20, color: "#FF7E33", lineHeight: 1 }}>{s.value}</div>
+              <div style={{ fontFamily: "'Inter', sans-serif", fontSize: 20, color: "#FF7E33", lineHeight: 1 }}>{s.value}</div>
               <div style={{ color: "#BBBBBB", fontSize: 10, letterSpacing: "0.08em", textTransform: "uppercase", marginTop: 4 }}>{s.label}</div>
             </div>
           ))}
@@ -4528,7 +4528,7 @@ function StatsDashboard({ profile }) {
           {sortedLeaderboard.length === 0 && <p style={S.muted}>No data yet.</p>}
           {sortedLeaderboard.map((m, idx) => (
             <div key={m.id} style={{ display: "flex", alignItems: "center", gap: 12, padding: "10px 0", borderBottom: idx < sortedLeaderboard.length - 1 ? "1px solid rgba(255,255,255,0.05)" : "none" }}>
-              <div style={{ width: 28, textAlign: "center", fontFamily: "'Cinzel', serif", fontSize: 16, color: idx === 0 ? "#C09A2F" : idx === 1 ? "#AAAAAA" : idx === 2 ? "#FF6600" : "#555" }}>
+              <div style={{ width: 28, textAlign: "center", fontFamily: "'Inter', sans-serif", fontSize: 16, color: idx === 0 ? "#C09A2F" : idx === 1 ? "#AAAAAA" : idx === 2 ? "#FF6600" : "#555" }}>
                 {idx < 3 ? <Medal size={18} color={idx === 0 ? "#C09A2F" : idx === 1 ? "#AAAAAA" : "#FF6600"} strokeWidth={1.75} /> : idx + 1}
               </div>
               <Avatar profile={m} size={36} />
@@ -4536,7 +4536,7 @@ function StatsDashboard({ profile }) {
                 <div style={{ color: m.id === profile.id ? "#FF6600" : "#fff", fontSize: 14 }}>{displayName(m)}{m.id === profile.id ? " (You)" : ""}</div>
                 <div style={{ marginTop: 4 }}><Badges userId={m.id} size="small" /></div>
               </div>
-              <div style={{ fontFamily: "'Cinzel', serif", fontSize: 16, color: "#FF7E33" }}>{m[leaderboardMetric] || 0}</div>
+              <div style={{ fontFamily: "'Inter', sans-serif", fontSize: 16, color: "#FF7E33" }}>{m[leaderboardMetric] || 0}</div>
             </div>
           ))}
         </div>
@@ -4559,7 +4559,7 @@ function StatsDashboard({ profile }) {
             ].map(s => (
               <div key={s.label} style={{ background: "rgba(192,154,47,0.06)", border: "1px solid rgba(192,154,47,0.15)", borderRadius: 10, padding: "14px 12px", textAlign: "center" }}>
                 <div style={{ marginBottom: 4, display: "flex", justifyContent: "center" }}><s.icon size={22} color="#C09A2F" strokeWidth={1.75} /></div>
-                <div style={{ fontFamily: "'Cinzel', serif", fontSize: 20, color: "#C09A2F", lineHeight: 1 }}>{s.value}</div>
+                <div style={{ fontFamily: "'Inter', sans-serif", fontSize: 20, color: "#C09A2F", lineHeight: 1 }}>{s.value}</div>
                 <div style={{ color: "#BBBBBB", fontSize: 10, letterSpacing: "0.08em", textTransform: "uppercase", marginTop: 4 }}>{s.label}</div>
               </div>
             ))}
@@ -5103,7 +5103,7 @@ function LegalDoc({ sections }) {
     <div>
       {sections.map((s, i) => (
         <div key={i} style={{ marginBottom: 16 }}>
-          <div style={{ color: "#FF7E33", fontFamily: "'Cinzel', serif", fontSize: 15, marginBottom: 4 }}>{s.h}</div>
+          <div style={{ color: "#FF7E33", fontFamily: "'Inter', sans-serif", fontSize: 15, marginBottom: 4 }}>{s.h}</div>
           {s.p && <p style={{ color: "#CCCCCC", fontSize: 14, lineHeight: 1.7 }}>{s.p}</p>}
         </div>
       ))}
@@ -5291,7 +5291,7 @@ export default function App() {
   if (loading) return (
     <div style={{ minHeight: "100vh", background: "#0a0a0a", display: "flex", alignItems: "center", justifyContent: "center" }}>
       <div style={{ textAlign: "center" }}>
-        <span style={{ fontFamily: "'Cinzel', serif", fontSize: 24, color: "#FF7E33" }}>ESix10</span>
+        <span style={{ fontFamily: "'Inter', sans-serif", fontSize: 24, color: "#FF7E33" }}>ESix10</span>
         <p style={{ color: "#8A8A8A", marginTop: 8, fontSize: 13 }}>Loading...</p>
       </div>
     </div>
@@ -5396,7 +5396,7 @@ export default function App() {
 
   return (
     <div style={{ ...S.app, paddingBottom: isMobile ? 60 : 0 }}>
-      <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@400;600&family=Lato:wght@300;400;700&display=swap" rel="stylesheet" />
+      <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@500;600;700&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet" />
       <style>{GLOBAL_CSS}</style>
 
       {/* NAV */}
@@ -5425,14 +5425,14 @@ export default function App() {
           {tab === "more" && (
             <div style={{ position: "fixed", inset: 0, background: "rgba(10,10,10,0.97)", zIndex: 200, display: "flex", flexDirection: "column", overflowY: "auto", paddingBottom: 90 }}>
               <div style={{ padding: "24px 20px 16px", textAlign: "center" }}>
-                <div style={{ fontFamily: "'Cinzel', serif", fontSize: 11, letterSpacing: "0.3em", color: "#FF7E33", textTransform: "uppercase" }}>More</div>
+                <div style={{ fontFamily: "'Inter', sans-serif", fontSize: 11, letterSpacing: "0.3em", color: "#FF7E33", textTransform: "uppercase" }}>More</div>
               </div>
               <div style={{ display: "flex", flexDirection: "column", gap: 8, padding: "0 20px" }}>
                 {MORE_ITEMS.map(item => (
                   <div key={item.id} onClick={() => { if (item.id === "share") { setShowShare(true); } else { setTab(item.id); } }}
                     style={{ padding: "16px 20px", background: "rgba(255,102,0,0.05)", border: "1px solid rgba(255,102,0,0.15)", borderRadius: 10, cursor: "pointer", display: "flex", alignItems: "center", gap: 16 }}>
                     <NavIcon id={item.id} size={24} color="#FF7E33" />
-                    <span style={{ fontFamily: "'Cinzel', serif", fontSize: 16, color: "#fff" }}>{item.label}</span>
+                    <span style={{ fontFamily: "'Inter', sans-serif", fontSize: 16, color: "#fff" }}>{item.label}</span>
                     <span style={{ marginLeft: "auto", color: "#8A8A8A", fontSize: 18 }}>›</span>
                   </div>
                 ))}
