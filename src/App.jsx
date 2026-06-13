@@ -76,9 +76,9 @@ function requireApproved(profile) {
 const isStaff = (p) => p?.role === "admin" || p?.role === "moderator";
 
 const GROUPS = [
-  { id: "brotherhood", label: "Brotherhood", subtitle: "Steadfast. Unmovable.", icon: "⚔", color: "#FF6600" },
-  { id: "sisterhood", label: "Sisterhood", subtitle: "Fierce. Faithful.", icon: "✦", color: "#FF6600" },
-  { id: "family", label: "Family", subtitle: "Rooted. Together. Unbreakable.", icon: "◈", color: "#FF6600" },
+  { id: "brotherhood", label: "Brotherhood", subtitle: "Steadfast. Unmovable.", icon: "⚔", color: "#FF7E33" },
+  { id: "sisterhood", label: "Sisterhood", subtitle: "Fierce. Faithful.", icon: "✦", color: "#FF7E33" },
+  { id: "family", label: "Family", subtitle: "Rooted. Together. Unbreakable.", icon: "◈", color: "#FF7E33" },
 ];
 
 const ADMIN_EMAIL = "michael@esix10.com";
@@ -125,9 +125,9 @@ const displayName = (profile) => {
 // Preset ESix10 avatars
 // Level system
 const LEVELS = [
-  { name: "Recruit", min: 0, max: 49, icon: "🛡️", color: "#888" },
+  { name: "Recruit", min: 0, max: 49, icon: "🛡️", color: "#BBBBBB" },
   { name: "Soldier", min: 50, max: 149, icon: "⚔️", color: "#51cf66" },
-  { name: "Warrior", min: 150, max: 349, icon: "🔥", color: "#FF6600" },
+  { name: "Warrior", min: 150, max: 349, icon: "🔥", color: "#FF7E33" },
   { name: "Guardian", min: 350, max: 699, icon: "🦁", color: "#fcc419" },
   { name: "Iron", min: 700, max: 99999, icon: "👑", color: "#C09A2F" },
 ];
@@ -269,13 +269,13 @@ function Avatar({ profile, size = 38, onClick }) {
   if (preset) {
     return (
       <div style={{ ...style, background: "linear-gradient(135deg, rgba(255,102,0,0.2), rgba(192,154,47,0.15))" }} onClick={onClick}>
-        {(() => { const I = AVATAR_ICONS[preset.id] || User; return <I size={Math.round(size * 0.5)} color="#FF6600" strokeWidth={1.75} />; })()}
+        {(() => { const I = AVATAR_ICONS[preset.id] || User; return <I size={Math.round(size * 0.5)} color="#FF7E33" strokeWidth={1.75} />; })()}
       </div>
     );
   }
 
   return (
-    <div style={{ ...style, background: "linear-gradient(135deg, rgba(255,102,0,0.3), rgba(192,154,47,0.2))", color: "#FF6600", fontFamily: "'Cinzel', serif", fontSize: size * 0.4, fontWeight: 600 }} onClick={onClick}>
+    <div style={{ ...style, background: "linear-gradient(135deg, rgba(255,102,0,0.3), rgba(192,154,47,0.2))", color: "#FF7E33", fontFamily: "'Cinzel', serif", fontSize: size * 0.4, fontWeight: 600 }} onClick={onClick}>
       {(profile?.username || profile?.full_name || "?")[0].toUpperCase()}
     </div>
   );
@@ -285,6 +285,9 @@ function Avatar({ profile, size = 38, onClick }) {
 
 // ─── Global CSS ───────────────────────────────────────────────────────────────
 const GLOBAL_CSS = `
+/* Crisp text rendering (fixes fuzzy light-on-dark text on Mac/Retina) */
+html, body, #root, * { -webkit-font-smoothing: antialiased; -moz-osx-font-smoothing: grayscale; }
+body { text-rendering: optimizeLegibility; }
 @keyframes fadeUp { from { opacity:0; transform:translateY(16px); } to { opacity:1; transform:translateY(0); } }
 @keyframes slideIn { from { opacity:0; transform:translateX(-12px); } to { opacity:1; transform:translateX(0); } }
 @keyframes pulse { 0%,100% { opacity:1; } 50% { opacity:0.5; } }
@@ -359,25 +362,25 @@ const S = {
   app: { minHeight: "100vh", background: "#0d1117", color: "#fff", fontFamily: "'Lato', sans-serif", fontSize: 15 },
   nav: { position: "fixed", top: 0, left: 0, right: 0, height: 60, background: "linear-gradient(180deg, rgba(10,12,18,0.99) 0%, rgba(13,17,23,0.97) 100%)", borderBottom: "1px solid rgba(255,102,0,0.15)", display: "flex", alignItems: "center", justifyContent: "space-between", padding: "0 16px", zIndex: 100 },
   navLogo: { fontFamily: "'Cinzel', serif", fontSize: 16, fontWeight: 600, color: "#fff", letterSpacing: "0.08em" },
-  navLogoSub: { color: "#FF6600", fontSize: 9, display: "block", letterSpacing: "0.35em", marginTop: -2 },
+  navLogoSub: { color: "#FF7E33", fontSize: 9, display: "block", letterSpacing: "0.35em", marginTop: -2 },
   navRight: { display: "flex", alignItems: "center", gap: 16 },
-  badge: { background: "rgba(255,102,0,0.15)", color: "#FF6600", padding: "4px 12px", borderRadius: 20, fontSize: 12, fontWeight: 600, letterSpacing: "0.1em", textTransform: "uppercase" },
+  badge: { background: "rgba(255,102,0,0.15)", color: "#FF7E33", padding: "4px 12px", borderRadius: 20, fontSize: 12, fontWeight: 600, letterSpacing: "0.1em", textTransform: "uppercase" },
   btn: { background: "linear-gradient(135deg, #FF6600, #E55A00)", color: "#fff", border: "none", borderRadius: 8, boxShadow: "0 2px 12px rgba(255,102,0,0.25)", padding: "10px 24px", fontFamily: "'Lato', sans-serif", fontSize: 12, letterSpacing: "0.15em", textTransform: "uppercase", cursor: "pointer", transition: "background 0.2s" },
-  btnGhost: { background: "transparent", color: "#AAAAAA", border: "1px solid rgba(255,255,255,0.15)", borderRadius: 8, padding: "10px 24px", fontFamily: "'Lato', sans-serif", fontSize: 12, letterSpacing: "0.15em", textTransform: "uppercase", cursor: "pointer" },
+  btnGhost: { background: "transparent", color: "#FFFFFF", border: "1px solid rgba(255,255,255,0.15)", borderRadius: 8, padding: "10px 24px", fontFamily: "'Lato', sans-serif", fontSize: 12, letterSpacing: "0.15em", textTransform: "uppercase", cursor: "pointer" },
   btnSm: { background: "linear-gradient(135deg, #FF6600, #E55A00)", color: "#fff", border: "none", borderRadius: 8, boxShadow: "0 2px 8px rgba(255,102,0,0.2)", padding: "8px 16px", fontFamily: "'Lato', sans-serif", fontSize: 11, letterSpacing: "0.12em", textTransform: "uppercase", cursor: "pointer" },
   btnDanger: { background: "transparent", color: "#ff4444", border: "1px solid #ff4444", borderRadius: 8, padding: "6px 12px", fontSize: 11, cursor: "pointer" },
   page: { paddingTop: 90, maxWidth: 1100, margin: "0 auto", padding: "90px 24px 60px" },
   card: { background: "linear-gradient(145deg, rgba(22,27,36,0.98), rgba(16,20,28,0.98))", border: "1px solid rgba(255,255,255,0.07)", borderRadius: 12, padding: 24, transition: "border-color 0.2s" },
   input: { width: "100%", background: "rgba(255,255,255,0.04)", border: "1px solid rgba(255,255,255,0.08)", borderRadius: 8, padding: "12px 16px", color: "#fff", fontFamily: "'Lato', sans-serif", fontSize: 15, outline: "none", boxSizing: "border-box" },
-  label: { fontSize: 10, letterSpacing: "0.2em", textTransform: "uppercase", color: "#FF6600", marginBottom: 6, display: "block" },
+  label: { fontSize: 10, letterSpacing: "0.2em", textTransform: "uppercase", color: "#FF7E33", marginBottom: 6, display: "block" },
   divider: { width: 50, height: 2, background: "#FF6600", margin: "16px 0" },
-  eyebrow: { fontSize: 10, letterSpacing: "0.2em", textTransform: "uppercase", color: "#FF6600", display: "block", marginBottom: 10 },
+  eyebrow: { fontSize: 10, letterSpacing: "0.2em", textTransform: "uppercase", color: "#FF7E33", display: "block", marginBottom: 10 },
   h1: { fontFamily: "'Cinzel', serif", fontSize: 36, fontWeight: 400, color: "#fff", marginBottom: 8 },
   h2: { fontFamily: "'Cinzel', serif", fontSize: 26, fontWeight: 400, color: "#fff", marginBottom: 8 },
   h3: { fontFamily: "'Cinzel', serif", fontSize: 20, fontWeight: 400, color: "#fff", marginBottom: 8 },
-  muted: { color: "#888", fontSize: 13 },
-  grey: { color: "#CCCCCC" },
-  orange: { color: "#FF6600" },
+  muted: { color: "#BBBBBB", fontSize: 13 },
+  grey: { color: "#FFFFFF" },
+  orange: { color: "#FF7E33" },
   error: { color: "#ff6b6b", fontSize: 13, marginTop: 6 },
   success: { color: "#51cf66", fontSize: 13, marginTop: 6 },
   flex: { display: "flex", alignItems: "center", gap: 12 },
@@ -386,8 +389,8 @@ const S = {
   grid3: { display: "grid", gridTemplateColumns: "repeat(3,1fr)", gap: 16 },
   post: { background: "linear-gradient(145deg, rgba(22,27,36,0.98), rgba(16,20,28,0.98))", border: "1px solid rgba(255,255,255,0.07)", borderRadius: 12, padding: 20, marginBottom: 12, transition: "border-color 0.2s" },
   postAuthor: { fontFamily: "'Cinzel', serif", fontSize: 14, fontWeight: 600, color: "#fff" },
-  postTime: { fontSize: 11, color: "#555", marginLeft: 8 },
-  postBody: { color: "#CCCCCC", fontSize: 15, lineHeight: 1.7, marginTop: 10 },
+  postTime: { fontSize: 11, color: "#8A8A8A", marginLeft: 8 },
+  postBody: { color: "#FFFFFF", fontSize: 15, lineHeight: 1.7, marginTop: 10 },
   tab: (active) => ({ padding: "10px 20px", background: active ? "#FF6600" : "transparent", color: active ? "#fff" : "#888", border: active ? "none" : "1px solid rgba(255,255,255,0.1)", borderRadius: 8, cursor: "pointer", fontFamily: "'Lato',sans-serif", fontSize: 11, letterSpacing: "0.12em", textTransform: "uppercase" }),
   groupCard: (selected) => ({ border: selected ? "2px solid #FF6600" : "1px solid rgba(255,255,255,0.08)", borderRadius: 12, padding: "24px 20px", cursor: "pointer", background: selected ? "rgba(255,102,0,0.08)" : "rgba(26,26,26,0.6)", textAlign: "center", transition: "all 0.2s" }),
 };
@@ -548,7 +551,7 @@ function SetupModal({ onClose }) {
           <li>Paste the SQL below and click <strong style={{ color: "#fff" }}>Run</strong></li>
           <li>Come back here and refresh</li>
         </ol>
-        <pre style={{ background: "#111", border: "1px solid rgba(255,102,0,0.2)", borderRadius: 4, padding: 16, fontSize: 12, color: "#AAAAAA", overflowX: "auto", whiteSpace: "pre-wrap", marginBottom: 20 }}>{SQL_SETUP}</pre>
+        <pre style={{ background: "#111", border: "1px solid rgba(255,102,0,0.2)", borderRadius: 4, padding: 16, fontSize: 12, color: "#FFFFFF", overflowX: "auto", whiteSpace: "pre-wrap", marginBottom: 20 }}>{SQL_SETUP}</pre>
         <div style={{ display: "flex", gap: 12 }}>
           <button style={S.btn} onClick={() => { navigator.clipboard.writeText(SQL_SETUP); setCopied(true); setTimeout(() => setCopied(false), 2000); }}>
             {copied ? "✓ Copied!" : "Copy SQL"}
@@ -566,7 +569,7 @@ function PendingScreen({ profile, onSignOut }) {
     <div style={{ minHeight: "100vh", background: "#0a0a0a", display: "flex", alignItems: "center", justifyContent: "center", padding: 24 }}>
       <div style={{ maxWidth: 480, width: "100%", textAlign: "center" }}>
         <img src="/esix10logo.png" alt="ESix10" style={{ height: 134, width: "auto", objectFit: "contain", marginBottom: 8 }} />
-        <span style={{ color: "#FF6600", fontSize: 10, display: "block", letterSpacing: "0.35em", textTransform: "uppercase", marginBottom: 32 }}>Community</span>
+        <span style={{ color: "#FF7E33", fontSize: 10, display: "block", letterSpacing: "0.35em", textTransform: "uppercase", marginBottom: 32 }}>Community</span>
         <div style={{ ...S.card, textAlign: "left" }}>
           <div style={{ textAlign: "center", marginBottom: 24 }}>
             <div style={{ width: 60, height: 60, borderRadius: "50%", background: "rgba(255,102,0,0.1)", border: "2px solid rgba(255,102,0,0.3)", display: "flex", alignItems: "center", justifyContent: "center", margin: "0 auto 16px", fontSize: 24 }}>⏳</div>
@@ -575,13 +578,13 @@ function PendingScreen({ profile, onSignOut }) {
           </div>
           <div style={S.divider} />
           <p style={{ ...S.grey, lineHeight: 1.8, marginBottom: 16 }}>
-            Your application to join the <strong style={{ color: "#FF6600" }}>{group?.label || "ESix10"} community</strong> has been received and is being reviewed.
+            Your application to join the <strong style={{ color: "#FF7E33" }}>{group?.label || "ESix10"} community</strong> has been received and is being reviewed.
           </p>
           <p style={{ ...S.grey, lineHeight: 1.8, marginBottom: 24 }}>
             You will receive an email confirmation once your application has been approved. This typically takes 24–48 hours.
           </p>
           <div style={{ background: "rgba(255,102,0,0.06)", border: "1px solid rgba(255,102,0,0.15)", borderRadius: 4, padding: "16px 20px", marginBottom: 24 }}>
-            <p style={{ color: "#AAAAAA", fontSize: 14, fontStyle: "italic", lineHeight: 1.7 }}>
+            <p style={{ color: "#FFFFFF", fontSize: 14, fontStyle: "italic", lineHeight: 1.7 }}>
               "Iron sharpens iron, so one person sharpens another." — Proverbs 27:17
             </p>
           </div>
@@ -646,7 +649,7 @@ function AuthScreen({ onAuth }) {
       <div style={{ width: "100%", maxWidth: 420 }}>
         <div style={{ textAlign: "center", marginBottom: 40 }}>
           <img src="/esix10logo.png" alt="ESix10" style={{ height: 144, width: "auto", objectFit: "contain", marginBottom: 8 }} />
-          <span style={{ color: "#FF6600", fontSize: 10, display: "block", letterSpacing: "0.35em", textTransform: "uppercase" }}>Community</span>
+          <span style={{ color: "#FF7E33", fontSize: 10, display: "block", letterSpacing: "0.35em", textTransform: "uppercase" }}>Community</span>
           <div style={{ width: 40, height: 2, background: "#FF6600", margin: "16px auto" }} />
           <p style={S.grey}>Prepared. Equipped. Unshaken.</p>
         </div>
@@ -664,31 +667,31 @@ function AuthScreen({ onAuth }) {
               <div style={{ marginBottom: 16 }}>
                 <label style={S.label}>Username</label>
                 <input style={S.input} placeholder="Choose a username (e.g. warrior_dad)" value={username} onChange={e => setUsername(e.target.value)} />
-                <p style={{ color: "#555", fontSize: 11, marginTop: 4 }}>Letters, numbers, and underscores only. Shown publicly.</p>
+                <p style={{ color: "#8A8A8A", fontSize: 11, marginTop: 4 }}>Letters, numbers, and underscores only. Shown publicly.</p>
               </div>
               <div style={{ marginBottom: 16, background: "rgba(255,255,255,0.03)", border: "1px solid rgba(255,255,255,0.08)", borderRadius: 8, padding: 16 }}>
                 <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
                   <input type="checkbox" checked={ageConfirmed} onChange={e => setAgeConfirmed(e.target.checked)} style={{ accentColor: "#FF6600", width: 18, height: 18, flexShrink: 0 }} />
-                  <p style={{ color: "#AAAAAA", fontSize: 13, lineHeight: 1.7 }}>I confirm that I am <strong style={{ color: "#fff" }}>18 years of age or older</strong>.</p>
+                  <p style={{ color: "#FFFFFF", fontSize: 13, lineHeight: 1.7 }}>I confirm that I am <strong style={{ color: "#fff" }}>18 years of age or older</strong>.</p>
                 </div>
               </div>
               <div style={{ marginBottom: 16, background: "rgba(255,102,0,0.04)", border: "1px solid rgba(255,102,0,0.15)", borderRadius: 8, padding: 16 }}>
                 <div style={{ display: "flex", alignItems: "flex-start", gap: 12 }}>
                   <input type="checkbox" checked={agreed} onChange={e => setAgreed(e.target.checked)} style={{ marginTop: 3, accentColor: "#FF6600", width: 16, height: 16, flexShrink: 0 }} />
                   <div>
-                    <p style={{ color: "#AAAAAA", fontSize: 13, lineHeight: 1.7 }}>
-                      I have read and agree to the <span style={{ color: "#FF6600", cursor: "pointer", textDecoration: "underline" }} onClick={() => setShowTerms(!showTerms)}>ESix10 Community Standards</span>.
+                    <p style={{ color: "#FFFFFF", fontSize: 13, lineHeight: 1.7 }}>
+                      I have read and agree to the <span style={{ color: "#FF7E33", cursor: "pointer", textDecoration: "underline" }} onClick={() => setShowTerms(!showTerms)}>ESix10 Community Standards</span>.
                     </p>
                     {showTerms && (
                       <div style={{ marginTop: 12, padding: 12, background: "rgba(0,0,0,0.3)", borderRadius: 4 }}>
-                        <p style={{ color: "#AAAAAA", fontSize: 12, lineHeight: 1.9 }}>
-                          <strong style={{ color: "#FF6600" }}>1. Real people. Real respect.</strong> Treat everyone the way you'd want to be treated in your own home.<br/><br/>
-                          <strong style={{ color: "#FF6600" }}>2. Language.</strong> We're adults. Real talk happens. But know your audience — keep it from becoming someone else's burden. If you wouldn't say it to someone's face at church, think twice.<br/><br/>
-                          <strong style={{ color: "#FF6600" }}>3. Confidentiality.</strong> What's shared here stays here. Someone's prayer request, struggle, or testimony is not yours to share outside these walls. Period.<br/><br/>
-                          <strong style={{ color: "#FF6600" }}>4. No harassment.</strong> We sharpen each other — we don't tear each other apart. Disagreement is fine. Disrespect is not.<br/><br/>
-                          <strong style={{ color: "#FF6600" }}>5. Faith-forward.</strong> This community was built on Ephesians 6:10. We don't all look the same or sound the same, but we stand on the same foundation. Honor that.<br/><br/>
-                          <strong style={{ color: "#FF6600" }}>6. Admin authority is final.</strong> The ESix10 team has the right to remove anyone who disrupts the community. This is someone's house — act accordingly.<br/><br/>
-                          <strong style={{ color: "#FF6600" }}>7. Membership is a privilege.</strong> It can be revoked at any time for conduct that goes against the spirit of this community.
+                        <p style={{ color: "#FFFFFF", fontSize: 12, lineHeight: 1.9 }}>
+                          <strong style={{ color: "#FF7E33" }}>1. Real people. Real respect.</strong> Treat everyone the way you'd want to be treated in your own home.<br/><br/>
+                          <strong style={{ color: "#FF7E33" }}>2. Language.</strong> We're adults. Real talk happens. But know your audience — keep it from becoming someone else's burden. If you wouldn't say it to someone's face at church, think twice.<br/><br/>
+                          <strong style={{ color: "#FF7E33" }}>3. Confidentiality.</strong> What's shared here stays here. Someone's prayer request, struggle, or testimony is not yours to share outside these walls. Period.<br/><br/>
+                          <strong style={{ color: "#FF7E33" }}>4. No harassment.</strong> We sharpen each other — we don't tear each other apart. Disagreement is fine. Disrespect is not.<br/><br/>
+                          <strong style={{ color: "#FF7E33" }}>5. Faith-forward.</strong> This community was built on Ephesians 6:10. We don't all look the same or sound the same, but we stand on the same foundation. Honor that.<br/><br/>
+                          <strong style={{ color: "#FF7E33" }}>6. Admin authority is final.</strong> The ESix10 team has the right to remove anyone who disrupts the community. This is someone's house — act accordingly.<br/><br/>
+                          <strong style={{ color: "#FF7E33" }}>7. Membership is a privilege.</strong> It can be revoked at any time for conduct that goes against the spirit of this community.
                         </p>
                       </div>
                     )}
@@ -707,7 +710,7 @@ function AuthScreen({ onAuth }) {
           </div>
           {mode === "signup" && (
             <div style={{ marginBottom: 16, textAlign: "center" }}>
-<span style={{ color: "#555", fontSize: 12 }}>By joining you agree to our </span><span style={{ color: "#FF6600", fontSize: 12 }}>Statement of Faith</span>
+<span style={{ color: "#8A8A8A", fontSize: 12 }}>By joining you agree to our </span><span style={{ color: "#FF7E33", fontSize: 12 }}>Statement of Faith</span>
             </div>
           )}
           {error && <p style={S.error}>{error}</p>}
@@ -717,7 +720,7 @@ function AuthScreen({ onAuth }) {
           </button>
           {mode === "login" && (
             <p style={{ textAlign: "center", marginTop: 16 }}>
-              <span style={{ color: "#FF6600", fontSize: 13, cursor: "pointer", textDecoration: "underline" }} onClick={forgotPassword}>Forgot password?</span>
+              <span style={{ color: "#FF7E33", fontSize: 13, cursor: "pointer", textDecoration: "underline" }} onClick={forgotPassword}>Forgot password?</span>
             </p>
           )}
         </div>
@@ -771,14 +774,14 @@ function GroupSelect({ user, onSelect }) {
         <div style={S.grid3}>
           {GROUPS.map(g => (
             <div key={g.id} style={S.groupCard(selected.includes(g.id))} onClick={() => toggleGroup(g.id)}>
-              <div style={{ marginBottom: 12, color: "#FF6600", display: "flex", justifyContent: "center" }}><NavIcon id={g.id} size={32} /></div>
+              <div style={{ marginBottom: 12, color: "#FF7E33", display: "flex", justifyContent: "center" }}><NavIcon id={g.id} size={32} /></div>
               {selected.includes(g.id) && <div style={{ position: "absolute", top: 12, right: 12, background: "#FF6600", borderRadius: "50%", width: 20, height: 20, display: "flex", alignItems: "center", justifyContent: "center", color: "#fff", fontSize: 12 }}>✓</div>}
               <h3 style={{ fontFamily: "'Cinzel', serif", fontSize: 20, fontWeight: 400, color: "#fff", marginBottom: 8 }}>{g.label}</h3>
-              <p style={{ fontSize: 13, color: "#FF6600", letterSpacing: "0.1em", textTransform: "uppercase", fontWeight: 700 }}>{g.subtitle}</p>
+              <p style={{ fontSize: 13, color: "#FF7E33", letterSpacing: "0.1em", textTransform: "uppercase", fontWeight: 700 }}>{g.subtitle}</p>
             </div>
           ))}
         </div>
-        <p style={{ textAlign: "center", color: "#555", fontSize: 12, marginTop: 16 }}>Brotherhood and Sisterhood cannot be selected together</p>
+        <p style={{ textAlign: "center", color: "#8A8A8A", fontSize: 12, marginTop: 16 }}>Brotherhood and Sisterhood cannot be selected together</p>
         <div style={{ textAlign: "center", marginTop: 24 }}>
           <button style={{ ...S.btn, padding: "14px 48px", opacity: selected.length > 0 ? 1 : 0.4 }} onClick={confirm} disabled={selected.length === 0 || loading}>
             {loading ? "Joining..." : `Join ${selected.length > 0 ? selected.length + " group" + (selected.length > 1 ? "s" : "") : "the Community"}`}
@@ -837,9 +840,9 @@ function ActivityTicker({ profile }) {
   return (
     <div className="activity-ticker">
       <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
-        <span style={{ fontSize: 10, letterSpacing: "0.15em", textTransform: "uppercase", color: "#FF6600", flexShrink: 0 }}>Live</span>
+        <span style={{ fontSize: 10, letterSpacing: "0.15em", textTransform: "uppercase", color: "#FF7E33", flexShrink: 0 }}>Live</span>
         <span style={{ width: 6, height: 6, borderRadius: "50%", background: "#51cf66", flexShrink: 0, animation: "pulse 1.5s infinite" }} />
-        <span style={{ color: "#CCCCCC", fontSize: 13, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }} className="activity-item">
+        <span style={{ color: "#FFFFFF", fontSize: 13, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }} className="activity-item">
           {activities[idx]}
         </span>
       </div>
@@ -911,19 +914,19 @@ function PersonalHeader({ profile }) {
             <LevelIcon level={level} size={13} /> {level.name}
           </span>
           {profile.state && localCount > 0 && (
-            <span style={{ color: "#555", fontSize: 12 }}><MapPin size={11} style={{ verticalAlign: "-1px", marginRight: 2 }} /> {localCount} members in {profile.state}</span>
+            <span style={{ color: "#8A8A8A", fontSize: 12 }}><MapPin size={11} style={{ verticalAlign: "-1px", marginRight: 2 }} /> {localCount} members in {profile.state}</span>
           )}
         </div>
       </div>
 
       {lastVisitSummary && (lastVisitSummary.posts > 0 || lastVisitSummary.prayers > 0) && (
         <div style={{ background: "linear-gradient(135deg, rgba(255,102,0,0.08), rgba(192,154,47,0.06))", border: "1px solid rgba(255,102,0,0.2)", borderRadius: 10, padding: "10px 16px", marginBottom: 12, display: "flex", alignItems: "center", gap: 10 }}>
-          <Eye size={15} color="#FF6600" strokeWidth={1.75} />
-          <p style={{ color: "#CCCCCC", fontSize: 13 }}>
+          <Eye size={15} color="#FF7E33" strokeWidth={1.75} />
+          <p style={{ color: "#FFFFFF", fontSize: 13 }}>
             Since your last visit:
-            {lastVisitSummary.posts > 0 && <span style={{ color: "#FF6600" }}> {lastVisitSummary.posts} new post{lastVisitSummary.posts !== 1 ? "s" : ""}</span>}
-            {lastVisitSummary.posts > 0 && lastVisitSummary.prayers > 0 && <span style={{ color: "#555" }}> · </span>}
-            {lastVisitSummary.prayers > 0 && <span style={{ color: "#FF6600" }}> {lastVisitSummary.prayers} prayer request{lastVisitSummary.prayers !== 1 ? "s" : ""}</span>}
+            {lastVisitSummary.posts > 0 && <span style={{ color: "#FF7E33" }}> {lastVisitSummary.posts} new post{lastVisitSummary.posts !== 1 ? "s" : ""}</span>}
+            {lastVisitSummary.posts > 0 && lastVisitSummary.prayers > 0 && <span style={{ color: "#8A8A8A" }}> · </span>}
+            {lastVisitSummary.prayers > 0 && <span style={{ color: "#FF7E33" }}> {lastVisitSummary.prayers} prayer request{lastVisitSummary.prayers !== 1 ? "s" : ""}</span>}
           </p>
         </div>
       )}
@@ -931,39 +934,39 @@ function PersonalHeader({ profile }) {
       <div style={{ display: "flex", gap: 8, overflowX: "auto", paddingBottom: 4, WebkitOverflowScrolling: "touch" }}>
         {walkStreak > 0 && (
           <div style={{ background: "rgba(255,102,0,0.06)", border: "1px solid rgba(255,102,0,0.15)", borderRadius: 10, padding: "10px 16px", flexShrink: 0, textAlign: "center", minWidth: 80 }}>
-            <div style={{ marginBottom: 2, display: "flex", justifyContent: "center" }}><Flame size={20} color="#FF6600" strokeWidth={1.75} /></div>
-            <div style={{ fontFamily: "'Cinzel', serif", fontSize: 18, color: "#FF6600", lineHeight: 1 }}>{walkStreak}</div>
-            <div style={{ color: "#555", fontSize: 10, letterSpacing: "0.08em", textTransform: "uppercase", marginTop: 2 }}>Streak</div>
+            <div style={{ marginBottom: 2, display: "flex", justifyContent: "center" }}><Flame size={20} color="#FF7E33" strokeWidth={1.75} /></div>
+            <div style={{ fontFamily: "'Cinzel', serif", fontSize: 18, color: "#FF7E33", lineHeight: 1 }}>{walkStreak}</div>
+            <div style={{ color: "#8A8A8A", fontSize: 10, letterSpacing: "0.08em", textTransform: "uppercase", marginTop: 2 }}>Streak</div>
           </div>
         )}
 
         {kudosCount > 0 && (
           <div style={{ background: "rgba(255,102,0,0.06)", border: "1px solid rgba(255,102,0,0.15)", borderRadius: 10, padding: "10px 16px", flexShrink: 0, textAlign: "center", minWidth: 80 }}>
-            <div style={{ marginBottom: 2, display: "flex", justifyContent: "center" }}><Award size={20} color="#FF6600" strokeWidth={1.75} /></div>
-            <div style={{ fontFamily: "'Cinzel', serif", fontSize: 18, color: "#FF6600", lineHeight: 1 }}>{kudosCount}</div>
-            <div style={{ color: "#555", fontSize: 10, letterSpacing: "0.08em", textTransform: "uppercase", marginTop: 2 }}>Kudos</div>
+            <div style={{ marginBottom: 2, display: "flex", justifyContent: "center" }}><Award size={20} color="#FF7E33" strokeWidth={1.75} /></div>
+            <div style={{ fontFamily: "'Cinzel', serif", fontSize: 18, color: "#FF7E33", lineHeight: 1 }}>{kudosCount}</div>
+            <div style={{ color: "#8A8A8A", fontSize: 10, letterSpacing: "0.08em", textTransform: "uppercase", marginTop: 2 }}>Kudos</div>
           </div>
         )}
 
         <div style={{ background: "rgba(255,102,0,0.06)", border: "1px solid rgba(255,102,0,0.15)", borderRadius: 10, padding: "10px 16px", flexShrink: 0, textAlign: "center", minWidth: 80 }}>
           <div style={{ marginBottom: 2, display: "flex", justifyContent: "center" }}><LevelIcon level={level} size={20} style={{ marginRight: 0 }} /></div>
           <div style={{ fontFamily: "'Cinzel', serif", fontSize: 14, color: level.color, lineHeight: 1 }}>{level.name}</div>
-          <div style={{ color: "#555", fontSize: 10, letterSpacing: "0.08em", textTransform: "uppercase", marginTop: 2 }}>{xp} XP</div>
+          <div style={{ color: "#8A8A8A", fontSize: 10, letterSpacing: "0.08em", textTransform: "uppercase", marginTop: 2 }}>{xp} XP</div>
         </div>
 
         {stats?.totalMiles > 0 && (
           <div style={{ background: "rgba(255,102,0,0.06)", border: "1px solid rgba(255,102,0,0.15)", borderRadius: 10, padding: "10px 16px", flexShrink: 0, textAlign: "center", minWidth: 80 }}>
-            <div style={{ marginBottom: 2, display: "flex", justifyContent: "center" }}><Footprints size={20} color="#FF6600" strokeWidth={1.75} /></div>
-            <div style={{ fontFamily: "'Cinzel', serif", fontSize: 18, color: "#FF6600", lineHeight: 1 }}>{stats.totalMiles.toFixed(1)}</div>
-            <div style={{ color: "#555", fontSize: 10, letterSpacing: "0.08em", textTransform: "uppercase", marginTop: 2 }}>Miles</div>
+            <div style={{ marginBottom: 2, display: "flex", justifyContent: "center" }}><Footprints size={20} color="#FF7E33" strokeWidth={1.75} /></div>
+            <div style={{ fontFamily: "'Cinzel', serif", fontSize: 18, color: "#FF7E33", lineHeight: 1 }}>{stats.totalMiles.toFixed(1)}</div>
+            <div style={{ color: "#8A8A8A", fontSize: 10, letterSpacing: "0.08em", textTransform: "uppercase", marginTop: 2 }}>Miles</div>
           </div>
         )}
 
         {profile.state && localCount > 1 && (
           <div style={{ background: "rgba(255,102,0,0.06)", border: "1px solid rgba(255,102,0,0.15)", borderRadius: 10, padding: "10px 16px", flexShrink: 0, textAlign: "center", minWidth: 80 }}>
-            <div style={{ marginBottom: 2, display: "flex", justifyContent: "center" }}><MapPin size={20} color="#FF6600" strokeWidth={1.75} /></div>
-            <div style={{ fontFamily: "'Cinzel', serif", fontSize: 18, color: "#FF6600", lineHeight: 1 }}>{localCount}</div>
-            <div style={{ color: "#555", fontSize: 10, letterSpacing: "0.08em", textTransform: "uppercase", marginTop: 2 }}>{profile.state}</div>
+            <div style={{ marginBottom: 2, display: "flex", justifyContent: "center" }}><MapPin size={20} color="#FF7E33" strokeWidth={1.75} /></div>
+            <div style={{ fontFamily: "'Cinzel', serif", fontSize: 18, color: "#FF7E33", lineHeight: 1 }}>{localCount}</div>
+            <div style={{ color: "#8A8A8A", fontSize: 10, letterSpacing: "0.08em", textTransform: "uppercase", marginTop: 2 }}>{profile.state}</div>
           </div>
         )}
       </div>
@@ -1092,16 +1095,16 @@ function Feed({ profile, activeGroup, isNewMember }) {
           <button onClick={() => setShowWelcome(false)} style={{ position: "absolute", top: 12, right: 16, background: "none", border: "none", color: "#666", cursor: "pointer", fontSize: 18 }}>x</button>
           <span style={S.eyebrow}>Welcome to ESix10</span>
           <h3 style={{ fontFamily: "'Cinzel', serif", fontSize: 20, color: "#fff", marginBottom: 8 }}>You are in. Now stand firm.</h3>
-          <p style={{ color: "#AAAAAA", fontSize: 14, lineHeight: 1.7 }}>You have joined the {GROUPS.find(g => g.id === profile.group_id)?.label}. Introduce yourself, engage with the community, and stand firm. Ephesians 6:10</p>
+          <p style={{ color: "#FFFFFF", fontSize: 14, lineHeight: 1.7 }}>You have joined the {GROUPS.find(g => g.id === profile.group_id)?.label}. Introduce yourself, engage with the community, and stand firm. Ephesians 6:10</p>
         </div>
       )}
       <div className="verse-banner" style={{ marginBottom: 20 }}>
         <div style={{ display: "flex", alignItems: "flex-start", gap: 12 }}>
-          <Cross size={20} color="#FF6600" strokeWidth={1.75} style={{ flexShrink: 0 }} />
+          <Cross size={20} color="#FF7E33" strokeWidth={1.75} style={{ flexShrink: 0 }} />
           <div>
             <span style={{ ...S.eyebrow, marginBottom: 4 }}>Verse of the Day</span>
             <p style={{ fontFamily: "'Cinzel', serif", fontSize: 14, fontStyle: "italic", color: "#fff", lineHeight: 1.7, marginBottom: 4 }}>"{verse.text}"</p>
-            <p style={{ color: "#FF6600", fontSize: 12, letterSpacing: "0.1em" }}>— {verse.ref}</p>
+            <p style={{ color: "#FF7E33", fontSize: 12, letterSpacing: "0.1em" }}>— {verse.ref}</p>
           </div>
         </div>
       </div>
@@ -1134,7 +1137,7 @@ function Feed({ profile, activeGroup, isNewMember }) {
             <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginTop: 12 }}>
               <div>
                 <input ref={photoRef} type="file" accept="image/*" style={{ display: "none" }} onChange={handlePhotoSelect} />
-                <button onClick={() => photoRef.current.click()} style={{ background: "none", border: "1px solid rgba(255,255,255,0.1)", borderRadius: 6, padding: "8px 14px", color: "#888", cursor: "pointer", fontSize: 13, display: "flex", alignItems: "center", gap: 6 }}>
+                <button onClick={() => photoRef.current.click()} style={{ background: "none", border: "1px solid rgba(255,255,255,0.1)", borderRadius: 6, padding: "8px 14px", color: "#BBBBBB", cursor: "pointer", fontSize: 13, display: "flex", alignItems: "center", gap: 6 }}>
                   <Camera size={15} /> Photo
                 </button>
               </div>
@@ -1157,7 +1160,7 @@ function Feed({ profile, activeGroup, isNewMember }) {
             <div key={post.id} className="post-card" style={{ ...S.post, marginBottom: 12 }}>
               <div style={{ ...S.flexBetween, flexWrap: "wrap", gap: 6 }}>
                 <div style={S.flex}>
-                  <div style={{ width: 44, height: 44, borderRadius: "50%", background: "linear-gradient(135deg, rgba(255,102,0,0.3), rgba(192,154,47,0.2))", display: "flex", alignItems: "center", justifyContent: "center", color: "#FF6600", fontFamily: "'Cinzel', serif", fontSize: 17, fontWeight: 600, border: "1px solid rgba(255,102,0,0.2)" }}>
+                  <div style={{ width: 44, height: 44, borderRadius: "50%", background: "linear-gradient(135deg, rgba(255,102,0,0.3), rgba(192,154,47,0.2))", display: "flex", alignItems: "center", justifyContent: "center", color: "#FF7E33", fontFamily: "'Cinzel', serif", fontSize: 17, fontWeight: 600, border: "1px solid rgba(255,102,0,0.2)" }}>
                     {(post.profiles?.username || post.profiles?.full_name || "?")[0].toUpperCase()}
                   </div>
                   <div>
@@ -1171,10 +1174,10 @@ function Feed({ profile, activeGroup, isNewMember }) {
                   <span style={{ ...S.badge, fontSize: 10 }}>{GROUPS.find(g => g.id === post.group_id)?.label}</span>
                   {profile.id !== post.user_id && (
                     <>
-                      <button id={`kudos_${post.user_id}`} onClick={() => sendKudos(post.user_id)} style={{ background: "none", border: "none", cursor: "pointer", color: "#555", fontSize: 13, padding: "4px 8px", borderRadius: 4 }} title="Send anonymous kudos">
+                      <button id={`kudos_${post.user_id}`} onClick={() => sendKudos(post.user_id)} style={{ background: "none", border: "none", cursor: "pointer", color: "#8A8A8A", fontSize: 13, padding: "4px 8px", borderRadius: 4 }} title="Send anonymous kudos">
                         👊
                       </button>
-                      <button onClick={() => flagPost(post.id)} style={{ background: "none", border: "none", cursor: "pointer", color: "#555", fontSize: 11, padding: "4px 8px", borderRadius: 4 }} title="Flag this post">
+                      <button onClick={() => flagPost(post.id)} style={{ background: "none", border: "none", cursor: "pointer", color: "#8A8A8A", fontSize: 11, padding: "4px 8px", borderRadius: 4 }} title="Flag this post">
                         <Flag size={13} />
                       </button>
                     </>
@@ -1495,9 +1498,9 @@ function Members({ profile }) {
             <div key={f.id} style={{ padding: "12px 0", borderBottom: "1px solid rgba(255,255,255,0.05)" }}>
               <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", gap: 12, flexWrap: "wrap" }}>
                 <div style={{ flex: 1 }}>
-                  <div style={{ color: "#888", fontSize: 12, marginBottom: 4 }}>Flagged by {f.profiles?.username ? `@${f.profiles.username}` : formatName(f.profiles?.full_name)} · Reason: {f.reason}</div>
+                  <div style={{ color: "#BBBBBB", fontSize: 12, marginBottom: 4 }}>Flagged by {f.profiles?.username ? `@${f.profiles.username}` : formatName(f.profiles?.full_name)} · Reason: {f.reason}</div>
                   <div style={{ background: "rgba(255,255,255,0.03)", border: "1px solid rgba(255,255,255,0.06)", borderRadius: 6, padding: "8px 12px" }}>
-                    <p style={{ color: "#CCCCCC", fontSize: 13 }}>{f.posts?.body}</p>
+                    <p style={{ color: "#FFFFFF", fontSize: 13 }}>{f.posts?.body}</p>
                   </div>
                 </div>
                 <div style={{ display: "flex", gap: 8, flexShrink: 0 }}>
@@ -1513,13 +1516,13 @@ function Members({ profile }) {
       {/* REMOVED / DENIED */}
       {showRemoved && profile.role === "admin" && (
         <div style={{ ...S.card, marginBottom: 16, borderTop: "3px solid #888" }}>
-          <span style={{ ...S.eyebrow, color: "#888" }}>Removed & Denied Members</span>
+          <span style={{ ...S.eyebrow, color: "#BBBBBB" }}>Removed & Denied Members</span>
           {removed.length === 0 && <p style={S.muted}>No removed or denied members.</p>}
           {removed.map(m => (
             <div key={m.id} style={{ display: "flex", justifyContent: "space-between", alignItems: "center", padding: "12px 0", borderBottom: "1px solid rgba(255,255,255,0.05)", flexWrap: "wrap", gap: 8 }}>
               <div>
                 <div style={{ color: "#fff", fontSize: 14 }}>{m.full_name || m.email}</div>
-                <div style={{ color: "#555", fontSize: 12 }}>
+                <div style={{ color: "#8A8A8A", fontSize: 12 }}>
                   {m.email} · {GROUPS.find(g => g.id === m.group_id)?.label || m.group_id} · 
                   <span style={{ color: m.status === "removed" ? "#ff4444" : "#888", marginLeft: 4 }}>{m.status}</span>
                   {m.updated_at && ` · ${new Date(m.updated_at).toLocaleDateString()}`}
@@ -1570,7 +1573,7 @@ function Members({ profile }) {
                     <div>
                       <div style={{ color: "#fff", fontFamily: "'Cinzel', serif", fontSize: 15 }}>{formatName(m.full_name)}</div>
                       <div style={S.muted}>{profile.role === "admin" ? m.email : ""}</div>
-                      {(m.city || m.state) && <div style={{ color: "#FF6600", fontSize: 12, marginTop: 2 }}><MapPin size={11} style={{ verticalAlign: "-1px", marginRight: 2 }} /> {[m.city, m.state].filter(Boolean).join(", ")}</div>}
+                      {(m.city || m.state) && <div style={{ color: "#FF7E33", fontSize: 12, marginTop: 2 }}><MapPin size={11} style={{ verticalAlign: "-1px", marginRight: 2 }} /> {[m.city, m.state].filter(Boolean).join(", ")}</div>}
                     </div>
                   </div>
                   <div style={S.flex}>
@@ -1590,21 +1593,21 @@ function Members({ profile }) {
         {approved.map(m => (
           <div key={m.id} style={{ ...S.card, padding: "16px" }}>
             <div style={{ display: "flex", alignItems: "flex-start", gap: 12 }}>
-              <div style={{ width: 48, height: 48, borderRadius: "50%", background: "rgba(255,102,0,0.15)", display: "flex", alignItems: "center", justifyContent: "center", color: "#FF6600", fontFamily: "'Cinzel', serif", fontWeight: 600, flexShrink: 0 }}>
+              <div style={{ width: 48, height: 48, borderRadius: "50%", background: "rgba(255,102,0,0.15)", display: "flex", alignItems: "center", justifyContent: "center", color: "#FF7E33", fontFamily: "'Cinzel', serif", fontWeight: 600, flexShrink: 0 }}>
                 {(m.full_name || m.email || "?")[0].toUpperCase()}
               </div>
               <div style={{ flex: 1, minWidth: 0 }}>
                 <div style={{ display: "flex", alignItems: "center", gap: 8, flexWrap: "wrap", marginBottom: 4 }}>
                   <span style={{ color: "#fff", fontFamily: "'Cinzel', serif", fontSize: 14 }}>{formatName(m.full_name)}</span>
                   <span style={{ ...S.badge, fontSize: 10 }}>{(m.group_ids && m.group_ids.length > 1 ? m.group_ids : [m.group_id]).map(id => GROUPS.find(g => g.id === id)?.label).filter(Boolean).join(" · ") || "No Group"}</span>
-                  {m.role === "admin" && <span style={{ ...S.badge, background: "rgba(255,102,0,0.3)", color: "#FF6600", fontSize: 10 }}>Admin</span>}
+                  {m.role === "admin" && <span style={{ ...S.badge, background: "rgba(255,102,0,0.3)", color: "#FF7E33", fontSize: 10 }}>Admin</span>}
                   {m.role === "moderator" && <span style={{ ...S.badge, background: "rgba(192,154,47,0.25)", color: "#C09A2F", fontSize: 10 }}>Mod</span>}
                 </div>
                 {profile.role === "admin" && <div style={{ ...S.muted, fontSize: 12 }}>{m.email}</div>}
-                {(m.city || m.state) && <div style={{ color: "#FF6600", fontSize: 12, marginTop: 2 }}><MapPin size={11} style={{ verticalAlign: "-1px", marginRight: 2 }} /> {[m.city, m.state].filter(Boolean).join(", ")}</div>}
+                {(m.city || m.state) && <div style={{ color: "#FF7E33", fontSize: 12, marginTop: 2 }}><MapPin size={11} style={{ verticalAlign: "-1px", marginRight: 2 }} /> {[m.city, m.state].filter(Boolean).join(", ")}</div>}
                 <div style={{ marginTop: 6 }}><Badges userId={m.id} size="small" /></div>
                 {m.id !== profile.id && (
-                  <button onClick={() => flagMember(m)} style={{ background: "none", border: "none", cursor: "pointer", color: "#555", fontSize: 11, padding: "4px 0", marginTop: 4 }} title="Report this member"><Flag size={12} style={{ verticalAlign: "-2px", marginRight: 3 }} /> Report</button>
+                  <button onClick={() => flagMember(m)} style={{ background: "none", border: "none", cursor: "pointer", color: "#8A8A8A", fontSize: 11, padding: "4px 0", marginTop: 4 }} title="Report this member"><Flag size={12} style={{ verticalAlign: "-2px", marginRight: 3 }} /> Report</button>
                 )}
                 {profile.role === "admin" && m.id !== profile.id && (
                   <div style={{ display: "flex", gap: 8, marginTop: 10, flexWrap: "wrap" }}>
@@ -1772,7 +1775,7 @@ function Messages({ profile, members, onRead }) {
         <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 12 }}>
           <p style={{ ...S.eyebrow, margin: 0 }}>Chats</p>
           <div style={{ display: "flex", gap: 4 }}>
-            <button onClick={() => { setShowNewDM(!showNewDM); setShowNewGroup(false); }} style={{ background: showNewDM ? "rgba(255,102,0,0.2)" : "rgba(255,255,255,0.05)", border: "1px solid rgba(255,102,0,0.2)", borderRadius: 6, padding: "4px 8px", color: "#FF6600", cursor: "pointer", fontSize: 11, display: "inline-flex", alignItems: "center", gap: 4 }}><Pencil size={12} /> DM</button>
+            <button onClick={() => { setShowNewDM(!showNewDM); setShowNewGroup(false); }} style={{ background: showNewDM ? "rgba(255,102,0,0.2)" : "rgba(255,255,255,0.05)", border: "1px solid rgba(255,102,0,0.2)", borderRadius: 6, padding: "4px 8px", color: "#FF7E33", cursor: "pointer", fontSize: 11, display: "inline-flex", alignItems: "center", gap: 4 }}><Pencil size={12} /> DM</button>
             <button onClick={() => { setShowNewGroup(!showNewGroup); setShowNewDM(false); }} style={{ background: showNewGroup ? "rgba(192,154,47,0.2)" : "rgba(255,255,255,0.05)", border: "1px solid rgba(192,154,47,0.2)", borderRadius: 6, padding: "4px 8px", color: "#C09A2F", cursor: "pointer", fontSize: 11, display: "inline-flex", alignItems: "center", gap: 4 }}><Users size={12} /> Group</button>
           </div>
         </div>
@@ -1790,7 +1793,7 @@ function Messages({ profile, members, onRead }) {
                     <Avatar profile={m} size={28} />
                     <div>
                       <div style={{ color: "#fff", fontSize: 12 }}>{m.username ? `@${m.username}` : formatName(m.full_name)}</div>
-                      <div style={{ color: "#555", fontSize: 10 }}>{GROUPS.find(g => g.id === m.group_id)?.label}</div>
+                      <div style={{ color: "#8A8A8A", fontSize: 10 }}>{GROUPS.find(g => g.id === m.group_id)?.label}</div>
                     </div>
                   </div>
                 ))}
@@ -1819,7 +1822,7 @@ function Messages({ profile, members, onRead }) {
             {newGroupMembers.length > 0 && (
               <div style={{ display: "flex", gap: 4, flexWrap: "wrap", marginBottom: 6 }}>
                 {newGroupMembers.map(m => (
-                  <span key={m.id} style={{ background: "rgba(255,102,0,0.1)", border: "1px solid rgba(255,102,0,0.2)", borderRadius: 20, padding: "2px 8px", fontSize: 10, color: "#FF6600", cursor: "pointer" }} onClick={() => setNewGroupMembers(newGroupMembers.filter(x => x.id !== m.id))}>
+                  <span key={m.id} style={{ background: "rgba(255,102,0,0.1)", border: "1px solid rgba(255,102,0,0.2)", borderRadius: 20, padding: "2px 8px", fontSize: 10, color: "#FF7E33", cursor: "pointer" }} onClick={() => setNewGroupMembers(newGroupMembers.filter(x => x.id !== m.id))}>
                     {m.username ? `@${m.username}` : formatName(m.full_name)} ✕
                   </span>
                 ))}
@@ -1862,7 +1865,7 @@ function Messages({ profile, members, onRead }) {
                   await supabase.from("messages").delete().eq("room_id", room.id);
                   setCustomRooms(prev => prev.filter(r => r.id !== room.id));
                   if (activeRoom === room.id) setActiveRoom(null);
-                }} style={{ background: "none", border: "none", color: "#555", cursor: "pointer", fontSize: 14, padding: "6px 8px", borderRadius: 6, flexShrink: 0 }} title="Delete group">✕</button>
+                }} style={{ background: "none", border: "none", color: "#8A8A8A", cursor: "pointer", fontSize: 14, padding: "6px 8px", borderRadius: 6, flexShrink: 0 }} title="Delete group">✕</button>
               </div>
             ))}
           </div>
@@ -1873,7 +1876,7 @@ function Messages({ profile, members, onRead }) {
             style={{ padding: "12px 16px", borderRadius: 4, cursor: "pointer", marginBottom: 4, background: activeRoom === room.id ? "rgba(255,102,0,0.1)" : "rgba(255,255,255,0.02)", color: activeRoom === room.id ? "#FF6600" : "#CCCCCC", fontSize: 14, display: "flex", alignItems: "center", gap: 12, border: "1px solid rgba(255,255,255,0.04)" }}>
             <span style={{ fontSize: 20 }}>{room.icon}</span>
             <span>{room.label}</span>
-            {isMobileChat && <span style={{ marginLeft: "auto", color: "#555", fontSize: 16 }}>›</span>}
+            {isMobileChat && <span style={{ marginLeft: "auto", color: "#8A8A8A", fontSize: 16 }}>›</span>}
           </div>
         ))}
       </div>
@@ -1883,11 +1886,11 @@ function Messages({ profile, members, onRead }) {
         {dmRooms.map(room => (
           <div key={room.id} onClick={() => isMobileChat ? selectRoomMobile(room.id) : selectRoom(room.id)}
             style={{ padding: "12px 16px", borderRadius: 4, cursor: "pointer", marginBottom: 4, background: activeRoom === room.id ? "rgba(255,102,0,0.1)" : "rgba(255,255,255,0.02)", color: activeRoom === room.id ? "#FF6600" : "#CCCCCC", fontSize: 14, display: "flex", alignItems: "center", gap: 12, border: "1px solid rgba(255,255,255,0.04)" }}>
-            <div style={{ width: 32, height: 32, borderRadius: "50%", background: "rgba(255,102,0,0.15)", display: "flex", alignItems: "center", justifyContent: "center", color: "#FF6600", fontSize: 13, fontWeight: 600, flexShrink: 0 }}>
+            <div style={{ width: 32, height: 32, borderRadius: "50%", background: "rgba(255,102,0,0.15)", display: "flex", alignItems: "center", justifyContent: "center", color: "#FF7E33", fontSize: 13, fontWeight: 600, flexShrink: 0 }}>
               {(room.member.username || room.member.full_name || "?")[0].toUpperCase()}
             </div>
             <span style={{ overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{room.label}</span>
-            {isMobileChat && <span style={{ marginLeft: "auto", color: "#555", fontSize: 16 }}>›</span>}
+            {isMobileChat && <span style={{ marginLeft: "auto", color: "#8A8A8A", fontSize: 16 }}>›</span>}
           </div>
         ))}
       </div>
@@ -1899,8 +1902,8 @@ function Messages({ profile, members, onRead }) {
       <div style={{ padding: "12px 16px", borderBottom: "1px solid rgba(255,255,255,0.05)", display: "flex", alignItems: "center", gap: 12 }}>
         {isMobileChat && (
           <>
-            <button onClick={() => setShowRoomList(true)} style={{ background: "none", border: "none", color: "#FF6600", fontSize: 20, cursor: "pointer", padding: "0 4px", lineHeight: 1 }}>‹</button>
-            <button onClick={() => loadMessages()} style={{ background: "none", border: "none", color: "#555", fontSize: 16, cursor: "pointer", padding: "0 4px", lineHeight: 1 }} title="Refresh">↻</button>
+            <button onClick={() => setShowRoomList(true)} style={{ background: "none", border: "none", color: "#FF7E33", fontSize: 20, cursor: "pointer", padding: "0 4px", lineHeight: 1 }}>‹</button>
+            <button onClick={() => loadMessages()} style={{ background: "none", border: "none", color: "#8A8A8A", fontSize: 16, cursor: "pointer", padding: "0 4px", lineHeight: 1 }} title="Refresh">↻</button>
           </>
         )}
         <span style={{ fontSize: 20 }}>{currentRoom?.icon}</span>
@@ -1917,14 +1920,14 @@ function Messages({ profile, members, onRead }) {
                 {(msg.sender_name || "?")[0].toUpperCase()}
               </div>
               <div style={{ maxWidth: "75%" }}>
-                <div style={{ fontSize: 10, color: "#555", marginBottom: 3, textAlign: isOwn ? "right" : "left" }}>
+                <div style={{ fontSize: 10, color: "#8A8A8A", marginBottom: 3, textAlign: isOwn ? "right" : "left" }}>
                   {senderName} · {new Date(msg.created_at).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })}
                 </div>
                 <div style={{ background: isOwn ? "rgba(255,102,0,0.15)" : "rgba(255,255,255,0.05)", border: isOwn ? "1px solid rgba(255,102,0,0.2)" : "1px solid rgba(255,255,255,0.06)", borderRadius: 8, padding: "8px 12px", color: "#fff", fontSize: 14, lineHeight: 1.6, wordBreak: "break-word" }}>
                   {msg.body}
                 </div>
                 {(isOwn || profile.role === "admin") && (
-                  <button style={{ background: "none", border: "none", cursor: "pointer", fontSize: 10, color: "#555", marginTop: 2, textAlign: isOwn ? "right" : "left", display: "block", width: "100%" }} onClick={() => deleteMessage(msg.id)}>delete</button>
+                  <button style={{ background: "none", border: "none", cursor: "pointer", fontSize: 10, color: "#8A8A8A", marginTop: 2, textAlign: isOwn ? "right" : "left", display: "block", width: "100%" }} onClick={() => deleteMessage(msg.id)}>delete</button>
                 )}
               </div>
             </div>
@@ -1940,7 +1943,7 @@ function Messages({ profile, members, onRead }) {
       )}
       <div style={{ padding: "10px 12px", borderTop: "1px solid rgba(255,255,255,0.05)", display: "flex", gap: 8, alignItems: "center" }}>
         <input ref={msgPhotoRef} type="file" accept="image/*" style={{ display: "none" }} onChange={e => { const f = e.target.files[0]; if (f && f.size <= 5*1024*1024) { setPhotoFile(f); setPhotoPreview(URL.createObjectURL(f)); } else if (f) alert("Max 5MB"); }} />
-        <button onClick={() => msgPhotoRef.current.click()} style={{ background: "none", border: "1px solid rgba(255,255,255,0.08)", borderRadius: 8, padding: "8px 10px", color: "#888", cursor: "pointer", fontSize: 16, flexShrink: 0 }}><Camera size={16} /></button>
+        <button onClick={() => msgPhotoRef.current.click()} style={{ background: "none", border: "1px solid rgba(255,255,255,0.08)", borderRadius: 8, padding: "8px 10px", color: "#BBBBBB", cursor: "pointer", fontSize: 16, flexShrink: 0 }}><Camera size={16} /></button>
         <input style={{ ...S.input, flex: 1, fontSize: 14, padding: "10px 14px" }} placeholder="Type a message..." value={body} onChange={e => setBody(e.target.value)} onKeyDown={e => { if (e.key === "Enter" && !e.shiftKey) { e.preventDefault(); send(); }}} />
         <button style={{ ...S.btn, padding: "10px 16px", flexShrink: 0 }} onClick={send} disabled={posting || uploading || (!body.trim() && !photoFile)}>{uploading ? "⏳" : "Send"}</button>
       </div>
@@ -2017,7 +2020,7 @@ function PrayerRequests({ profile }) {
         <label style={S.label}>Share a Prayer Request</label>
         <textarea style={{ ...S.input, minHeight: 80, resize: "vertical" }} placeholder="Share what's on your heart. This community stands with you." value={body} onChange={e => setBody(e.target.value)} />
         <div style={{ ...S.flexBetween, marginTop: 12 }}>
-          <label style={{ display: "flex", alignItems: "center", gap: 8, cursor: "pointer", color: "#888", fontSize: 13 }}>
+          <label style={{ display: "flex", alignItems: "center", gap: 8, cursor: "pointer", color: "#BBBBBB", fontSize: 13 }}>
             <input type="checkbox" checked={anonymous} onChange={e => setAnonymous(e.target.checked)} style={{ accentColor: "#FF6600" }} />
             Post anonymously
           </label>
@@ -2036,7 +2039,7 @@ function PrayerRequests({ profile }) {
           <div key={p.id} style={{ ...S.post, borderLeft: p.pinned ? "3px solid #FF6600" : "none", marginBottom: 12 }}>
             <div style={S.flexBetween}>
               <div style={S.flex}>
-                <div style={{ width: 36, height: 36, borderRadius: "50%", background: "rgba(255,102,0,0.15)", display: "flex", alignItems: "center", justifyContent: "center", color: "#FF6600", fontSize: 16 }}>{p.anonymous ? "🙏" : (p.author_name || "?")[0].toUpperCase()}</div>
+                <div style={{ width: 36, height: 36, borderRadius: "50%", background: "rgba(255,102,0,0.15)", display: "flex", alignItems: "center", justifyContent: "center", color: "#FF7E33", fontSize: 16 }}>{p.anonymous ? "🙏" : (p.author_name || "?")[0].toUpperCase()}</div>
                 <div>
                   <span style={S.postAuthor}>{p.author_name || "Member"}</span>
                   {p.pinned && <span style={{ ...S.badge, marginLeft: 8, fontSize: 10 }}><Pin size={10} style={{ verticalAlign: "-1px", marginRight: 2 }} /> Pinned</span>}
@@ -2049,7 +2052,7 @@ function PrayerRequests({ profile }) {
               </div>
             </div>
             <p style={S.postBody}>{p.body}</p>
-            <button onClick={() => react(p.id, p.reactions)} style={{ background: "rgba(255,102,0,0.08)", border: "1px solid rgba(255,102,0,0.2)", borderRadius: 20, padding: "6px 16px", color: "#FF6600", cursor: "pointer", fontSize: 13, marginTop: 12, display: "flex", alignItems: "center", gap: 6 }}>
+            <button onClick={() => react(p.id, p.reactions)} style={{ background: "rgba(255,102,0,0.08)", border: "1px solid rgba(255,102,0,0.2)", borderRadius: 20, padding: "6px 16px", color: "#FF7E33", cursor: "pointer", fontSize: 13, marginTop: 12, display: "flex", alignItems: "center", gap: 6 }}>
               🙏 {p.reactions || 0} {p.reactions === 1 ? "praying" : "praying"}
             </button>
           </div>
@@ -2136,7 +2139,7 @@ function Devotion({ profile }) {
           <div style={{ ...S.card, marginBottom: 16, borderTop: "3px solid #FF6600" }}>
             <span style={{ ...S.badge, marginBottom: 8, display: "inline-block" }}>Today — {today.toLocaleDateString("en-US", { weekday: "long", month: "long", day: "numeric" })}</span>
             <h3 style={{ fontFamily: "'Cinzel', serif", fontSize: 20, fontWeight: 400, color: "#fff", marginBottom: 8 }}>{todaysDevotion.title}</h3>
-            <div style={{ background: "rgba(255,102,0,0.06)", border: "1px solid rgba(255,102,0,0.15)", borderRadius: 4, padding: "12px 16px", marginBottom: 12 }}><p style={{ color: "#fff", fontFamily: "'Cinzel', serif", fontSize: 14, fontStyle: "italic", lineHeight: 1.7 }}>"{todaysDevotion.verse}"</p><p style={{ color: "#FF6600", fontSize: 12, marginTop: 4, letterSpacing: "0.1em" }}>— {todaysDevotion.ref}</p></div>
+            <div style={{ background: "rgba(255,102,0,0.06)", border: "1px solid rgba(255,102,0,0.15)", borderRadius: 4, padding: "12px 16px", marginBottom: 12 }}><p style={{ color: "#fff", fontFamily: "'Cinzel', serif", fontSize: 14, fontStyle: "italic", lineHeight: 1.7 }}>"{todaysDevotion.verse}"</p><p style={{ color: "#FF7E33", fontSize: 12, marginTop: 4, letterSpacing: "0.1em" }}>— {todaysDevotion.ref}</p></div>
             <p style={{ ...S.postBody }}>{todaysDevotion.body}</p>
           </div>
         )}
@@ -2146,13 +2149,13 @@ function Devotion({ profile }) {
               <div>
                 {idx === 0 && <span style={{ ...S.badge, marginBottom: 8, display: "inline-block" }}>Today</span>}
                 <h3 style={{ fontFamily: "'Cinzel', serif", fontSize: 20, fontWeight: 400, color: "#fff", marginBottom: 8 }}>{d.title}</h3>
-                {d.scripture && <div style={{ background: "rgba(255,102,0,0.06)", border: "1px solid rgba(255,102,0,0.15)", borderRadius: 4, padding: "12px 16px", marginBottom: 12 }}><p style={{ color: "#fff", fontFamily: "'Cinzel', serif", fontSize: 14, fontStyle: "italic", lineHeight: 1.7 }}>"{d.scripture}"</p>{d.scripture_ref && <p style={{ color: "#FF6600", fontSize: 12, marginTop: 4, letterSpacing: "0.1em" }}>— {d.scripture_ref}</p>}</div>}
+                {d.scripture && <div style={{ background: "rgba(255,102,0,0.06)", border: "1px solid rgba(255,102,0,0.15)", borderRadius: 4, padding: "12px 16px", marginBottom: 12 }}><p style={{ color: "#fff", fontFamily: "'Cinzel', serif", fontSize: 14, fontStyle: "italic", lineHeight: 1.7 }}>"{d.scripture}"</p>{d.scripture_ref && <p style={{ color: "#FF7E33", fontSize: 12, marginTop: 4, letterSpacing: "0.1em" }}>— {d.scripture_ref}</p>}</div>}
               </div>
               {profile.role === "admin" && <button style={S.btnDanger} onClick={() => deleteDevotion(d.id)}>Remove</button>}
             </div>
             <p style={{ ...S.postBody, marginBottom: 12 }}>{d.body}</p>
             <div style={S.flexBetween}>
-              <button onClick={() => react(d.id, d.reactions)} style={{ background: "rgba(255,102,0,0.08)", border: "1px solid rgba(255,102,0,0.2)", borderRadius: 20, padding: "6px 14px", color: "#FF6600", cursor: "pointer", fontSize: 13, display: "flex", alignItems: "center", gap: 6 }}>❤️ {d.reactions || 0}</button>
+              <button onClick={() => react(d.id, d.reactions)} style={{ background: "rgba(255,102,0,0.08)", border: "1px solid rgba(255,102,0,0.2)", borderRadius: 20, padding: "6px 14px", color: "#FF7E33", cursor: "pointer", fontSize: 13, display: "flex", alignItems: "center", gap: 6 }}>❤️ {d.reactions || 0}</button>
               <span style={S.muted}>{new Date(d.created_at).toLocaleDateString("en-US", { weekday: "long", month: "long", day: "numeric" })}</span>
             </div>
             {idx === 0 && (
@@ -2160,8 +2163,8 @@ function Devotion({ profile }) {
                 <p style={{ ...S.eyebrow, marginBottom: 12 }}>Responses</p>
                 {(comments[d.id] || []).map(c => (
                   <div key={c.id} style={{ display: "flex", gap: 10, marginBottom: 12 }}>
-                    <div style={{ width: 28, height: 28, borderRadius: "50%", background: "rgba(255,102,0,0.1)", display: "flex", alignItems: "center", justifyContent: "center", color: "#FF6600", fontSize: 11, fontWeight: 600, flexShrink: 0 }}>{(c.author_name || "?")[0].toUpperCase()}</div>
-                    <div><span style={{ color: "#fff", fontSize: 13, fontWeight: 600 }}>{c.author_name}</span><p style={{ color: "#AAAAAA", fontSize: 14, marginTop: 4, lineHeight: 1.6 }}>{c.body}</p></div>
+                    <div style={{ width: 28, height: 28, borderRadius: "50%", background: "rgba(255,102,0,0.1)", display: "flex", alignItems: "center", justifyContent: "center", color: "#FF7E33", fontSize: 11, fontWeight: 600, flexShrink: 0 }}>{(c.author_name || "?")[0].toUpperCase()}</div>
+                    <div><span style={{ color: "#fff", fontSize: 13, fontWeight: 600 }}>{c.author_name}</span><p style={{ color: "#FFFFFF", fontSize: 14, marginTop: 4, lineHeight: 1.6 }}>{c.body}</p></div>
                   </div>
                 ))}
                 <div style={{ display: "flex", gap: 10, marginTop: 12 }}>
@@ -2250,7 +2253,7 @@ function ForgeWalk({ profile }) {
     <div>
       <div style={{ display: 'flex', gap: 16, marginBottom: 24, flexWrap: 'wrap' }}>
         <div className="streak-badge">
-          <Flame size={20} color="#FF6600" strokeWidth={1.75} />
+          <Flame size={20} color="#FF7E33" strokeWidth={1.75} />
           <div><div style={{ fontFamily: "'Cinzel', serif", fontSize: 22, color: '#FF6600', lineHeight: 1 }}>{streak}</div><div style={{ fontSize: 10, color: '#888', letterSpacing: '0.1em', textTransform: 'uppercase' }}>Day Streak</div></div>
         </div>
         <div style={{ background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.08)', borderRadius: 20, padding: '6px 16px', display: 'flex', alignItems: 'center', gap: 8 }}>
@@ -2265,7 +2268,7 @@ function ForgeWalk({ profile }) {
           <p style={{ color: '#888', fontSize: 14 }}>{todayWalk.distance_miles && `${todayWalk.distance_miles} miles`}{todayWalk.distance_miles && todayWalk.duration_minutes && ' · '}{todayWalk.duration_minutes && `${todayWalk.duration_minutes} minutes`}</p>
           {todayWalk.notes && <p style={{ color: '#AAAAAA', fontSize: 14, marginTop: 8, fontStyle: 'italic' }}>"{todayWalk.notes}"</p>}
           <div style={{ display: "flex", alignItems: "center", justifyContent: "center", gap: 8, marginTop: 16 }}>
-          <Flame size={22} color="#FF6600" strokeWidth={1.75} style={{ animation: "pulse 1.5s infinite" }} />
+          <Flame size={22} color="#FF7E33" strokeWidth={1.75} style={{ animation: "pulse 1.5s infinite" }} />
           <p style={{ color: '#FF6600', fontSize: 12, letterSpacing: '0.1em' }}>{streak} day streak — keep it going tomorrow</p>
         </div>
         </div>
@@ -2395,7 +2398,7 @@ function ForgeChallenge({ profile }) {
     <div>
       {streak > 0 && (
         <div className="streak-badge" style={{ marginBottom: 16 }}>
-          <Flame size={18} color="#FF6600" strokeWidth={1.75} />
+          <Flame size={18} color="#FF7E33" strokeWidth={1.75} />
           <div><div style={{ fontFamily: "'Cinzel', serif", fontSize: 18, color: '#FF6600', lineHeight: 1 }}>{streak}</div><div style={{ fontSize: 9, color: '#888', letterSpacing: '0.1em', textTransform: 'uppercase' }}>Day Streak</div></div>
         </div>
       )}
@@ -2434,7 +2437,7 @@ function ForgeChallenge({ profile }) {
       <div style={{ marginTop: 20 }}>
         {!challenge ? (
           <div style={{ ...S.card, textAlign: 'center', padding: 48 }}>
-            <span style={{ display: 'flex', justifyContent: 'center', marginBottom: 16 }}><Zap size={40} color="#FF6600" strokeWidth={1.5} /></span>
+            <span style={{ display: 'flex', justifyContent: 'center', marginBottom: 16 }}><Zap size={40} color="#FF7E33" strokeWidth={1.5} /></span>
             <h3 style={{ fontFamily: "'Cinzel', serif", fontSize: 18, color: '#fff', marginBottom: 8 }}>No challenge posted today.</h3>
             <p style={S.muted}>{profile.role === 'admin' ? 'Use AI Generate to schedule a week.' : 'Check back soon.'}</p>
           </div>
@@ -2581,7 +2584,7 @@ function ForgeWOD({ profile }) {
     <div>
       {streak > 0 && (
         <div className="streak-badge" style={{ marginBottom: 16 }}>
-          <Flame size={18} color="#FF6600" strokeWidth={1.75} />
+          <Flame size={18} color="#FF7E33" strokeWidth={1.75} />
           <div><div style={{ fontFamily: "'Cinzel', serif", fontSize: 18, color: '#FF6600', lineHeight: 1 }}>{streak}</div><div style={{ fontSize: 9, color: '#888', letterSpacing: '0.1em', textTransform: 'uppercase' }}>Day Streak</div></div>
         </div>
       )}
@@ -2757,12 +2760,12 @@ function TheForge({ profile }) {
         <div style={{ flex: 1 }}>
           <span style={{ ...S.eyebrow, marginBottom: 6 }}>The Forge</span>
           <h2 style={{ fontFamily: "'Cinzel', serif", fontSize: 24, fontWeight: 400, color: "#fff", marginBottom: 8, lineHeight: 1.2 }}>Train. Pray. Prepare.</h2>
-          <p style={{ color: "#FF6600", fontSize: 13, fontStyle: "italic", letterSpacing: "0.05em" }}>"{todayQuote}"</p>
+          <p style={{ color: "#FF7E33", fontSize: 13, fontStyle: "italic", letterSpacing: "0.05em" }}>"{todayQuote}"</p>
           <div style={{ display: "flex", gap: 12, marginTop: 16, flexWrap: "wrap" }}>
-            <span style={{ background: "rgba(255,102,0,0.1)", border: "1px solid rgba(255,102,0,0.2)", borderRadius: 20, padding: "4px 12px", fontSize: 11, color: "#FF6600", letterSpacing: "0.1em", display: "inline-flex", alignItems: "center", gap: 5 }}><Unlock size={11} /> Beta — Full Access Free</span>
+            <span style={{ background: "rgba(255,102,0,0.1)", border: "1px solid rgba(255,102,0,0.2)", borderRadius: 20, padding: "4px 12px", fontSize: 11, color: "#FF7E33", letterSpacing: "0.1em", display: "inline-flex", alignItems: "center", gap: 5 }}><Unlock size={11} /> Beta — Full Access Free</span>
           </div>
         </div>
-        <div style={{ width: 80, height: 80, flexShrink: 0, display: "flex", alignItems: "center", justifyContent: "center", animation: "pulse 1.5s infinite" }}><Flame size={56} color="#FF6600" strokeWidth={1.5} /></div>
+        <div style={{ width: 80, height: 80, flexShrink: 0, display: "flex", alignItems: "center", justifyContent: "center", animation: "pulse 1.5s infinite" }}><Flame size={56} color="#FF7E33" strokeWidth={1.5} /></div>
       </div>
       <div className="forge-tab-bar">
         {FORGE_TABS.map(t => (
@@ -2832,7 +2835,7 @@ function LocalChapter({ profile }) {
     <div style={{ textAlign: "center", padding: 60 }}>
       <div style={{ fontSize: 48, marginBottom: 16 }}>📍</div>
       <h3 style={{ fontFamily: "'Cinzel', serif", fontSize: 18, color: "#fff", marginBottom: 8 }}>Add your state to your profile</h3>
-      <p style={{ color: "#888", fontSize: 14 }}>We will show you members and events in your area.</p>
+      <p style={{ color: "#BBBBBB", fontSize: 14 }}>We will show you members and events in your area.</p>
     </div>
   );
   const city = profile.city ? `${profile.city}, ${profile.state}` : profile.state;
@@ -2841,7 +2844,7 @@ function LocalChapter({ profile }) {
       <div style={{ marginBottom: 20 }}>
         <span style={S.eyebrow}>Local Chapter</span>
         <h2 style={{ ...S.h2, margin: 0 }}>📍 {city}</h2>
-        <p style={{ color: "#888", fontSize: 13, marginTop: 4 }}>{localMembers.length} member{localMembers.length !== 1 ? "s" : ""} in your area</p>
+        <p style={{ color: "#BBBBBB", fontSize: 13, marginTop: 4 }}>{localMembers.length} member{localMembers.length !== 1 ? "s" : ""} in your area</p>
       </div>
       <div style={{ display: "flex", gap: 4, marginBottom: 20, background: "rgba(255,255,255,0.03)", borderRadius: 6, padding: 4 }}>
         {[{id:"members",label:"Members",icon:"👥"},{id:"posts",label:"Local Feed",icon:"📋"},{id:"events",label:"Events",icon:"📅"},{id:"recs",label:"Places",icon:"🗺️"}].map(t => (
@@ -2853,14 +2856,14 @@ function LocalChapter({ profile }) {
       {loading && <p style={S.muted}>Loading...</p>}
       {!loading && activeTab === "members" && (
         <div>
-          {localMembers.length === 0 && <div style={{ textAlign: "center", padding: 40 }}><div style={{ fontSize: 40, marginBottom: 12 }}>🌱</div><h3 style={{ fontFamily: "'Cinzel', serif", fontSize: 16, color: "#fff", marginBottom: 8 }}>You are the first in {profile.state}.</h3><p style={{ color: "#888", fontSize: 13 }}>Share the app — build your local chapter.</p></div>}
+          {localMembers.length === 0 && <div style={{ textAlign: "center", padding: 40 }}><div style={{ fontSize: 40, marginBottom: 12 }}>🌱</div><h3 style={{ fontFamily: "'Cinzel', serif", fontSize: 16, color: "#fff", marginBottom: 8 }}>You are the first in {profile.state}.</h3><p style={{ color: "#BBBBBB", fontSize: 13 }}>Share the app — build your local chapter.</p></div>}
           <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
             {localMembers.map(m => (
               <div key={m.id} style={{ ...S.card, padding: "14px 18px", display: "flex", alignItems: "center", gap: 14 }}>
                 <Avatar profile={m} size={44} />
                 <div style={{ flex: 1 }}>
                   <div style={{ color: "#fff", fontFamily: "'Cinzel', serif", fontSize: 14 }}>{m.username ? `@${m.username}` : formatName(m.full_name)}</div>
-                  <div style={{ color: "#555", fontSize: 12, marginTop: 2 }}>{m.city && <span>📍 {m.city} · </span>}<span>{GROUPS.find(g => g.id === m.group_id)?.label}</span></div>
+                  <div style={{ color: "#8A8A8A", fontSize: 12, marginTop: 2 }}>{m.city && <span>📍 {m.city} · </span>}<span>{GROUPS.find(g => g.id === m.group_id)?.label}</span></div>
                 </div>
                 <LevelBadgeForUser profile={m} fontSize={10} />
               </div>
@@ -2870,7 +2873,7 @@ function LocalChapter({ profile }) {
       )}
       {!loading && activeTab === "posts" && (
         <div>
-          {localPosts.length === 0 && <div style={{ textAlign: "center", padding: 40 }}><div style={{ fontSize: 40, marginBottom: 12 }}>📋</div><p style={{ color: "#888", fontSize: 14 }}>No local posts yet.</p></div>}
+          {localPosts.length === 0 && <div style={{ textAlign: "center", padding: 40 }}><div style={{ fontSize: 40, marginBottom: 12 }}>📋</div><p style={{ color: "#BBBBBB", fontSize: 14 }}>No local posts yet.</p></div>}
           {localPosts.map(post => (
             <div key={post.id} style={{ ...S.post, marginBottom: 12 }}>
               <div style={S.flex}><Avatar profile={post.profiles} size={38} /><div><span style={S.postAuthor}>{displayName(post.profiles)}</span><span style={S.postTime}>{new Date(post.created_at).toLocaleDateString()}</span></div></div>
@@ -2881,13 +2884,13 @@ function LocalChapter({ profile }) {
       )}
       {!loading && activeTab === "events" && (
         <div>
-          {localEvents.length === 0 && <div style={{ textAlign: "center", padding: 40 }}><div style={{ fontSize: 40, marginBottom: 12 }}>📅</div><p style={{ color: "#888", fontSize: 14 }}>No local events yet.</p></div>}
+          {localEvents.length === 0 && <div style={{ textAlign: "center", padding: 40 }}><div style={{ fontSize: 40, marginBottom: 12 }}>📅</div><p style={{ color: "#BBBBBB", fontSize: 14 }}>No local events yet.</p></div>}
           {localEvents.map(ev => (
             <div key={ev.id} style={{ ...S.card, marginBottom: 12 }}>
-              <div style={{ color: "#FF6600", fontSize: 11, letterSpacing: "0.1em", textTransform: "uppercase", marginBottom: 6 }}>{new Date(ev.event_date).toLocaleDateString("en-US", { weekday: "long", month: "long", day: "numeric" })}</div>
+              <div style={{ color: "#FF7E33", fontSize: 11, letterSpacing: "0.1em", textTransform: "uppercase", marginBottom: 6 }}>{new Date(ev.event_date).toLocaleDateString("en-US", { weekday: "long", month: "long", day: "numeric" })}</div>
               <h3 style={{ fontFamily: "'Cinzel', serif", fontSize: 16, color: "#fff", marginBottom: 6 }}>{ev.title}</h3>
-              {ev.location && <p style={{ color: "#888", fontSize: 13 }}>📍 {ev.location}</p>}
-              {ev.description && <p style={{ color: "#CCCCCC", fontSize: 14, marginTop: 8, lineHeight: 1.7 }}>{ev.description}</p>}
+              {ev.location && <p style={{ color: "#BBBBBB", fontSize: 13 }}>📍 {ev.location}</p>}
+              {ev.description && <p style={{ color: "#FFFFFF", fontSize: 14, marginTop: 8, lineHeight: 1.7 }}>{ev.description}</p>}
             </div>
           ))}
         </div>
@@ -2895,7 +2898,7 @@ function LocalChapter({ profile }) {
       {!loading && activeTab === "recs" && (
         <div>
           <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 16 }}>
-            <p style={{ color: "#888", fontSize: 13 }}>ESix10 vetted places in {profile.state}</p>
+            <p style={{ color: "#BBBBBB", fontSize: 13 }}>ESix10 vetted places in {profile.state}</p>
             <button style={S.btn} onClick={() => setShowAddRec(!showAddRec)}>+ Add Place</button>
           </div>
           {showAddRec && (
@@ -2908,23 +2911,23 @@ function LocalChapter({ profile }) {
                 <div style={{ gridColumn: "1/-1" }}><label style={S.label}>Why recommend it?</label><textarea style={{ ...S.input, minHeight: 60 }} value={recForm.description} onChange={e => setRecForm({...recForm, description: e.target.value})} /></div>
                 <div style={{ gridColumn: "1/-1" }}><label style={S.label}>Website (optional)</label><input style={S.input} value={recForm.website} onChange={e => setRecForm({...recForm, website: e.target.value})} placeholder="https://..." /></div>
               </div>
-              {profile.role !== "admin" && <p style={{ color: "#555", fontSize: 12, marginBottom: 10 }}>Requires admin approval before going live.</p>}
+              {profile.role !== "admin" && <p style={{ color: "#8A8A8A", fontSize: 12, marginBottom: 10 }}>Requires admin approval before going live.</p>}
               <button style={S.btn} onClick={saveRec} disabled={!recForm.name}>Submit</button>
             </div>
           )}
-          {recommendations.length === 0 && !showAddRec && <div style={{ textAlign: "center", padding: 40 }}><div style={{ fontSize: 40, marginBottom: 12 }}>🗺️</div><h3 style={{ fontFamily: "'Cinzel', serif", fontSize: 16, color: "#fff", marginBottom: 8 }}>No places yet in {profile.state}</h3><p style={{ color: "#888", fontSize: 13 }}>Know a great gym or coffee shop? Add it.</p></div>}
+          {recommendations.length === 0 && !showAddRec && <div style={{ textAlign: "center", padding: 40 }}><div style={{ fontSize: 40, marginBottom: 12 }}>🗺️</div><h3 style={{ fontFamily: "'Cinzel', serif", fontSize: 16, color: "#fff", marginBottom: 8 }}>No places yet in {profile.state}</h3><p style={{ color: "#BBBBBB", fontSize: 13 }}>Know a great gym or coffee shop? Add it.</p></div>}
           {REC_CATEGORIES.filter(cat => recommendations.some(r => r.category === cat.id)).map(cat => (
             <div key={cat.id} style={{ marginBottom: 24 }}>
-              <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 10 }}><span style={{ fontSize: 18 }}>{cat.icon}</span><span style={{ fontFamily: "'Cinzel', serif", fontSize: 13, color: "#FF6600", letterSpacing: "0.1em", textTransform: "uppercase" }}>{cat.label}</span></div>
+              <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 10 }}><span style={{ fontSize: 18 }}>{cat.icon}</span><span style={{ fontFamily: "'Cinzel', serif", fontSize: 13, color: "#FF7E33", letterSpacing: "0.1em", textTransform: "uppercase" }}>{cat.label}</span></div>
               {recommendations.filter(r => r.category === cat.id).map(rec => (
                 <div key={rec.id} style={{ ...S.card, marginBottom: 8 }}>
                   <div style={{ display: "flex", alignItems: "flex-start", justifyContent: "space-between", gap: 10 }}>
                     <div style={{ flex: 1 }}>
                       <h3 style={{ fontFamily: "'Cinzel', serif", fontSize: 15, color: "#fff", marginBottom: 4 }}>{rec.name}</h3>
-                      {rec.address && <p style={{ color: "#FF6600", fontSize: 12, marginBottom: 4 }}>📍 {rec.address}, {rec.state}</p>}
-                      {rec.description && <p style={{ color: "#CCCCCC", fontSize: 13, lineHeight: 1.7, marginBottom: 6 }}>{rec.description}</p>}
+                      {rec.address && <p style={{ color: "#FF7E33", fontSize: 12, marginBottom: 4 }}>📍 {rec.address}, {rec.state}</p>}
+                      {rec.description && <p style={{ color: "#FFFFFF", fontSize: 13, lineHeight: 1.7, marginBottom: 6 }}>{rec.description}</p>}
                       <div style={{ display: "flex", gap: 10, flexWrap: "wrap" }}>
-                        {rec.website && <a href={rec.website} target="_blank" rel="noreferrer" style={{ color: "#FF6600", fontSize: 12, textDecoration: "none" }}>🌐 Website</a>}
+                        {rec.website && <a href={rec.website} target="_blank" rel="noreferrer" style={{ color: "#FF7E33", fontSize: 12, textDecoration: "none" }}>🌐 Website</a>}
                         <span style={{ color: "#444", fontSize: 11 }}>Added by {rec.profiles?.username ? `@${rec.profiles.username}` : formatName(rec.profiles?.full_name)}</span>
                       </div>
                     </div>
@@ -3614,7 +3617,7 @@ function StatementOfFaith({ onBack }) {
   return (
     <div className="tab-content">
       <div style={{ display: "flex", alignItems: "center", gap: 12, marginBottom: 24 }}>
-        {onBack && <button onClick={onBack} style={{ background: "none", border: "none", color: "#FF6600", cursor: "pointer", fontSize: 20, padding: 0 }}>←</button>}
+        {onBack && <button onClick={onBack} style={{ background: "none", border: "none", color: "#FF7E33", cursor: "pointer", fontSize: 20, padding: 0 }}>←</button>}
         <div>
           <span style={S.eyebrow}>ESix10 Initiative</span>
           <h2 style={{ ...S.h2, margin: 0 }}>Statement of Faith</h2>
@@ -3634,28 +3637,28 @@ function StatementOfFaith({ onBack }) {
         <div key={i} style={{ ...S.card, marginBottom: 12 }}>
           <div style={{ display: "flex", alignItems: "center", gap: 10, marginBottom: 10 }}>
             <span style={{ fontSize: 20 }}>{item.icon}</span>
-            <h3 style={{ fontFamily: "'Cinzel', serif", fontSize: 16, fontWeight: 400, color: "#FF6600", margin: 0 }}>{item.title}</h3>
+            <h3 style={{ fontFamily: "'Cinzel', serif", fontSize: 16, fontWeight: 400, color: "#FF7E33", margin: 0 }}>{item.title}</h3>
           </div>
-          <p style={{ color: "#CCCCCC", fontSize: 14, lineHeight: 1.8 }}>{item.body}</p>
+          <p style={{ color: "#FFFFFF", fontSize: 14, lineHeight: 1.8 }}>{item.body}</p>
         </div>
       ))}
 
       <div style={{ ...S.card, marginBottom: 12, borderTop: "3px solid #FF6600" }}>
-        <h3 style={{ fontFamily: "'Cinzel', serif", fontSize: 16, fontWeight: 400, color: "#FF6600", marginBottom: 10 }}>What We Don't Do</h3>
-        <p style={{ color: "#CCCCCC", fontSize: 14, lineHeight: 1.8 }}>We do not take denominational positions on secondary theological issues where Bible-believing Christians disagree. ESix10 is not a Baptist organization, a Pentecostal organization, or any other denominational organization. We are a community of believers who stand on the essentials and extend grace on everything else.</p>
+        <h3 style={{ fontFamily: "'Cinzel', serif", fontSize: 16, fontWeight: 400, color: "#FF7E33", marginBottom: 10 }}>What We Don't Do</h3>
+        <p style={{ color: "#FFFFFF", fontSize: 14, lineHeight: 1.8 }}>We do not take denominational positions on secondary theological issues where Bible-believing Christians disagree. ESix10 is not a Baptist organization, a Pentecostal organization, or any other denominational organization. We are a community of believers who stand on the essentials and extend grace on everything else.</p>
       </div>
 
       <div style={{ ...S.card, marginBottom: 12, background: "linear-gradient(135deg, rgba(255,102,0,0.08), rgba(192,154,47,0.06))", border: "1px solid rgba(255,102,0,0.2)" }}>
         <h3 style={{ fontFamily: "'Cinzel', serif", fontSize: 16, fontWeight: 400, color: "#fff", marginBottom: 10 }}>A Word on Welcome</h3>
-        <p style={{ color: "#CCCCCC", fontSize: 14, lineHeight: 1.8, marginBottom: 12 }}>ESix10 is a faith-based organization. We are clear about what we believe and we do not apologize for it. But we are equally clear about this — everyone is welcome here.</p>
-        <p style={{ color: "#CCCCCC", fontSize: 14, lineHeight: 1.8, marginBottom: 12 }}>You do not have to share our faith to walk through this door. You do not have to have it all figured out. You do not have to clean yourself up before you show up.</p>
-        <p style={{ color: "#CCCCCC", fontSize: 14, lineHeight: 1.8, marginBottom: 12 }}>We will not change our standard to make anyone comfortable. But we will never use our standard as a weapon against anyone either. That is not the way of Christ and it is not the way of ESix10.</p>
+        <p style={{ color: "#FFFFFF", fontSize: 14, lineHeight: 1.8, marginBottom: 12 }}>ESix10 is a faith-based organization. We are clear about what we believe and we do not apologize for it. But we are equally clear about this — everyone is welcome here.</p>
+        <p style={{ color: "#FFFFFF", fontSize: 14, lineHeight: 1.8, marginBottom: 12 }}>You do not have to share our faith to walk through this door. You do not have to have it all figured out. You do not have to clean yourself up before you show up.</p>
+        <p style={{ color: "#FFFFFF", fontSize: 14, lineHeight: 1.8, marginBottom: 12 }}>We will not change our standard to make anyone comfortable. But we will never use our standard as a weapon against anyone either. That is not the way of Christ and it is not the way of ESix10.</p>
         <p style={{ color: "#fff", fontFamily: "'Cinzel', serif", fontSize: 14, fontStyle: "italic" }}>You are welcome here. Exactly as you are. Right now.</p>
       </div>
 
       <div style={{ background: "rgba(255,102,0,0.06)", border: "1px solid rgba(255,102,0,0.15)", borderRadius: 10, padding: "16px 20px", textAlign: "center", marginBottom: 24 }}>
-        <p style={{ color: "#AAAAAA", fontSize: 14, fontStyle: "italic", lineHeight: 1.7 }}>"We love because He first loved us."</p>
-        <p style={{ color: "#FF6600", fontSize: 12, letterSpacing: "0.1em", marginTop: 6 }}>— 1 John 4:19</p>
+        <p style={{ color: "#FFFFFF", fontSize: 14, fontStyle: "italic", lineHeight: 1.7 }}>"We love because He first loved us."</p>
+        <p style={{ color: "#FF7E33", fontSize: 12, letterSpacing: "0.1em", marginTop: 6 }}>— 1 John 4:19</p>
       </div>
     </div>
   );
@@ -3683,7 +3686,7 @@ function PlanOfSalvation({ onBack, profile }) {
   return (
     <div className="tab-content">
       <div style={{ display: "flex", alignItems: "center", gap: 12, marginBottom: 24 }}>
-        {onBack && <button onClick={onBack} style={{ background: "none", border: "none", color: "#FF6600", cursor: "pointer", fontSize: 20, padding: 0 }}>←</button>}
+        {onBack && <button onClick={onBack} style={{ background: "none", border: "none", color: "#FF7E33", cursor: "pointer", fontSize: 20, padding: 0 }}>←</button>}
         <div>
           <span style={S.eyebrow}>Do You Know Him?</span>
           <h2 style={{ ...S.h2, margin: 0 }}>The Plan of Salvation</h2>
@@ -3691,7 +3694,7 @@ function PlanOfSalvation({ onBack, profile }) {
       </div>
 
       <div style={{ ...S.card, marginBottom: 12, borderTop: "3px solid #FF6600" }}>
-        <p style={{ color: "#CCCCCC", fontSize: 15, lineHeight: 1.9 }}>Everything ESix10 is built on — the discipline, the brotherhood, the readiness, the standard — it all flows from one thing. A relationship with Jesus Christ. Not a religion. Not a set of rules. A relationship.</p>
+        <p style={{ color: "#FFFFFF", fontSize: 15, lineHeight: 1.9 }}>Everything ESix10 is built on — the discipline, the brotherhood, the readiness, the standard — it all flows from one thing. A relationship with Jesus Christ. Not a religion. Not a set of rules. A relationship.</p>
       </div>
 
       {[
@@ -3730,13 +3733,13 @@ function PlanOfSalvation({ onBack, profile }) {
           </div>
           <div style={{ background: "rgba(255,102,0,0.06)", border: "1px solid rgba(255,102,0,0.15)", borderRadius: 6, padding: "12px 16px", marginBottom: 12 }}>
             <p style={{ color: "#fff", fontFamily: "'Cinzel', serif", fontSize: 14, fontStyle: "italic", lineHeight: 1.7, marginBottom: 4 }}>"{item.scripture}"</p>
-            <p style={{ color: "#FF6600", fontSize: 12, letterSpacing: "0.1em" }}>— {item.ref}</p>
+            <p style={{ color: "#FF7E33", fontSize: 12, letterSpacing: "0.1em" }}>— {item.ref}</p>
           </div>
-          <p style={{ color: "#CCCCCC", fontSize: 14, lineHeight: 1.8, marginBottom: item.scripture2 ? 12 : 0 }}>{item.body}</p>
+          <p style={{ color: "#FFFFFF", fontSize: 14, lineHeight: 1.8, marginBottom: item.scripture2 ? 12 : 0 }}>{item.body}</p>
           {item.scripture2 && (
             <div style={{ background: "rgba(255,102,0,0.06)", border: "1px solid rgba(255,102,0,0.15)", borderRadius: 6, padding: "12px 16px" }}>
               <p style={{ color: "#fff", fontFamily: "'Cinzel', serif", fontSize: 14, fontStyle: "italic", lineHeight: 1.7, marginBottom: 4 }}>"{item.scripture2}"</p>
-              <p style={{ color: "#FF6600", fontSize: 12, letterSpacing: "0.1em" }}>— {item.ref2}</p>
+              <p style={{ color: "#FF7E33", fontSize: 12, letterSpacing: "0.1em" }}>— {item.ref2}</p>
             </div>
           )}
         </div>
@@ -3745,7 +3748,7 @@ function PlanOfSalvation({ onBack, profile }) {
       {/* Prayer Section */}
       <div style={{ ...S.card, marginBottom: 12, borderTop: prayed ? "3px solid #51cf66" : "3px solid #FF6600" }}>
         <h3 style={{ fontFamily: "'Cinzel', serif", fontSize: 18, fontWeight: 400, color: "#fff", marginBottom: 12 }}>A Simple Prayer</h3>
-        <p style={{ color: "#CCCCCC", fontSize: 14, lineHeight: 1.8, marginBottom: 16 }}>If you are ready to make that decision right now — you can. God is not waiting on a perfect moment. He is waiting on you.</p>
+        <p style={{ color: "#FFFFFF", fontSize: 14, lineHeight: 1.8, marginBottom: 16 }}>If you are ready to make that decision right now — you can. God is not waiting on a perfect moment. He is waiting on you.</p>
 
         {!showPrayer ? (
           <button style={{ ...S.btn, width: "100%", padding: 16 }} onClick={() => setShowPrayer(true)}>
@@ -3766,7 +3769,7 @@ function PlanOfSalvation({ onBack, profile }) {
               <div style={{ background: "rgba(81,207,102,0.08)", border: "1px solid rgba(81,207,102,0.2)", borderRadius: 8, padding: 20, textAlign: "center" }}>
                 <span style={{ fontSize: 32, display: "block", marginBottom: 8 }}>🎉</span>
                 <h3 style={{ fontFamily: "'Cinzel', serif", fontSize: 20, color: "#51cf66", marginBottom: 8 }}>Welcome to the Family.</h3>
-                <p style={{ color: "#CCCCCC", fontSize: 14, lineHeight: 1.8 }}>That decision is the most important one you will ever make. Heaven is celebrating right now. So are we.</p>
+                <p style={{ color: "#FFFFFF", fontSize: 14, lineHeight: 1.8 }}>That decision is the most important one you will ever make. Heaven is celebrating right now. So are we.</p>
               </div>
             )}
           </div>
@@ -3777,7 +3780,7 @@ function PlanOfSalvation({ onBack, profile }) {
       {prayed && (
         <div style={{ ...S.card, marginBottom: 24 }}>
           <h3 style={{ fontFamily: "'Cinzel', serif", fontSize: 18, fontWeight: 400, color: "#fff", marginBottom: 8 }}>Connect With Someone Near You</h3>
-          <p style={{ color: "#CCCCCC", fontSize: 14, lineHeight: 1.8, marginBottom: 16 }}>You do not have to figure this out alone. Let us connect you with a real person in your area who can walk with you from here. No program. No pressure. Just a brother or sister who has been where you are.</p>
+          <p style={{ color: "#FFFFFF", fontSize: 14, lineHeight: 1.8, marginBottom: 16 }}>You do not have to figure this out alone. Let us connect you with a real person in your area who can walk with you from here. No program. No pressure. Just a brother or sister who has been where you are.</p>
           {!connected ? (
             <div>
               <div style={{ marginBottom: 12 }}>
@@ -3790,8 +3793,8 @@ function PlanOfSalvation({ onBack, profile }) {
             </div>
           ) : (
             <div style={{ background: "rgba(255,102,0,0.08)", border: "1px solid rgba(255,102,0,0.2)", borderRadius: 8, padding: 20, textAlign: "center" }}>
-              <p style={{ color: "#FF6600", fontFamily: "'Cinzel', serif", fontSize: 15 }}>Request sent. Someone will reach out to you soon.</p>
-              <p style={{ color: "#888", fontSize: 13, marginTop: 8 }}>In the meantime — you are already part of this community. Start here.</p>
+              <p style={{ color: "#FF7E33", fontFamily: "'Cinzel', serif", fontSize: 15 }}>Request sent. Someone will reach out to you soon.</p>
+              <p style={{ color: "#BBBBBB", fontSize: 13, marginTop: 8 }}>In the meantime — you are already part of this community. Start here.</p>
             </div>
           )}
         </div>
@@ -3840,21 +3843,21 @@ function WelcomeModal({ profile, onClose }) {
         <div style={{ marginBottom: 24 }}>
           <span style={{ ...S.eyebrow, display: "block", marginBottom: 8 }}>{group?.label} — {group?.subtitle}</span>
           <h2 style={{ fontFamily: "'Cinzel', serif", fontSize: 28, fontWeight: 400, color: "#fff", marginBottom: 16 }}>{msg.headline}</h2>
-          <p style={{ color: "#CCCCCC", fontSize: 15, lineHeight: 1.9, marginBottom: 24 }}>{msg.body}</p>
+          <p style={{ color: "#FFFFFF", fontSize: 15, lineHeight: 1.9, marginBottom: 24 }}>{msg.body}</p>
         </div>
 
         <div style={{ background: "rgba(255,102,0,0.08)", border: "1px solid rgba(255,102,0,0.2)", borderRadius: 10, padding: "20px 24px", marginBottom: 32 }}>
           <p style={{ fontFamily: "'Cinzel', serif", fontSize: 14, fontStyle: "italic", color: "#fff", lineHeight: 1.8, marginBottom: 8 }}>"{msg.scripture}"</p>
-          <p style={{ color: "#FF6600", fontSize: 12, letterSpacing: "0.1em" }}>— {msg.ref}</p>
+          <p style={{ color: "#FF7E33", fontSize: 12, letterSpacing: "0.1em" }}>— {msg.ref}</p>
         </div>
 
         <div style={{ marginBottom: 24 }}>
-          <p style={{ color: "#888", fontSize: 13, lineHeight: 1.8 }}>
+          <p style={{ color: "#BBBBBB", fontSize: 13, lineHeight: 1.8 }}>
             Here's where to start:<br/>
-            <span style={{ color: "#FF6600" }}>📋 Feed</span> — introduce yourself to the community<br/>
-            <span style={{ color: "#FF6600" }}>🙏 Prayer</span> — share what's on your heart<br/>
-            <span style={{ color: "#FF6600" }}>🔥 The Forge</span> — log your first walk today<br/>
-            <span style={{ color: "#FF6600" }}>👤 Profile</span> — set your avatar and bio
+            <span style={{ color: "#FF7E33" }}>📋 Feed</span> — introduce yourself to the community<br/>
+            <span style={{ color: "#FF7E33" }}>🙏 Prayer</span> — share what's on your heart<br/>
+            <span style={{ color: "#FF7E33" }}>🔥 The Forge</span> — log your first walk today<br/>
+            <span style={{ color: "#FF7E33" }}>👤 Profile</span> — set your avatar and bio
           </p>
         </div>
 
@@ -4028,14 +4031,14 @@ function ShareESix10({ profile, onClose }) {
             <span style={S.eyebrow}>Spread the Word</span>
             <h2 style={{ ...S.h2, margin: 0 }}>Share ESix10</h2>
           </div>
-          <button onClick={onClose} style={{ background: "none", border: "none", color: "#FF6600", fontSize: 24, cursor: "pointer" }}>✕</button>
+          <button onClick={onClose} style={{ background: "none", border: "none", color: "#FF7E33", fontSize: 24, cursor: "pointer" }}>✕</button>
         </div>
 
         {/* App URL */}
         <div style={{ ...S.card, marginBottom: 16 }}>
           <span style={S.eyebrow}>App Link</span>
           <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
-            <div style={{ flex: 1, background: "rgba(255,255,255,0.04)", border: "1px solid rgba(255,255,255,0.08)", borderRadius: 8, padding: "10px 14px", color: "#FF6600", fontSize: 14, fontFamily: "'Lato', sans-serif" }}>
+            <div style={{ flex: 1, background: "rgba(255,255,255,0.04)", border: "1px solid rgba(255,255,255,0.08)", borderRadius: 8, padding: "10px 14px", color: "#FF7E33", fontSize: 14, fontFamily: "'Lato', sans-serif" }}>
               community.esix10.com
             </div>
             <button style={{ ...S.btn, padding: "10px 16px", flexShrink: 0 }} onClick={copyLink}>
@@ -4050,30 +4053,30 @@ function ShareESix10({ profile, onClose }) {
             <button onClick={shareNative} style={{ ...S.card, border: "1px solid rgba(255,102,0,0.2)", cursor: "pointer", textAlign: "center", padding: 16 }}>
               <div style={{ fontSize: 28, marginBottom: 6 }}>📤</div>
               <div style={{ color: "#fff", fontSize: 13, fontFamily: "'Cinzel', serif" }}>Share</div>
-              <div style={{ color: "#888", fontSize: 11, marginTop: 2 }}>Native share</div>
+              <div style={{ color: "#BBBBBB", fontSize: 11, marginTop: 2 }}>Native share</div>
             </button>
           )}
           <button onClick={shareSMS} style={{ ...S.card, border: "1px solid rgba(255,102,0,0.2)", cursor: "pointer", textAlign: "center", padding: 16 }}>
             <div style={{ fontSize: 28, marginBottom: 6 }}>💬</div>
             <div style={{ color: "#fff", fontSize: 13, fontFamily: "'Cinzel', serif" }}>Text</div>
-            <div style={{ color: "#888", fontSize: 11, marginTop: 2 }}>Send via SMS</div>
+            <div style={{ color: "#BBBBBB", fontSize: 11, marginTop: 2 }}>Send via SMS</div>
           </button>
           <button onClick={shareFacebook} style={{ ...S.card, border: "1px solid rgba(255,102,0,0.2)", cursor: "pointer", textAlign: "center", padding: 16 }}>
             <div style={{ fontSize: 28, marginBottom: 6 }}>📘</div>
             <div style={{ color: "#fff", fontSize: 13, fontFamily: "'Cinzel', serif" }}>Facebook</div>
-            <div style={{ color: "#888", fontSize: 11, marginTop: 2 }}>Share to page</div>
+            <div style={{ color: "#BBBBBB", fontSize: 11, marginTop: 2 }}>Share to page</div>
           </button>
           <button onClick={shareInstagram} style={{ ...S.card, border: "1px solid rgba(255,102,0,0.2)", cursor: "pointer", textAlign: "center", padding: 16 }}>
             <div style={{ fontSize: 28, marginBottom: 6 }}>📸</div>
             <div style={{ color: "#fff", fontSize: 13, fontFamily: "'Cinzel', serif" }}>Instagram</div>
-            <div style={{ color: "#888", fontSize: 11, marginTop: 2 }}>Copy & post</div>
+            <div style={{ color: "#BBBBBB", fontSize: 11, marginTop: 2 }}>Copy & post</div>
           </button>
         </div>
 
         {/* Invite message */}
         <div style={S.card}>
           <span style={S.eyebrow}>Invite Message</span>
-          <p style={{ color: "#CCCCCC", fontSize: 14, lineHeight: 1.8, marginBottom: 12, fontStyle: "italic" }}>"{inviteMsg}"</p>
+          <p style={{ color: "#FFFFFF", fontSize: 14, lineHeight: 1.8, marginBottom: 12, fontStyle: "italic" }}>"{inviteMsg}"</p>
           <button style={{ ...S.btn, width: "100%" }} onClick={copyMessage}>
             {copiedMsg ? "✓ Message Copied!" : "Copy Invite Message"}
           </button>
@@ -4112,8 +4115,8 @@ function Badges({ userId, size = "normal" }) {
     <div style={{ display: "flex", gap: 6, flexWrap: "wrap" }}>
       {earned.map(b => (
         <div key={b.id} title={`${b.label} — ${b.desc}`} style={{ display: "flex", alignItems: "center", gap: 4, background: "rgba(255,102,0,0.08)", border: "1px solid rgba(255,102,0,0.2)", borderRadius: 20, padding, cursor: "default" }}>
-          {(() => { const I = BADGE_ICONS[b.id] || Star; return <I size={iconSize} color="#FF6600" strokeWidth={1.75} />; })()}
-          {size !== "small" && <span style={{ color: "#FF6600", fontSize: 11, letterSpacing: "0.05em" }}>{b.label}</span>}
+          {(() => { const I = BADGE_ICONS[b.id] || Star; return <I size={iconSize} color="#FF7E33" strokeWidth={1.75} />; })()}
+          {size !== "small" && <span style={{ color: "#FF7E33", fontSize: 11, letterSpacing: "0.05em" }}>{b.label}</span>}
         </div>
       ))}
     </div>
@@ -4138,7 +4141,7 @@ function KudosCount({ userId }) {
       <span style={{ fontSize: 24 }}>👊</span>
       <div>
         <div style={{ fontFamily: "'Cinzel', serif", fontSize: 16, color: "#fff" }}>{count} {count === 1 ? "Kudos" : "Kudos"} received</div>
-        <div style={{ color: "#888", fontSize: 12 }}>Anonymous encouragement from your community</div>
+        <div style={{ color: "#BBBBBB", fontSize: 12 }}>Anonymous encouragement from your community</div>
       </div>
     </div>
   );
@@ -4300,9 +4303,9 @@ function StatsDashboard({ profile }) {
             { label: "Prayers Shared", value: myStats.prayerCount, icon: HeartHandshake },
           ].map(s => (
             <div key={s.label} style={{ background: "rgba(255,102,0,0.06)", border: "1px solid rgba(255,102,0,0.15)", borderRadius: 10, padding: "14px 12px", textAlign: "center" }}>
-              <div style={{ marginBottom: 4, display: "flex", justifyContent: "center" }}><s.icon size={22} color="#FF6600" strokeWidth={1.75} /></div>
-              <div style={{ fontFamily: "'Cinzel', serif", fontSize: 20, color: "#FF6600", lineHeight: 1 }}>{s.value}</div>
-              <div style={{ color: "#888", fontSize: 10, letterSpacing: "0.08em", textTransform: "uppercase", marginTop: 4 }}>{s.label}</div>
+              <div style={{ marginBottom: 4, display: "flex", justifyContent: "center" }}><s.icon size={22} color="#FF7E33" strokeWidth={1.75} /></div>
+              <div style={{ fontFamily: "'Cinzel', serif", fontSize: 20, color: "#FF7E33", lineHeight: 1 }}>{s.value}</div>
+              <div style={{ color: "#BBBBBB", fontSize: 10, letterSpacing: "0.08em", textTransform: "uppercase", marginTop: 4 }}>{s.label}</div>
             </div>
           ))}
         </div>
@@ -4338,7 +4341,7 @@ function StatsDashboard({ profile }) {
                 <div style={{ color: m.id === profile.id ? "#FF6600" : "#fff", fontSize: 14 }}>{displayName(m)}{m.id === profile.id ? " (You)" : ""}</div>
                 <div style={{ marginTop: 4 }}><Badges userId={m.id} size="small" /></div>
               </div>
-              <div style={{ fontFamily: "'Cinzel', serif", fontSize: 16, color: "#FF6600" }}>{m[leaderboardMetric] || 0}</div>
+              <div style={{ fontFamily: "'Cinzel', serif", fontSize: 16, color: "#FF7E33" }}>{m[leaderboardMetric] || 0}</div>
             </div>
           ))}
         </div>
@@ -4362,7 +4365,7 @@ function StatsDashboard({ profile }) {
               <div key={s.label} style={{ background: "rgba(192,154,47,0.06)", border: "1px solid rgba(192,154,47,0.15)", borderRadius: 10, padding: "14px 12px", textAlign: "center" }}>
                 <div style={{ marginBottom: 4, display: "flex", justifyContent: "center" }}><s.icon size={22} color="#C09A2F" strokeWidth={1.75} /></div>
                 <div style={{ fontFamily: "'Cinzel', serif", fontSize: 20, color: "#C09A2F", lineHeight: 1 }}>{s.value}</div>
-                <div style={{ color: "#888", fontSize: 10, letterSpacing: "0.08em", textTransform: "uppercase", marginTop: 4 }}>{s.label}</div>
+                <div style={{ color: "#BBBBBB", fontSize: 10, letterSpacing: "0.08em", textTransform: "uppercase", marginTop: 4 }}>{s.label}</div>
               </div>
             ))}
           </div>
@@ -4394,7 +4397,7 @@ function ProfileLevelSummary({ profile }) {
       <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 12 }}>
         <div>
           <span className="level-badge" style={{ background: `${lvl.color}20`, color: lvl.color, border: `1px solid ${lvl.color}40`, fontSize: 13, padding: "4px 14px", display: "inline-flex", alignItems: "center" }}><LevelIcon level={lvl} size={14} /> {lvl.name}</span>
-          <div style={{ color: "#888", fontSize: 12, marginTop: 6 }}>{xp} XP total{nextLvl ? ` · ${Math.max(nextLvl.min - xp, 0)} XP to ${nextLvl.name}` : " · Max Level"}</div>
+          <div style={{ color: "#BBBBBB", fontSize: 12, marginTop: 6 }}>{xp} XP total{nextLvl ? ` · ${Math.max(nextLvl.min - xp, 0)} XP to ${nextLvl.name}` : " · Max Level"}</div>
           {stats?.updatedAt && <div style={{ color: "#444", fontSize: 11, marginTop: 4 }}>Stats updated {new Date(stats.updatedAt).toLocaleString()}</div>}
         </div>
         <Avatar profile={profile} size={56} />
@@ -4494,7 +4497,7 @@ function Profile({ profile, onUpdate, onSignOut }) {
           <div style={{ display: "flex", alignItems: "center", gap: 20, marginBottom: 16 }}>
             <Avatar profile={{ ...profile, avatar_url: currentAvatar }} size={72} />
             <div>
-              <p style={{ color: "#888", fontSize: 13, marginBottom: 8 }}>Choose a preset icon or upload a photo</p>
+              <p style={{ color: "#BBBBBB", fontSize: 13, marginBottom: 8 }}>Choose a preset icon or upload a photo</p>
               <div style={{ display: "flex", gap: 8 }}>
                 <button style={{ ...S.tab(avatarMode === "preset"), padding: "6px 14px", fontSize: 11 }} onClick={() => setAvatarMode("preset")}>Choose Icon</button>
                 <button style={{ ...S.tab(avatarMode === "upload"), padding: "6px 14px", fontSize: 11 }} onClick={() => setAvatarMode("upload")}>Upload Photo</button>
@@ -4521,7 +4524,7 @@ function Profile({ profile, onUpdate, onSignOut }) {
               <button style={{ ...S.btn, marginBottom: 8 }} onClick={() => fileRef.current.click()} disabled={uploading}>
                 {uploading ? "Uploading..." : "Choose Photo"}
               </button>
-              <p style={{ color: "#555", fontSize: 12 }}>JPG or PNG. Max 2MB. Square photos work best.</p>
+              <p style={{ color: "#8A8A8A", fontSize: 12 }}>JPG or PNG. Max 2MB. Square photos work best.</p>
             </div>
           )}
         </div>
@@ -4535,7 +4538,7 @@ function Profile({ profile, onUpdate, onSignOut }) {
         <div style={{ marginBottom: 16 }}>
           <label style={S.label}>Username</label>
           <input style={S.input} placeholder="your_username" value={form.username || ""} onChange={e => setForm({ ...form, username: e.target.value.toLowerCase().replace(/[^a-z0-9_]/g, "") })} />
-          <p style={{ color: "#555", fontSize: 11, marginTop: 4 }}>Shown publicly in posts and member list.</p>
+          <p style={{ color: "#8A8A8A", fontSize: 11, marginTop: 4 }}>Shown publicly in posts and member list.</p>
         </div>
         <div style={S.grid2}>
           <div style={{ marginBottom: 16 }}>
@@ -4552,14 +4555,14 @@ function Profile({ profile, onUpdate, onSignOut }) {
           <div style={{ display: "flex", gap: 8, flexWrap: "wrap", marginTop: 4, marginBottom: 12 }}>
             {((profile.group_ids && profile.group_ids.length) ? profile.group_ids : [profile.group_id]).filter(Boolean).map(gid => (
               <div key={gid} style={{ background: "rgba(255,102,0,0.12)", border: "1px solid rgba(255,102,0,0.3)", borderRadius: 8, padding: "10px 16px", display: "flex", alignItems: "center", gap: 8 }}>
-                <NavIcon id={gid} size={16} color="#FF6600" />
-                <span style={{ color: "#FF6600", fontSize: 13 }}>{GROUPS.find(g => g.id === gid)?.label || gid}</span>
+                <NavIcon id={gid} size={16} color="#FF7E33" />
+                <span style={{ color: "#FF7E33", fontSize: 13 }}>{GROUPS.find(g => g.id === gid)?.label || gid}</span>
               </div>
             ))}
           </div>
           {pendingGroup ? (
             <div style={{ background: "rgba(255,255,255,0.04)", border: "1px solid rgba(255,255,255,0.1)", borderRadius: 8, padding: "12px 16px" }}>
-              <p style={{ color: "#fff", fontSize: 13, marginBottom: 8 }}>Pending: request to join <strong style={{ color: "#FF6600" }}>{GROUPS.find(g => g.id === pendingGroup)?.label}</strong> — waiting on admin approval.</p>
+              <p style={{ color: "#fff", fontSize: 13, marginBottom: 8 }}>Pending: request to join <strong style={{ color: "#FF7E33" }}>{GROUPS.find(g => g.id === pendingGroup)?.label}</strong> — waiting on admin approval.</p>
               <button style={{ ...S.btnGhost, padding: "6px 14px", fontSize: 12 }} onClick={cancelGroupRequest}>Cancel Request</button>
             </div>
           ) : (
@@ -4571,7 +4574,7 @@ function Profile({ profile, onUpdate, onSignOut }) {
               <button style={{ ...S.btn, padding: "10px 18px" }} disabled={!groupReq} onClick={requestGroupChange}>Submit Request</button>
             </div>
           )}
-          <p style={{ color: "#555", fontSize: 11, marginTop: 8 }}>Group changes are reviewed and approved by an admin.</p>
+          <p style={{ color: "#8A8A8A", fontSize: 11, marginTop: 8 }}>Group changes are reviewed and approved by an admin.</p>
         </div>
         <div style={{ marginBottom: 20 }}>
           <label style={S.label}>Bio</label>
@@ -4590,7 +4593,7 @@ function Profile({ profile, onUpdate, onSignOut }) {
         <div style={{ marginTop: 12, marginBottom: 16 }}>
           <label style={S.label}>Change Email</label>
           <input style={S.input} type="email" placeholder={profile.email || "new@email.com"} value={newEmail} onChange={e => setNewEmail(e.target.value)} />
-          <p style={{ color: "#555", fontSize: 11, marginTop: 4 }}>You'll get a confirmation link at the new address to finish the change.</p>
+          <p style={{ color: "#8A8A8A", fontSize: 11, marginTop: 4 }}>You'll get a confirmation link at the new address to finish the change.</p>
         </div>
         <div style={{ marginBottom: 16 }}>
           <label style={S.label}>Change Password</label>
@@ -4837,7 +4840,7 @@ function PasswordResetScreen({ onDone }) {
             </>
           ) : (
             <>
-              <p style={{ color: "#AAAAAA", fontSize: 14, marginBottom: 16 }}>Enter a new password for your account.</p>
+              <p style={{ color: "#FFFFFF", fontSize: 14, marginBottom: 16 }}>Enter a new password for your account.</p>
               <input style={S.input} type="password" placeholder="New password (at least 6 characters)" value={pass} onChange={e => setPass(e.target.value)} onKeyDown={e => e.key === "Enter" && submit()} />
               {err && <p style={S.error}>{err}</p>}
               <button style={{ ...S.btn, width: "100%", padding: "14px 24px", marginTop: 16 }} onClick={submit} disabled={busy}>{busy ? "Saving..." : "Update Password"}</button>
@@ -4984,8 +4987,8 @@ export default function App() {
   if (loading) return (
     <div style={{ minHeight: "100vh", background: "#0a0a0a", display: "flex", alignItems: "center", justifyContent: "center" }}>
       <div style={{ textAlign: "center" }}>
-        <span style={{ fontFamily: "'Cinzel', serif", fontSize: 24, color: "#FF6600" }}>ESix10</span>
-        <p style={{ color: "#555", marginTop: 8, fontSize: 13 }}>Loading...</p>
+        <span style={{ fontFamily: "'Cinzel', serif", fontSize: 24, color: "#FF7E33" }}>ESix10</span>
+        <p style={{ color: "#8A8A8A", marginTop: 8, fontSize: 13 }}>Loading...</p>
       </div>
     </div>
   );
@@ -5074,13 +5077,13 @@ export default function App() {
       <nav style={{ ...S.nav, height: isMobile ? 60 : 72, padding: isMobile ? "0 12px" : "0 32px" }}>
         <img src="/esix10logo.png" alt="ESix10" style={{ height: isMobile ? 60 : 88, width: "auto", objectFit: "contain" }} />
         <div style={S.navRight}>
-          <button onClick={() => window.location.reload()} style={{ background: "none", border: "none", color: "#888", fontSize: 18, cursor: "pointer", padding: "4px 6px", lineHeight: 1, display: "flex", alignItems: "center" }} title="Refresh">↻</button>
+          <button onClick={() => window.location.reload()} style={{ background: "none", border: "none", color: "#BBBBBB", fontSize: 18, cursor: "pointer", padding: "4px 6px", lineHeight: 1, display: "flex", alignItems: "center" }} title="Refresh">↻</button>
           <span style={{ ...S.badge, fontSize: 10 }}>
             {(profile.group_ids && profile.group_ids.length > 1) 
               ? profile.group_ids.map(id => GROUPS.find(g => g.id === id)?.icon).join(" ")
               : `${myGroup?.icon} ${myGroup?.label}`}
           </span>
-          {isAdmin && !isMobile && <span style={{ ...S.badge, background: "rgba(255,102,0,0.3)", color: "#FF6600" }}>Admin</span>}
+          {isAdmin && !isMobile && <span style={{ ...S.badge, background: "rgba(255,102,0,0.3)", color: "#FF7E33" }}>Admin</span>}
           {profile?.role === "moderator" && !isMobile && <span style={{ ...S.badge, background: "rgba(192,154,47,0.25)", color: "#C09A2F" }}>Mod</span>}
           <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
             {!isMobile && <LevelBadgeForUser profile={profile} fontSize={10} />}
@@ -5096,20 +5099,20 @@ export default function App() {
           {tab === "more" && (
             <div style={{ position: "fixed", inset: 0, background: "rgba(10,10,10,0.97)", zIndex: 200, display: "flex", flexDirection: "column", overflowY: "auto", paddingBottom: 90 }}>
               <div style={{ padding: "24px 20px 16px", textAlign: "center" }}>
-                <div style={{ fontFamily: "'Cinzel', serif", fontSize: 11, letterSpacing: "0.3em", color: "#FF6600", textTransform: "uppercase" }}>More</div>
+                <div style={{ fontFamily: "'Cinzel', serif", fontSize: 11, letterSpacing: "0.3em", color: "#FF7E33", textTransform: "uppercase" }}>More</div>
               </div>
               <div style={{ display: "flex", flexDirection: "column", gap: 8, padding: "0 20px" }}>
                 {MORE_ITEMS.map(item => (
                   <div key={item.id} onClick={() => { if (item.id === "share") { setShowShare(true); } else { setTab(item.id); } }}
                     style={{ padding: "16px 20px", background: "rgba(255,102,0,0.05)", border: "1px solid rgba(255,102,0,0.15)", borderRadius: 10, cursor: "pointer", display: "flex", alignItems: "center", gap: 16 }}>
-                    <NavIcon id={item.id} size={24} color="#FF6600" />
+                    <NavIcon id={item.id} size={24} color="#FF7E33" />
                     <span style={{ fontFamily: "'Cinzel', serif", fontSize: 16, color: "#fff" }}>{item.label}</span>
-                    <span style={{ marginLeft: "auto", color: "#555", fontSize: 18 }}>›</span>
+                    <span style={{ marginLeft: "auto", color: "#8A8A8A", fontSize: 18 }}>›</span>
                   </div>
                 ))}
               </div>
               <div style={{ padding: "24px 20px", textAlign: "center" }}>
-                <div onClick={() => setTab("feed")} style={{ color: "#555", fontSize: 13, cursor: "pointer" }}>← Back to Feed</div>
+                <div onClick={() => setTab("feed")} style={{ color: "#8A8A8A", fontSize: 13, cursor: "pointer" }}>← Back to Feed</div>
               </div>
             </div>
           )}
@@ -5192,7 +5195,7 @@ export default function App() {
               ))}
             </div>
             <div style={{ paddingTop: 16, borderTop: "1px solid rgba(255,255,255,0.05)" }}>
-              <div style={{ fontSize: 12, color: "#555", marginBottom: 2 }}>{profile.username ? `@${profile.username}` : formatName(profile.full_name)}</div>
+              <div style={{ fontSize: 12, color: "#8A8A8A", marginBottom: 2 }}>{profile.username ? `@${profile.username}` : formatName(profile.full_name)}</div>
               <div style={{ fontSize: 11, color: "#444" }}>{profile.email}</div>
             </div>
           </div>
