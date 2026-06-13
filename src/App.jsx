@@ -2298,6 +2298,7 @@ function Devotion({ profile }) {
   const [posting, setPosting] = useState(false);
   const [comment, setComment] = useState({});
   const [comments, setComments] = useState({});
+  const [dayOffset, setDayOffset] = useState(0);
 
   useEffect(() => { loadDevotions(); }, []);
 
@@ -2344,6 +2345,8 @@ function Devotion({ profile }) {
   const today = new Date();
   const todaysDevotion = getTodaysDevotion(today);
   const dbToday = devotions[0] && new Date(devotions[0].created_at).toDateString() === today.toDateString();
+  const viewDate = new Date(today); viewDate.setDate(today.getDate() - dayOffset);
+  const viewDevotion = getTodaysDevotion(viewDate);
 
   return (
     <div>
@@ -2363,7 +2366,20 @@ function Devotion({ profile }) {
         </div>
       )}
       <div style={{ marginTop: 20 }}>
-        {!dbToday && (
+        <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 14, gap: 8 }}>
+          <button style={{ ...S.btnGhost, padding: "6px 14px", fontSize: 12 }} onClick={() => setDayOffset(d => d + 1)}>← Previous</button>
+          <span style={{ color: "#9aa4b2", fontSize: 12, fontWeight: 600 }}>{dayOffset === 0 ? "Today" : viewDate.toLocaleDateString("en-US", { weekday: "long", month: "long", day: "numeric" })}</span>
+          <button style={{ ...S.btnGhost, padding: "6px 14px", fontSize: 12, opacity: dayOffset === 0 ? 0.4 : 1 }} disabled={dayOffset === 0} onClick={() => setDayOffset(d => Math.max(0, d - 1))}>Today →</button>
+        </div>
+        {dayOffset > 0 && (
+          <div style={{ ...S.card, marginBottom: 16, borderTop: "3px solid #C09A2F" }}>
+            <span style={{ ...S.badge, marginBottom: 8, display: "inline-block", background: "rgba(192,154,47,0.2)", color: "#C09A2F" }}>{viewDate.toLocaleDateString("en-US", { weekday: "long", month: "long", day: "numeric" })}</span>
+            <h3 style={{ fontFamily: "'Inter', sans-serif", fontSize: 20, fontWeight: 400, color: "#fff", marginBottom: 8 }}>{viewDevotion.title}</h3>
+            <div style={{ background: "rgba(255,102,0,0.06)", border: "1px solid rgba(255,102,0,0.15)", borderRadius: 4, padding: "12px 16px", marginBottom: 12 }}><p style={{ color: "#fff", fontFamily: "'Inter', sans-serif", fontSize: 14, fontStyle: "italic", lineHeight: 1.7 }}>"{viewDevotion.verse}"</p><p style={{ color: "#FF7E33", fontSize: 12, marginTop: 4, letterSpacing: "0.1em" }}>— {viewDevotion.ref}</p></div>
+            <p style={{ ...S.postBody }}>{viewDevotion.body}</p>
+          </div>
+        )}
+        {dayOffset === 0 && !dbToday && (
           <div style={{ ...S.card, marginBottom: 16, borderTop: "3px solid #FF6600" }}>
             <span style={{ ...S.badge, marginBottom: 8, display: "inline-block" }}>Today — {today.toLocaleDateString("en-US", { weekday: "long", month: "long", day: "numeric" })}</span>
             <h3 style={{ fontFamily: "'Inter', sans-serif", fontSize: 20, fontWeight: 400, color: "#fff", marginBottom: 8 }}>{todaysDevotion.title}</h3>
@@ -2371,7 +2387,7 @@ function Devotion({ profile }) {
             <p style={{ ...S.postBody }}>{todaysDevotion.body}</p>
           </div>
         )}
-        {dbToday && devotions.map((d, idx) => (
+        {dayOffset === 0 && dbToday && devotions.map((d, idx) => (
           <div key={d.id} style={{ ...S.card, marginBottom: 16, borderTop: idx === 0 ? "3px solid #FF6600" : "1px solid rgba(255,255,255,0.06)" }}>
             <div style={S.flexBetween}>
               <div>
