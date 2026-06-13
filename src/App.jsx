@@ -1709,6 +1709,9 @@ function Messages({ profile, members, onRead }) {
   const [groupMemberSearch, setGroupMemberSearch] = useState("");
   const [creatingGroup, setCreatingGroup] = useState(false);
   const [customRooms, setCustomRooms] = useState([]);
+  const [roomMembers, setRoomMembers] = useState([]);
+  const [showGroupMembers, setShowGroupMembers] = useState(false);
+  const [addMemberSearch, setAddMemberSearch] = useState("");
   const msgPhotoRef = useRef();
   const bottomRef = useRef(null);
 
@@ -1738,15 +1741,36 @@ function Messages({ profile, members, onRead }) {
     if (onRead) onRead();
   }
 
+  async function loadCustomRooms() {
+    // Casual groups are visible only to their members (room_members).
+    const { data: mem } = await supabase.from("room_members").select("room_id").eq("user_id", profile.id);
+    const ids = [...new Set((mem || []).map(r => r.room_id))];
+    if (!ids.length) { setCustomRooms([]); return; }
+    const { data } = await supabase.from("messages").select("room_id, body").in("room_id", ids).order("created_at", { ascending: false });
+    const roomMap = {};
+    ids.forEach(id => { roomMap[id] = { id, label: "Group Chat", icon: "👥", type: "custom_group" }; });
+    (data || []).forEach(m => { if (m.body && m.body.includes("[GROUP:") && roomMap[m.room_id]) roomMap[m.room_id].label = m.body.split("[GROUP:")[1].split("]")[0]; });
+    setCustomRooms(Object.values(roomMap));
+  }
+  async function loadRoomMembers(roomId) {
+    const { data } = await supabase.from("room_members").select("*, profiles(full_name, username, avatar_url)").eq("room_id", roomId);
+    setRoomMembers(data || []);
+  }
+  async function addRoomMember(m) {
+    await supabase.from("room_members").insert({ room_id: activeRoom, user_id: m.id, added_by: profile.id });
+    setAddMemberSearch("");
+    loadRoomMembers(activeRoom);
+  }
+  async function removeRoomMember(userId) {
+    await supabase.from("room_members").delete().eq("room_id", activeRoom).eq("user_id", userId);
+    if (userId === profile.id) { setShowGroupMembers(false); setActiveRoom(`group_${profile.group_id}`); loadCustomRooms(); return; }
+    loadRoomMembers(activeRoom);
+  }
+  useEffect(() => { loadCustomRooms(); }, []);
   useEffect(() => {
-    // Load custom group rooms on mount
-    supabase.from("messages").select("room_id, body").like("room_id", "group_custom_%").order("created_at", { ascending: false }).then(({ data }) => {
-      if (!data) return;
-      const roomMap = {};
-      data.forEach(m => { if (!roomMap[m.room_id]) { const gLabel = m.body && m.body.includes("[GROUP:") ? m.body.split("[GROUP:")[1].split("]")[0] : null; roomMap[m.room_id] = { id: m.room_id, label: gLabel || "Group Chat", icon: "👥", type: "custom_group" }; } });
-      setCustomRooms(Object.values(roomMap));
-    });
-  }, []);
+    if (activeRoom?.startsWith("group_custom_")) loadRoomMembers(activeRoom);
+    else setShowGroupMembers(false);
+  }, [activeRoom]);
 
   useEffect(() => {
     if (!activeRoom) return;
@@ -1893,13 +1917,8 @@ function Messages({ profile, members, onRead }) {
                 const roomId = `group_custom_${Date.now()}`;
                 const senderName = profile.username ? `@${profile.username}` : formatName(profile.full_name);
                 await supabase.from("messages").insert({ room_id: roomId, user_id: profile.id, body: `📢 [GROUP:${newGroupName}] Members: ${newGroupMembers.map(m => m.username ? `@${m.username}` : formatName(m.full_name)).join(", ")}`, sender_name: senderName });
-                // Reload custom rooms inline
-                const { data: newRooms } = await supabase.from("messages").select("room_id, body").like("room_id", "group_custom_%").order("created_at", { ascending: false });
-                if (newRooms) {
-                  const roomMap = {};
-                  newRooms.forEach(m => { if (!roomMap[m.room_id]) { const gLabel = m.body && m.body.includes("[GROUP:") ? m.body.split("[GROUP:")[1].split("]")[0] : null; roomMap[m.room_id] = { id: m.room_id, label: gLabel || "Group Chat", icon: "👥", type: "custom_group" }; } });
-                  setCustomRooms(Object.values(roomMap));
-                }
+                await supabase.from("room_members").insert([{ room_id: roomId, user_id: profile.id, added_by: profile.id, is_creator: true }, ...newGroupMembers.map(m => ({ room_id: roomId, user_id: m.id, added_by: profile.id }))]);
+                await loadCustomRooms();
                 isMobileChat ? selectRoomMobile(roomId) : selectRoom(roomId);
                 setShowNewGroup(false); setNewGroupName(""); setNewGroupMembers([]); setCreatingGroup(false);
               }}>
@@ -1921,8 +1940,9 @@ function Messages({ profile, members, onRead }) {
                 <button onClick={async () => {
                   if (!window.confirm(`Delete "${room.label}"?`)) return;
                   await supabase.from("messages").delete().eq("room_id", room.id);
+                  await supabase.from("room_members").delete().eq("room_id", room.id);
                   setCustomRooms(prev => prev.filter(r => r.id !== room.id));
-                  if (activeRoom === room.id) setActiveRoom(null);
+                  if (activeRoom === room.id) setActiveRoom(`group_${profile.group_id}`);
                 }} style={{ background: "none", border: "none", color: "#8A8A8A", cursor: "pointer", fontSize: 14, padding: "6px 8px", borderRadius: 6, flexShrink: 0 }} title="Delete group">✕</button>
               </div>
             ))}
@@ -1965,8 +1985,42 @@ function Messages({ profile, members, onRead }) {
           </>
         )}
         <span style={{ fontSize: 20 }}>{currentRoom?.icon}</span>
-        <span style={{ fontFamily: "'Cinzel', serif", fontSize: 15, color: "#fff" }}>{currentRoom?.label}</span>
+        <span style={{ fontFamily: "'Cinzel', serif", fontSize: 15, color: "#fff", flex: 1 }}>{currentRoom?.label}</span>
+        {currentRoom?.type === "custom_group" && (
+          <button onClick={() => setShowGroupMembers(v => !v)} style={{ background: "none", border: "1px solid rgba(255,255,255,0.1)", borderRadius: 8, padding: "6px 12px", color: "#BBBBBB", cursor: "pointer", fontSize: 12, flexShrink: 0 }}>👥 {roomMembers.length}</button>
+        )}
       </div>
+      {currentRoom?.type === "custom_group" && showGroupMembers && (() => {
+        const mine = roomMembers.find(r => r.user_id === profile.id);
+        const amCreator = mine?.is_creator;
+        return (
+          <div style={{ borderBottom: "1px solid rgba(255,255,255,0.05)", padding: "10px 16px", background: "rgba(255,255,255,0.02)" }}>
+            <div style={{ display: "flex", flexWrap: "wrap", gap: 6, marginBottom: 8 }}>
+              {roomMembers.map(rm => (
+                <span key={rm.user_id} style={{ background: "rgba(255,102,0,0.1)", border: "1px solid rgba(255,102,0,0.2)", borderRadius: 20, padding: "4px 10px", fontSize: 12, color: "#FF7E33", display: "inline-flex", alignItems: "center", gap: 6 }}>
+                  {rm.profiles?.username ? `@${rm.profiles.username}` : formatName(rm.profiles?.full_name)}{rm.is_creator ? " ★" : ""}
+                  {amCreator && rm.user_id !== profile.id && <span onClick={() => removeRoomMember(rm.user_id)} style={{ cursor: "pointer", color: "#ff6b6b", fontWeight: 700 }}>✕</span>}
+                </span>
+              ))}
+            </div>
+            {amCreator && (
+              <>
+                <input style={{ ...S.input, fontSize: 12, padding: "8px 12px" }} placeholder="Add a member..." value={addMemberSearch} onChange={e => setAddMemberSearch(e.target.value)} />
+                {addMemberSearch.length > 1 && (
+                  <div style={{ background: "rgba(10,10,10,0.98)", border: "1px solid rgba(255,255,255,0.08)", borderRadius: 6, marginTop: 4, maxHeight: 150, overflowY: "auto" }}>
+                    {(members || []).filter(m => m.status === "approved" && !roomMembers.find(x => x.user_id === m.id) && ((m.full_name || "").toLowerCase().includes(addMemberSearch.toLowerCase()) || (m.username || "").toLowerCase().includes(addMemberSearch.toLowerCase()))).slice(0, 5).map(m => (
+                      <div key={m.id} onClick={() => addRoomMember(m)} style={{ display: "flex", alignItems: "center", gap: 8, padding: "6px 10px", cursor: "pointer", color: "#fff", fontSize: 12 }}>
+                        <Avatar profile={m} size={22} /> {m.username ? `@${m.username}` : formatName(m.full_name)}
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </>
+            )}
+            <button onClick={() => removeRoomMember(profile.id)} style={{ background: "none", border: "none", color: "#8A8A8A", fontSize: 11, cursor: "pointer", marginTop: 6 }}>Leave group</button>
+          </div>
+        );
+      })()}
       <div style={{ flex: 1, overflowY: "auto", padding: "12px 16px", display: "flex", flexDirection: "column", gap: 8 }}>
         {messages.filter(m => !m.body?.includes('[GROUP:')).length === 0 && <div style={{ textAlign: "center", padding: 40 }}><p style={S.muted}>No messages yet. Start the conversation.</p></div>}
         {messages.filter(m => !m.body?.includes('[GROUP:')).map(msg => {
