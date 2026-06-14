@@ -2149,6 +2149,11 @@ function Messages({ profile, members, onRead }) {
     .filter(r => dmLatest[r.id])
     .sort((a, b) => new Date(dmLatest[b.id]) - new Date(dmLatest[a.id]));
 
+  // A room is "unread" (show a clear new-message indicator) when it has unseen
+  // messages and isn't the one currently open.
+  const isUnread = (id) => unreadRooms.has(id) && activeRoom !== id;
+  const UnreadDot = () => <span style={{ width: 11, height: 11, borderRadius: "50%", background: "#FF6600", flexShrink: 0, boxShadow: "0 0 8px rgba(255,102,0,0.9)" }} />;
+
   const ROOM_LIST = (
     <div style={{ width: isMobileChat ? "100%" : 230, borderRight: isMobileChat ? "none" : "1px solid rgba(255,255,255,0.06)", flexShrink: 0, overflowY: "auto", height: isMobileChat ? "calc(100dvh - 72px)" : "auto", paddingBottom: isMobileChat ? 116 : 0, background: "rgba(255,255,255,0.015)" }}>
       {isMobileChat && <div style={{ padding: "12px 12px 0" }}><TabCarousel slides={CHAT_SLIDES} /></div>}
@@ -2234,8 +2239,8 @@ function Messages({ profile, members, onRead }) {
                 <div onClick={() => isMobileChat ? selectRoomMobile(room.id) : selectRoom(room.id)}
                   style={{ flex: 1, padding: "10px 12px", borderRadius: 8, cursor: "pointer", background: activeRoom === room.id ? "rgba(255,102,0,0.1)" : "rgba(255,255,255,0.02)", color: activeRoom === room.id ? "#FF6600" : "#CCCCCC", fontSize: 14, display: "flex", alignItems: "center", gap: 10, border: "1px solid rgba(255,255,255,0.04)" }}>
                   <Users size={18} color="#aaa" strokeWidth={1.75} />
-                  <span style={{ flex: 1, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{room.label}</span>
-                  {unreadRooms.has(room.id) && activeRoom !== room.id && <span style={{ width: 9, height: 9, borderRadius: "50%", background: "#FF6600", flexShrink: 0, boxShadow: "0 0 6px rgba(255,102,0,0.7)" }} />}
+                  <span style={{ flex: 1, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap", fontWeight: isUnread(room.id) ? 700 : 400, color: isUnread(room.id) ? "#fff" : undefined }}>{room.label}</span>
+                  {isUnread(room.id) && <UnreadDot />}
                 </div>
                 <button onClick={async () => {
                   if (!window.confirm(`Delete "${room.label}"?`)) return;
@@ -2254,10 +2259,10 @@ function Messages({ profile, members, onRead }) {
             style={{ padding: "12px 16px", borderRadius: 4, cursor: "pointer", marginBottom: 4, background: activeRoom === room.id ? "rgba(255,102,0,0.1)" : "rgba(255,255,255,0.02)", color: activeRoom === room.id ? "#FF6600" : "#CCCCCC", fontSize: 14, display: "flex", alignItems: "center", gap: 12, border: "1px solid rgba(255,255,255,0.04)" }}>
             <span style={{ fontSize: 20 }}>{room.icon}</span>
             <div style={{ flex: 1, minWidth: 0 }}>
-              <div>{room.label}</div>
+              <div style={{ fontWeight: isUnread(room.id) ? 700 : 400, color: isUnread(room.id) ? "#fff" : undefined }}>{room.label}</div>
               {room.subtitle && <div style={{ color: "#FF7E33", fontSize: 9, letterSpacing: "0.12em", textTransform: "uppercase", fontWeight: 700, marginTop: 1 }}>{room.subtitle}</div>}
             </div>
-            {unreadRooms.has(room.id) && activeRoom !== room.id && <span style={{ width: 9, height: 9, borderRadius: "50%", background: "#FF6600", flexShrink: 0, boxShadow: "0 0 6px rgba(255,102,0,0.7)" }} />}
+            {isUnread(room.id) && <UnreadDot />}
             {isMobileChat && <span style={{ color: "#8A8A8A", fontSize: 16 }}>›</span>}
           </div>
         ))}
@@ -2271,8 +2276,8 @@ function Messages({ profile, members, onRead }) {
             <div style={{ width: 32, height: 32, borderRadius: "50%", background: "rgba(255,102,0,0.15)", display: "flex", alignItems: "center", justifyContent: "center", color: "#FF7E33", fontSize: 13, fontWeight: 600, flexShrink: 0 }}>
               {(room.member.username || room.member.full_name || "?")[0].toUpperCase()}
             </div>
-            <span style={{ flex: 1, minWidth: 0, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{room.label}</span>
-            {unreadRooms.has(room.id) && activeRoom !== room.id && <span style={{ width: 9, height: 9, borderRadius: "50%", background: "#FF6600", flexShrink: 0, boxShadow: "0 0 6px rgba(255,102,0,0.7)" }} />}
+            <span style={{ flex: 1, minWidth: 0, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap", fontWeight: isUnread(room.id) ? 700 : 400, color: isUnread(room.id) ? "#fff" : undefined }}>{room.label}</span>
+            {isUnread(room.id) && <UnreadDot />}
             {isMobileChat && <span style={{ color: "#8A8A8A", fontSize: 16 }}>›</span>}
           </div>
         ))}
