@@ -5894,6 +5894,9 @@ export default function App() {
               </div>
               <div style={{ padding: "24px 20px", textAlign: "center" }}>
                 <div onClick={() => setTab("feed")} style={{ color: "#8A8A8A", fontSize: 13, cursor: "pointer" }}>← Back to Feed</div>
+                <div style={{ color: "#555", fontSize: 10, marginTop: 14 }}>
+                  Build {(typeof __BUILD_TIME__ !== "undefined" ? __BUILD_TIME__ : "dev").replace("T", " ").slice(0, 16)} UTC
+                </div>
               </div>
             </div>
           )}
