@@ -5748,7 +5748,7 @@ export default function App() {
                         filter: isActive ? "drop-shadow(0 0 6px rgba(255,102,0,0.6))" : "none",
                         transition: "filter 0.2s",
                         display: "flex"
-                      }}><NavIcon id={item.id} size={22} color={isActive ? "#FF6600" : "#888"} /></span>
+                      }}><NavIcon id={item.id} size={22} color={isActive ? "#FF6600" : "#c8cdd6"} /></span>
                       {item.id === "messages" && unreadCount > 0 && (
                         <span style={{ position: "absolute", top: -4, right: -6, background: "#ff4444", color: "#fff", borderRadius: "50%", width: 16, height: 16, fontSize: 9, display: "flex", alignItems: "center", justifyContent: "center", fontWeight: 700, border: "2px solid rgba(10,12,18,1)" }}>
                           {unreadCount > 9 ? "9+" : unreadCount}
@@ -5759,7 +5759,7 @@ export default function App() {
                       fontSize: 9, 
                       letterSpacing: "0.08em", 
                       textTransform: "uppercase",
-                      color: isActive ? "#FF6600" : "#444",
+                      color: isActive ? "#FF6600" : "#c8cdd6",
                       fontWeight: isActive ? 700 : 400,
                       transition: "color 0.2s"
                     }}>{item.label}</span>
