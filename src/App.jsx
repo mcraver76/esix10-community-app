@@ -5608,6 +5608,37 @@ export default function App() {
     });
   }, []);
 
+  // Auto-update: phones (especially home-screen apps) cache the old bundle and
+  // keep running stale code. Each Vite build produces a uniquely-hashed entry
+  // file in index.html. We note the hash we loaded with, then on focus / every
+  // few minutes fetch a fresh index.html; if its entry hash changed, a new
+  // version is live, so reload to pick it up. One reload per version (guarded in
+  // sessionStorage) so it can never loop.
+  useEffect(() => {
+    if (!import.meta.env || !import.meta.env.PROD) return; // dev uses HMR
+    const entryRe = /assets\/[\w.-]*index[\w.-]*\.js/;
+    const runningTag = (document.querySelector('script[type="module"][src*="assets/"]')?.getAttribute("src") || "").match(entryRe)?.[0];
+    if (!runningTag) return;
+    const check = async () => {
+      try {
+        const res = await fetch("/?_=" + Date.now(), { cache: "no-store" });
+        const html = await res.text();
+        const deployedTag = html.match(entryRe)?.[0];
+        if (!deployedTag || deployedTag === runningTag) return;
+        if (sessionStorage.getItem("esix10_reloaded_for") === deployedTag) return; // already reloaded for this version
+        sessionStorage.setItem("esix10_reloaded_for", deployedTag);
+        window.location.reload();
+      } catch (e) {}
+    };
+    const onFocus = () => check();
+    const onVisible = () => { if (document.visibilityState === "visible") check(); };
+    window.addEventListener("focus", onFocus);
+    document.addEventListener("visibilitychange", onVisible);
+    const iv = setInterval(check, 5 * 60 * 1000);
+    check();
+    return () => { window.removeEventListener("focus", onFocus); document.removeEventListener("visibilitychange", onVisible); clearInterval(iv); };
+  }, []);
+
   async function loadProfile(u) {
     setUser(u);
     try {
