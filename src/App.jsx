@@ -1562,6 +1562,13 @@ function Members({ profile, onNavigate }) {
     if (m.id === profile.id) return;
     const roomId = `dm_${[profile.id, m.id].sort().join("_")}`;
     localStorage.setItem(`esix10_room_${profile.id}`, roomId);
+    // One-time signal so the Chat tab opens straight into the conversation
+    // (on mobile it otherwise lands on the room list).
+    localStorage.setItem(`esix10_open_room_${profile.id}`, "1");
+    // Mark the DM as read so it doesn't show as unread when we open it.
+    const lastRead = JSON.parse(localStorage.getItem(`esix10_lastread_${profile.id}`) || "{}");
+    lastRead[roomId] = new Date().toISOString();
+    localStorage.setItem(`esix10_lastread_${profile.id}`, JSON.stringify(lastRead));
     if (onNavigate) onNavigate("messages");
   }
 
@@ -2058,7 +2065,14 @@ function Messages({ profile, members, onRead }) {
 
   const currentRoom = [...GROUP_ROOMS, ...dmRooms, ...customRooms].find(r => r.id === activeRoom);
   const isMobileChat = useMobile();
-  const [showRoomList, setShowRoomList] = useState(true);
+  const [showRoomList, setShowRoomList] = useState(() => {
+    // If we arrived here from a "Message" button, open straight into the chat.
+    if (localStorage.getItem(`esix10_open_room_${profile.id}`)) {
+      localStorage.removeItem(`esix10_open_room_${profile.id}`);
+      return false;
+    }
+    return true;
+  });
 
   function selectRoomMobile(roomId) {
     selectRoom(roomId);
