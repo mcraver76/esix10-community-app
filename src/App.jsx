@@ -5356,6 +5356,7 @@ export default function App() {
   const [showShare, setShowShare] = useState(false);
   const [unreadCount, setUnreadCount] = useState(0);
   const [showMore, setShowMore] = useState(false);
+  const [showCreate, setShowCreate] = useState(false);
   const [adminPending, setAdminPending] = useState(0);
   const [recovering, setRecovering] = useState(false);
 
@@ -5518,13 +5519,14 @@ export default function App() {
   const NAV_ITEMS = [
     { id: "feed", label: "Feed", icon: "📋" },
     { id: "forge", label: "Forge", icon: "🔥" },
-    { id: "prayer", label: "Prayer", icon: "🙏" },
+    { id: "create", label: "", fab: true },
     { id: "messages", label: unreadCount > 0 ? `Chat (${unreadCount})` : "Chat", icon: "💬" },
     { id: "more", label: "More", icon: "☰" },
   ];
 
   const MORE_ITEMS = [
     ...(isStaff(profile) ? [{ id: "admin", label: adminPending > 0 ? `Admin (${adminPending})` : "Admin", icon: "🛡️" }] : []),
+    { id: "prayer", label: "Prayer Wall", icon: "🙏" },
     { id: "profile", label: "My Profile", icon: "👤" },
     { id: "stats", label: "Stats Dashboard", icon: "📊" },
     { id: "members", label: "Members", icon: "👥" },
@@ -5632,9 +5634,28 @@ export default function App() {
           )}
 
           {/* FLOATING BOTTOM NAV */}
+          {showCreate && (
+            <div onClick={() => setShowCreate(false)} style={{ position: "fixed", inset: 0, background: "rgba(0,0,0,0.55)", zIndex: 200, display: "flex", alignItems: "flex-end", justifyContent: "center" }}>
+              <div onClick={e => e.stopPropagation()} style={{ background: "#161b24", borderTopLeftRadius: 20, borderTopRightRadius: 20, width: "100%", maxWidth: 480, padding: "14px 16px 30px", border: "1px solid rgba(255,255,255,0.08)" }}>
+                <div style={{ width: 40, height: 4, background: "rgba(255,255,255,0.2)", borderRadius: 2, margin: "0 auto 14px" }} />
+                <p style={{ ...S.eyebrow, marginBottom: 8 }}>Create</p>
+                {[
+                  { label: "Share to the Feed", sub: "Post a win, a thought, a photo", icon: "📋", to: "feed" },
+                  { label: "Prayer Request", sub: "Ask the community to lift you up", icon: "🙏", to: "prayer" },
+                  { label: "Log a Walk or Workout", sub: "The Forge", icon: "🔥", to: "forge" },
+                  { label: "Submit an Event", sub: "Gather in person", icon: "📅", to: "events" },
+                ].map(a => (
+                  <div key={a.to} onClick={() => { setShowCreate(false); setTab(a.to); }} style={{ display: "flex", alignItems: "center", gap: 14, padding: "11px 8px", cursor: "pointer", borderRadius: 12 }}>
+                    <div style={{ width: 42, height: 42, borderRadius: 12, background: "rgba(255,102,0,0.12)", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 20, flexShrink: 0 }}>{a.icon}</div>
+                    <div><div style={{ color: "#fff", fontSize: 15, fontWeight: 600 }}>{a.label}</div><div style={{ color: "#9aa4b2", fontSize: 12 }}>{a.sub}</div></div>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
           <div style={{ position: "fixed", bottom: 16, left: 12, right: 12, zIndex: 100 }}>
-            <div style={{ 
-              background: "rgba(13,17,23,0.97)", 
+            <div style={{
+              background: "rgba(13,17,23,0.97)",
               backdropFilter: "blur(20px)",
               WebkitBackdropFilter: "blur(20px)",
               border: "1px solid rgba(255,102,0,0.2)", 
@@ -5644,6 +5665,13 @@ export default function App() {
               boxShadow: "0 8px 32px rgba(0,0,0,0.6), 0 0 0 1px rgba(255,102,0,0.1), inset 0 1px 0 rgba(255,255,255,0.05)"
             }}>
               {NAV_ITEMS.map(item => {
+                if (item.fab) {
+                  return (
+                    <div key="create" style={{ flex: 1, display: "flex", justifyContent: "center" }}>
+                      <div onClick={() => setShowCreate(true)} aria-label="Create" style={{ width: 52, height: 52, borderRadius: "50%", background: "linear-gradient(135deg,#FF6600,#E55A00)", display: "flex", alignItems: "center", justifyContent: "center", color: "#fff", fontSize: 30, fontWeight: 300, marginTop: -30, boxShadow: "0 6px 18px rgba(255,102,0,0.5)", cursor: "pointer", lineHeight: 1, border: "3px solid #0d1117" }}>+</div>
+                    </div>
+                  );
+                }
                 const isActive = tab === item.id || (item.id === "more" && MORE_ITEMS.some(m => m.id === tab));
                 return (
                   <div key={item.id} onClick={() => setTab(item.id)}
