@@ -2029,7 +2029,7 @@ function Messages({ profile, members, onRead }) {
   }
 
   const ROOM_LIST = (
-    <div style={{ width: isMobileChat ? "100%" : 220, borderRight: isMobileChat ? "none" : "1px solid rgba(255,255,255,0.05)", flexShrink: 0, overflowY: "auto", height: isMobileChat ? "calc(100vh - 200px)" : "auto" }}>
+    <div style={{ width: isMobileChat ? "100%" : 230, borderRight: isMobileChat ? "none" : "1px solid rgba(255,255,255,0.06)", flexShrink: 0, overflowY: "auto", height: isMobileChat ? "calc(100dvh - 215px)" : "auto", background: "rgba(255,255,255,0.015)" }}>
       {isMobileChat && <div style={{ padding: "12px 12px 0" }}><TabCarousel slides={CHAT_SLIDES} /></div>}
       <div style={{ padding: "16px 12px 8px" }}>
         <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 12 }}>
@@ -2154,8 +2154,8 @@ function Messages({ profile, members, onRead }) {
   );
 
   const CHAT_VIEW = (
-    <div style={{ flex: 1, display: "flex", flexDirection: "column", height: isMobileChat ? "calc(100vh - 200px)" : "auto" }}>
-      <div style={{ padding: "12px 16px", borderBottom: "1px solid rgba(255,255,255,0.05)", display: "flex", alignItems: "center", gap: 12 }}>
+    <div style={{ flex: 1, display: "flex", flexDirection: "column", height: isMobileChat ? "calc(100dvh - 215px)" : "auto", minWidth: 0 }}>
+      <div style={{ padding: "12px 16px", borderBottom: "1px solid rgba(255,255,255,0.06)", display: "flex", alignItems: "center", gap: 12, background: "rgba(255,255,255,0.02)" }}>
         {isMobileChat && (
           <>
             <button onClick={() => setShowRoomList(true)} style={{ background: "none", border: "none", color: "#FF7E33", fontSize: 20, cursor: "pointer", padding: "0 4px", lineHeight: 1 }}>‹</button>
@@ -2268,7 +2268,7 @@ function Messages({ profile, members, onRead }) {
   }
 
   return (
-    <div style={{ display: "flex", gap: 0, height: "calc(100vh - 130px)", minHeight: 500 }}>
+    <div style={{ display: "flex", gap: 0, height: isMobileChat ? "calc(100dvh - 215px)" : "calc(100vh - 150px)", minHeight: isMobileChat ? 0 : 480, background: "#161b24", border: "1px solid rgba(255,255,255,0.07)", borderRadius: 16, overflow: "hidden" }}>
       {ROOM_LIST}
       <div style={{ flex: 1, display: "flex", flexDirection: "column" }}>
         {!activeRoom ? (
