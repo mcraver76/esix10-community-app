@@ -1486,6 +1486,7 @@ function MemberProfileModal({ m, me, onClose }) {
             {m.role === "admin" && <span style={{ ...S.badge, background: "rgba(255,102,0,0.3)", color: "#FF7E33", fontSize: 10 }}>Admin</span>}
             {m.role === "moderator" && <span style={{ ...S.badge, background: "rgba(192,154,47,0.25)", color: "#C09A2F", fontSize: 10 }}>Mod</span>}
           </div>
+          {GROUPS.find(g => g.id === m.group_id)?.subtitle && <p style={{ color: "#FF7E33", fontSize: 11, letterSpacing: "0.18em", textTransform: "uppercase", fontWeight: 700, marginTop: 10 }}>{GROUPS.find(g => g.id === m.group_id).subtitle}</p>}
         </div>
         <div style={{ marginTop: 16, display: "flex", flexDirection: "column", gap: 8, fontSize: 14 }}>
           {(m.city || m.state) && <div style={{ color: "#c8cdd6" }}><MapPin size={13} color="#FF7E33" style={{ verticalAlign: "-2px", marginRight: 6 }} />{[m.city, m.state].filter(Boolean).join(", ")}</div>}
@@ -1669,12 +1670,15 @@ function Members({ profile }) {
     <div>
       <TabCarousel slides={MEMBER_SLIDES} />
       <div style={{ marginBottom: 8 }}>
-        <h2 style={{ ...S.h2, margin: "0 0 2px 0" }}>
-          {profile.role === "admin" ? `Members (${filtered.length})` : `${myGroup?.label} (${filtered.length})`}
-        </h2>
-        {profile.role !== "admin" && myGroup?.subtitle && (
-          <p style={{ color: "#FF7E33", fontSize: 12, letterSpacing: "0.18em", textTransform: "uppercase", fontWeight: 700, margin: "0 0 12px 0" }}>{myGroup.subtitle}</p>
-        )}
+        {(() => {
+          const shownGroup = profile.role === "admin" ? (filter && filter !== "all" ? GROUPS.find(g => g.id === filter) : null) : myGroup;
+          return (<>
+            <h2 style={{ ...S.h2, margin: "0 0 2px 0" }}>
+              {profile.role === "admin" ? (shownGroup ? `${shownGroup.label} (${filtered.length})` : `Members (${filtered.length})`) : `${myGroup?.label} (${filtered.length})`}
+            </h2>
+            <p style={{ color: "#FF7E33", fontSize: 12, letterSpacing: "0.18em", textTransform: "uppercase", fontWeight: 700, margin: "0 0 12px 0" }}>{shownGroup?.subtitle || "Brotherhood. Sisterhood. Family."}</p>
+          </>);
+        })()}
         {profile.role === "admin" && (
           <div style={{ display: "flex", gap: 6, flexWrap: "wrap" }}>
             {["all", ...GROUPS.map(g => g.id)].map(f => (
@@ -4969,9 +4973,12 @@ function Profile({ profile, onUpdate, onSignOut }) {
           <label style={S.label}>Your Group</label>
           <div style={{ display: "flex", gap: 8, flexWrap: "wrap", marginTop: 4, marginBottom: 12 }}>
             {((profile.group_ids && profile.group_ids.length) ? profile.group_ids : [profile.group_id]).filter(Boolean).map(gid => (
-              <div key={gid} style={{ background: "rgba(255,102,0,0.12)", border: "1px solid rgba(255,102,0,0.3)", borderRadius: 8, padding: "10px 16px", display: "flex", alignItems: "center", gap: 8 }}>
-                <NavIcon id={gid} size={16} color="#FF7E33" />
-                <span style={{ color: "#FF7E33", fontSize: 13 }}>{GROUPS.find(g => g.id === gid)?.label || gid}</span>
+              <div key={gid} style={{ background: "rgba(255,102,0,0.12)", border: "1px solid rgba(255,102,0,0.3)", borderRadius: 8, padding: "10px 16px", display: "flex", alignItems: "center", gap: 10 }}>
+                <NavIcon id={gid} size={18} color="#FF7E33" />
+                <div>
+                  <div style={{ color: "#FF7E33", fontSize: 13, fontWeight: 600 }}>{GROUPS.find(g => g.id === gid)?.label || gid}</div>
+                  {GROUPS.find(g => g.id === gid)?.subtitle && <div style={{ color: "#FF7E33", fontSize: 9, letterSpacing: "0.12em", textTransform: "uppercase", opacity: 0.85 }}>{GROUPS.find(g => g.id === gid).subtitle}</div>}
+                </div>
               </div>
             ))}
           </div>
