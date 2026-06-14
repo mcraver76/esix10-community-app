@@ -1121,7 +1121,7 @@ function TabCarousel({ slides }) {
   );
 }
 
-function Feed({ profile, activeGroup, isNewMember, onNavigate }) {
+function Feed({ profile, activeGroup, setActiveGroup, isNewMember, onNavigate }) {
   const [posts, setPosts] = useState([]);
   const [body, setBody] = useState("");
   const [loading, setLoading] = useState(false);
@@ -1200,8 +1200,16 @@ function Feed({ profile, activeGroup, isNewMember, onNavigate }) {
       }
     }
     setUploading(false);
-    await supabase.from("posts").insert({ user_id: profile.id, group_id: postTarget, body: body.trim(), photo_url: photoUrl, photo_approved: photoUrl ? false : true, reactions: {} });
-    setBody(""); setPhotoFile(null); setPhotoPreview(null); setPosting(false); loadPosts();
+    const target = postTarget;
+    await supabase.from("posts").insert({ user_id: profile.id, group_id: target, body: body.trim(), photo_url: photoUrl, photo_approved: photoUrl ? false : true, reactions: {} });
+    setBody(""); setPhotoFile(null); setPhotoPreview(null); setPosting(false);
+    // If the feed is filtered to a different group than the one just posted to,
+    // switch the filter to follow the post so the user sees it land.
+    if (setActiveGroup && activeGroup && activeGroup !== "all" && activeGroup !== target) {
+      setActiveGroup(target); // this triggers loadPosts via the activeGroup effect
+    } else {
+      loadPosts();
+    }
   }
 
   async function approvePhoto(id) {
@@ -5635,7 +5643,7 @@ export default function App() {
           {isMobile && GROUPS.find(g => g.id === feedGroup)?.subtitle && (
             <p style={{ color: "#FF7E33", fontSize: 11, letterSpacing: "0.2em", textTransform: "uppercase", fontWeight: 700, margin: "-6px 0 16px 2px" }}>{GROUPS.find(g => g.id === feedGroup).subtitle}</p>
           )}
-          <Feed profile={profile} activeGroup={feedGroup} onNavigate={setTab} />
+          <Feed profile={profile} activeGroup={feedGroup} setActiveGroup={setFeedGroup} onNavigate={setTab} />
         </div>
       )}
       {tab === "forge" && <TheForge profile={profile} />}
