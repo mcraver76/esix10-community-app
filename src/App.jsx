@@ -2161,8 +2161,11 @@ function Messages({ profile, members, onRead }) {
     .sort((a, b) => new Date(dmLatest[b.id]) - new Date(dmLatest[a.id]));
 
   // A room is "unread" (show a clear new-message indicator) when it has unseen
-  // messages and isn't the one currently open.
-  const isUnread = (id) => unreadRooms.has(id) && activeRoom !== id;
+  // messages and you're not CURRENTLY VIEWING that conversation. On mobile the
+  // list shares this component with the conversation, so the remembered
+  // activeRoom must still show a dot while you're looking at the list.
+  const viewingConversation = !isMobileChat || !showRoomList;
+  const isUnread = (id) => unreadRooms.has(id) && !(viewingConversation && activeRoom === id);
   const UnreadDot = () => <span style={{ width: 11, height: 11, borderRadius: "50%", background: "#FF6600", flexShrink: 0, boxShadow: "0 0 8px rgba(255,102,0,0.9)" }} />;
 
   const ROOM_LIST = (
@@ -5842,7 +5845,7 @@ export default function App() {
       {tab === "prayer" && <PrayerRequests profile={profile} />}
       {tab === "devotion" && <Devotion profile={profile} />}
       {tab === "events" && <Events profile={profile} />}
-      {tab === "messages" && <Messages profile={profile} members={allMembers} onRead={() => setUnreadCount(0)} />}
+      {tab === "messages" && <Messages profile={profile} members={allMembers} onRead={() => checkUnread(profile)} />}
       {tab === "members" && <Members profile={profile} onNavigate={setTab} />}
       {tab === "media" && <Media profile={profile} />}
       {tab === "local" && <LocalChapter profile={profile} />}
