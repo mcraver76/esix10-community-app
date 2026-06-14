@@ -5530,12 +5530,11 @@ export default function App() {
         });
         const { data: newProfile } = await supabase.from("profiles").select("*").eq("id", u.id).single();
         setProfile(newProfile);
-        // Send admin notification for new non-admin signups
-        if (!isAdmin) {
-          supabase.functions.invoke("notify", {
-            body: { full_name: fullName, email: u.email, group_id: "pending" }
-          }).catch(() => {});
-        }
+        // NOTE: the admin "new member" text is sent once from GroupSelect.confirm()
+        // when the member picks their group. We intentionally do NOT notify here —
+        // loadProfile can run several times across auth events (getSession +
+        // onAuthStateChange firing SIGNED_IN/TOKEN_REFRESHED/etc.), which was
+        // sending the admin multiple texts for a single signup.
       } else if (error) {
         setShowSetup(true);
       } else {
