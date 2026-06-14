@@ -5682,8 +5682,10 @@ export default function App() {
           {/* MORE OVERLAY */}
           {tab === "more" && (
             <div style={{ position: "fixed", inset: 0, background: "rgba(10,10,10,0.97)", zIndex: 200, display: "flex", flexDirection: "column", overflowY: "auto", paddingBottom: 90 }}>
-              <div style={{ padding: "24px 20px 16px", textAlign: "center" }}>
+              <div style={{ padding: "18px 20px 14px", display: "flex", alignItems: "center", justifyContent: "space-between" }}>
+                <div onClick={() => setTab("feed")} style={{ color: "#FF7E33", fontSize: 14, fontWeight: 600, cursor: "pointer", display: "flex", alignItems: "center", gap: 4 }}>‹ Back</div>
                 <div style={{ fontFamily: "'Inter', sans-serif", fontSize: 11, letterSpacing: "0.3em", color: "#FF7E33", textTransform: "uppercase" }}>More</div>
+                <div onClick={() => setTab("feed")} style={{ color: "#9aa4b2", fontSize: 22, cursor: "pointer", lineHeight: 1 }}>✕</div>
               </div>
               <div style={{ display: "flex", flexDirection: "column", gap: 8, padding: "0 20px" }}>
                 {MORE_ITEMS.map(item => (
@@ -5703,7 +5705,7 @@ export default function App() {
 
           {/* FLOATING BOTTOM NAV */}
           {showCreate && (
-            <div onClick={() => setShowCreate(false)} style={{ position: "fixed", inset: 0, background: "rgba(0,0,0,0.55)", zIndex: 200, display: "flex", alignItems: "flex-end", justifyContent: "center" }}>
+            <div onClick={() => setShowCreate(false)} style={{ position: "fixed", inset: 0, background: "rgba(0,0,0,0.55)", zIndex: 350, display: "flex", alignItems: "flex-end", justifyContent: "center" }}>
               <div onClick={e => e.stopPropagation()} style={{ background: "#161b24", borderTopLeftRadius: 20, borderTopRightRadius: 20, width: "100%", maxWidth: 480, padding: "14px 16px 30px", border: "1px solid rgba(255,255,255,0.08)" }}>
                 <div style={{ width: 40, height: 4, background: "rgba(255,255,255,0.2)", borderRadius: 2, margin: "0 auto 14px" }} />
                 <p style={{ ...S.eyebrow, marginBottom: 8 }}>Create</p>
@@ -5721,7 +5723,7 @@ export default function App() {
               </div>
             </div>
           )}
-          <div style={{ position: "fixed", bottom: 16, left: 12, right: 12, zIndex: 100 }}>
+          <div style={{ position: "fixed", bottom: 16, left: 12, right: 12, zIndex: 300 }}>
             <div style={{
               background: "rgba(13,17,23,0.97)",
               backdropFilter: "blur(20px)",
