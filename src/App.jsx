@@ -2023,6 +2023,8 @@ function Messages({ profile, members, onRead }) {
       lr[activeRoom] = new Date().toISOString();
       localStorage.setItem(`esix10_lastread_${profile.id}`, JSON.stringify(lr));
     } catch(e) {}
+    // Clear the unread dot for the room we just opened.
+    setUnreadRooms(prev => { if (!prev.has(activeRoom)) return prev; const n = new Set(prev); n.delete(activeRoom); return n; });
   }
 
   async function send() {
@@ -2080,6 +2082,35 @@ function Messages({ profile, members, onRead }) {
     selectRoom(roomId);
     setShowRoomList(false);
   }
+
+  // Per-room unread tracking — drives the orange dot on chats with new messages.
+  const [unreadRooms, setUnreadRooms] = useState(() => new Set());
+  async function refreshUnread() {
+    try {
+      const lastRead = JSON.parse(localStorage.getItem(`esix10_lastread_${profile.id}`) || "{}");
+      const { data } = await supabase.from("messages").select("room_id, created_at, user_id").order("created_at", { ascending: false }).limit(200);
+      if (!data) return;
+      const byRoom = {};
+      data.forEach(m => { (byRoom[m.room_id] = byRoom[m.room_id] || []).push(m); });
+      const next = new Set();
+      Object.entries(byRoom).forEach(([roomId, msgs]) => {
+        const lastFromOther = msgs.find(m => m.user_id !== profile.id); // newest-first
+        if (!lastFromOther) return;
+        const lrt = lastRead[roomId] || "2000-01-01";
+        if (new Date(lastFromOther.created_at) > new Date(lrt)) next.add(roomId);
+      });
+      setUnreadRooms(next);
+    } catch (e) {}
+  }
+  useEffect(() => {
+    refreshUnread();
+    const ch = supabase
+      .channel(`messages-unread-${profile.id}`)
+      .on("postgres_changes", { event: "INSERT", schema: "public", table: "messages" }, () => refreshUnread())
+      .subscribe();
+    const iv = setInterval(refreshUnread, 45000);
+    return () => { supabase.removeChannel(ch); clearInterval(iv); };
+  }, []);
 
   const ROOM_LIST = (
     <div style={{ width: isMobileChat ? "100%" : 230, borderRight: isMobileChat ? "none" : "1px solid rgba(255,255,255,0.06)", flexShrink: 0, overflowY: "auto", height: isMobileChat ? "calc(100dvh - 215px)" : "auto", background: "rgba(255,255,255,0.015)" }}>
@@ -2167,6 +2198,7 @@ function Messages({ profile, members, onRead }) {
                   style={{ flex: 1, padding: "10px 12px", borderRadius: 8, cursor: "pointer", background: activeRoom === room.id ? "rgba(255,102,0,0.1)" : "rgba(255,255,255,0.02)", color: activeRoom === room.id ? "#FF6600" : "#CCCCCC", fontSize: 14, display: "flex", alignItems: "center", gap: 10, border: "1px solid rgba(255,255,255,0.04)" }}>
                   <Users size={18} color="#aaa" strokeWidth={1.75} />
                   <span style={{ flex: 1, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{room.label}</span>
+                  {unreadRooms.has(room.id) && activeRoom !== room.id && <span style={{ width: 9, height: 9, borderRadius: "50%", background: "#FF6600", flexShrink: 0, boxShadow: "0 0 6px rgba(255,102,0,0.7)" }} />}
                 </div>
                 <button onClick={async () => {
                   if (!window.confirm(`Delete "${room.label}"?`)) return;
@@ -2188,6 +2220,7 @@ function Messages({ profile, members, onRead }) {
               <div>{room.label}</div>
               {room.subtitle && <div style={{ color: "#FF7E33", fontSize: 9, letterSpacing: "0.12em", textTransform: "uppercase", fontWeight: 700, marginTop: 1 }}>{room.subtitle}</div>}
             </div>
+            {unreadRooms.has(room.id) && activeRoom !== room.id && <span style={{ width: 9, height: 9, borderRadius: "50%", background: "#FF6600", flexShrink: 0, boxShadow: "0 0 6px rgba(255,102,0,0.7)" }} />}
             {isMobileChat && <span style={{ color: "#8A8A8A", fontSize: 16 }}>›</span>}
           </div>
         ))}
@@ -2201,8 +2234,9 @@ function Messages({ profile, members, onRead }) {
             <div style={{ width: 32, height: 32, borderRadius: "50%", background: "rgba(255,102,0,0.15)", display: "flex", alignItems: "center", justifyContent: "center", color: "#FF7E33", fontSize: 13, fontWeight: 600, flexShrink: 0 }}>
               {(room.member.username || room.member.full_name || "?")[0].toUpperCase()}
             </div>
-            <span style={{ overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{room.label}</span>
-            {isMobileChat && <span style={{ marginLeft: "auto", color: "#8A8A8A", fontSize: 16 }}>›</span>}
+            <span style={{ flex: 1, minWidth: 0, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{room.label}</span>
+            {unreadRooms.has(room.id) && activeRoom !== room.id && <span style={{ width: 9, height: 9, borderRadius: "50%", background: "#FF6600", flexShrink: 0, boxShadow: "0 0 6px rgba(255,102,0,0.7)" }} />}
+            {isMobileChat && <span style={{ color: "#8A8A8A", fontSize: 16 }}>›</span>}
           </div>
         ))}
       </div>
