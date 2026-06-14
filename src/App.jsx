@@ -383,7 +383,7 @@ const S = {
   btnDanger: { background: "transparent", color: "#ff4444", border: "1px solid #ff4444", borderRadius: 8, padding: "6px 12px", fontSize: 11, cursor: "pointer" },
   page: { paddingTop: 90, maxWidth: 1100, margin: "0 auto", padding: "90px 24px 60px" },
   card: { background: "linear-gradient(145deg, rgba(22,27,36,0.98), rgba(16,20,28,0.98))", border: "1px solid rgba(255,255,255,0.07)", borderRadius: 12, padding: 24, transition: "border-color 0.2s" },
-  input: { width: "100%", background: "rgba(255,255,255,0.04)", border: "1px solid rgba(255,255,255,0.08)", borderRadius: 8, padding: "12px 16px", color: "#fff", fontFamily: "'Inter', sans-serif", fontSize: 15, outline: "none", boxSizing: "border-box" },
+  input: { width: "100%", background: "rgba(255,255,255,0.04)", border: "1px solid rgba(255,255,255,0.08)", borderRadius: 8, padding: "12px 16px", color: "#fff", fontFamily: "'Inter', sans-serif", fontSize: 16, outline: "none", boxSizing: "border-box" },
   label: { fontSize: 10, letterSpacing: "0.2em", textTransform: "uppercase", color: "#FF7E33", marginBottom: 6, display: "block" },
   divider: { width: 50, height: 2, background: "#FF6600", margin: "16px 0" },
   eyebrow: { fontSize: 10, letterSpacing: "0.2em", textTransform: "uppercase", color: "#FF7E33", display: "block", marginBottom: 10 },
@@ -2130,7 +2130,7 @@ function Messages({ profile, members, onRead }) {
             {dmSearch.length > 1 && (
               <div style={{ background: "rgba(10,10,10,0.98)", border: "1px solid rgba(255,255,255,0.08)", borderRadius: 6, maxHeight: 180, overflowY: "auto" }}>
                 {(members || []).filter(m => m.id !== profile.id && m.status === "approved" && ((m.full_name||"").toLowerCase().includes(dmSearch.toLowerCase()) || (m.username||"").toLowerCase().includes(dmSearch.toLowerCase()))).slice(0, 8).map(m => (
-                  <div key={m.id} onClick={() => { const roomId = [profile.id, m.id].sort().join("_"); isMobileChat ? selectRoomMobile(roomId) : selectRoom(roomId); setShowNewDM(false); setDmSearch(""); }}
+                  <div key={m.id} onClick={() => { const roomId = `dm_${[profile.id, m.id].sort().join("_")}`; isMobileChat ? selectRoomMobile(roomId) : selectRoom(roomId); setShowNewDM(false); setDmSearch(""); }}
                     style={{ display: "flex", alignItems: "center", gap: 8, padding: "8px 12px", cursor: "pointer", borderBottom: "1px solid rgba(255,255,255,0.04)" }}
                     onMouseOver={e => e.currentTarget.style.background = "rgba(255,102,0,0.08)"}
                     onMouseOut={e => e.currentTarget.style.background = "transparent"}>
@@ -2343,7 +2343,7 @@ function Messages({ profile, members, onRead }) {
       <div style={{ padding: "10px 12px", borderTop: "1px solid rgba(255,255,255,0.05)", display: "flex", gap: 8, alignItems: "center" }}>
         <input ref={msgPhotoRef} type="file" accept="image/*" style={{ display: "none" }} onChange={e => { const f = e.target.files[0]; if (f && f.size <= 5*1024*1024) { setPhotoFile(f); setPhotoPreview(URL.createObjectURL(f)); } else if (f) alert("Max 5MB"); }} />
         <button onClick={() => msgPhotoRef.current.click()} style={{ background: "none", border: "1px solid rgba(255,255,255,0.08)", borderRadius: 8, padding: "8px 10px", color: "#BBBBBB", cursor: "pointer", fontSize: 16, flexShrink: 0 }}><Camera size={16} /></button>
-        <input style={{ ...S.input, flex: 1, fontSize: 14, padding: "10px 14px" }} placeholder="Type a message..." value={body} onChange={e => setBody(e.target.value)} onKeyDown={e => { if (e.key === "Enter" && !e.shiftKey) { e.preventDefault(); send(); }}} />
+        <input style={{ ...S.input, flex: 1, fontSize: 16, padding: "10px 14px" }} placeholder="Type a message..." value={body} onChange={e => setBody(e.target.value)} onKeyDown={e => { if (e.key === "Enter" && !e.shiftKey) { e.preventDefault(); send(); }}} />
         <button style={{ ...S.btn, padding: "10px 16px", flexShrink: 0 }} onClick={send} disabled={posting || uploading || (!body.trim() && !photoFile)}>{uploading ? "⏳" : "Send"}</button>
       </div>
     </div>
@@ -5536,6 +5536,22 @@ export default function App() {
       }, 120000);
       return () => clearInterval(interval);
     }
+  }, [profile?.id]);
+
+  // Keep the nav "Chat (N)" badge fresh: recompute on any new message, on a
+  // timer, and when the tab regains focus. Previously it only ran once at login,
+  // so incoming DMs/messages never showed up until a manual refresh.
+  useEffect(() => {
+    if (!profile?.id) return;
+    checkUnread(profile);
+    const ch = supabase
+      .channel(`nav-unread-${profile.id}`)
+      .on("postgres_changes", { event: "INSERT", schema: "public", table: "messages" }, () => checkUnread(profile))
+      .subscribe();
+    const iv = setInterval(() => checkUnread(profile), 45000);
+    const onFocus = () => checkUnread(profile);
+    window.addEventListener("focus", onFocus);
+    return () => { supabase.removeChannel(ch); clearInterval(iv); window.removeEventListener("focus", onFocus); };
   }, [profile?.id]);
 
   useEffect(() => {
