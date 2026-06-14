@@ -2142,7 +2142,7 @@ function Messages({ profile, members, onRead }) {
     .sort((a, b) => new Date(dmLatest[b.id]) - new Date(dmLatest[a.id]));
 
   const ROOM_LIST = (
-    <div style={{ width: isMobileChat ? "100%" : 230, borderRight: isMobileChat ? "none" : "1px solid rgba(255,255,255,0.06)", flexShrink: 0, overflowY: "auto", height: isMobileChat ? "calc(100dvh - 165px)" : "auto", background: "rgba(255,255,255,0.015)" }}>
+    <div style={{ width: isMobileChat ? "100%" : 230, borderRight: isMobileChat ? "none" : "1px solid rgba(255,255,255,0.06)", flexShrink: 0, overflowY: "auto", height: isMobileChat ? "calc(100dvh - 72px)" : "auto", paddingBottom: isMobileChat ? 116 : 0, background: "rgba(255,255,255,0.015)" }}>
       {isMobileChat && <div style={{ padding: "12px 12px 0" }}><TabCarousel slides={CHAT_SLIDES} /></div>}
       <div style={{ padding: "16px 12px 8px" }}>
         <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 12 }}>
@@ -2273,7 +2273,7 @@ function Messages({ profile, members, onRead }) {
   );
 
   const CHAT_VIEW = (
-    <div style={{ flex: 1, display: "flex", flexDirection: "column", height: isMobileChat ? "calc(100dvh - 165px)" : "auto", minWidth: 0 }}>
+    <div style={{ flex: 1, display: "flex", flexDirection: "column", height: isMobileChat ? "calc(100dvh - 72px)" : "auto", paddingBottom: isMobileChat ? 116 : 0, minWidth: 0 }}>
       <div style={{ padding: "12px 16px", borderBottom: "1px solid rgba(255,255,255,0.06)", display: "flex", alignItems: "center", gap: 12, background: "rgba(255,255,255,0.02)" }}>
         {isMobileChat && (
           <>
@@ -2380,7 +2380,7 @@ function Messages({ profile, members, onRead }) {
 
   if (isMobileChat) {
     return (
-      <div style={{ margin: "-16px -16px 0" }}>
+      <div style={{ margin: 0 }}>
         {showRoomList || !activeRoom ? ROOM_LIST : CHAT_VIEW}
       </div>
     );
@@ -5759,7 +5759,7 @@ export default function App() {
   ];
 
   const CONTENT = (
-    <div style={{ flex: 1, padding: isMobile ? "20px 16px 110px" : "32px 32px 60px", maxWidth: isMobile ? "100%" : 800, overflow: "hidden", boxSizing: "border-box" }}>
+    <div style={{ flex: 1, padding: isMobile ? (tab === "messages" ? "0px" : "20px 16px 110px") : "32px 32px 60px", maxWidth: isMobile ? "100%" : 800, overflow: "hidden", boxSizing: "border-box" }}>
       {!isApproved(profile) && (
         <div style={{ background: "rgba(252,196,25,0.1)", border: "1px solid rgba(252,196,25,0.3)", color: "#fcc419", padding: "12px 16px", borderRadius: 8, marginBottom: 16, fontSize: 13, lineHeight: 1.5 }}>
           ⏳ <strong>Your profile is under review.</strong> You can browse and react now — posting, messaging, kudos, and joining groups unlock once an admin approves you (usually within 24–48 hours).
