@@ -1669,9 +1669,12 @@ function Members({ profile }) {
     <div>
       <TabCarousel slides={MEMBER_SLIDES} />
       <div style={{ marginBottom: 8 }}>
-        <h2 style={{ ...S.h2, margin: "0 0 12px 0" }}>
+        <h2 style={{ ...S.h2, margin: "0 0 2px 0" }}>
           {profile.role === "admin" ? `Members (${filtered.length})` : `${myGroup?.label} (${filtered.length})`}
         </h2>
+        {profile.role !== "admin" && myGroup?.subtitle && (
+          <p style={{ color: "#FF7E33", fontSize: 12, letterSpacing: "0.18em", textTransform: "uppercase", fontWeight: 700, margin: "0 0 12px 0" }}>{myGroup.subtitle}</p>
+        )}
         {profile.role === "admin" && (
           <div style={{ display: "flex", gap: 6, flexWrap: "wrap" }}>
             {["all", ...GROUPS.map(g => g.id)].map(f => (
@@ -1883,8 +1886,8 @@ function Messages({ profile, members, onRead }) {
   const bottomRef = useRef(null);
 
   const GROUP_ROOMS = [
-    { id: `group_${profile.group_id}`, label: `${GROUPS.find(g => g.id === profile.group_id)?.label} Chat`, icon: "💬", type: "group" },
-    ...(profile.role === "admin" ? GROUPS.filter(g => g.id !== profile.group_id).map(g => ({ id: `group_${g.id}`, label: `${g.label} Chat`, icon: "💬", type: "group" })) : []),
+    { id: `group_${profile.group_id}`, label: `${GROUPS.find(g => g.id === profile.group_id)?.label} Chat`, subtitle: GROUPS.find(g => g.id === profile.group_id)?.subtitle, icon: "💬", type: "group" },
+    ...(profile.role === "admin" ? GROUPS.filter(g => g.id !== profile.group_id).map(g => ({ id: `group_${g.id}`, label: `${g.label} Chat`, subtitle: g.subtitle, icon: "💬", type: "group" })) : []),
     ...(profile.role === "admin" ? [{ id: "group_all", label: "Leadership Chat", icon: "📢", type: "group" }] : []),
   ];
 
@@ -2160,7 +2163,10 @@ function Messages({ profile, members, onRead }) {
           </>
         )}
         <span style={{ fontSize: 20 }}>{currentRoom?.icon}</span>
-        <span style={{ fontFamily: "'Inter', sans-serif", fontSize: 15, color: "#fff", flex: 1 }}>{currentRoom?.label}</span>
+        <div style={{ flex: 1, minWidth: 0 }}>
+          <div style={{ fontFamily: "'Inter', sans-serif", fontSize: 15, color: "#fff", fontWeight: 600 }}>{currentRoom?.label}</div>
+          {currentRoom?.subtitle && <div style={{ color: "#FF7E33", fontSize: 10, letterSpacing: "0.15em", textTransform: "uppercase", fontWeight: 700 }}>{currentRoom.subtitle}</div>}
+        </div>
         {currentRoom?.type === "custom_group" && (
           <button onClick={() => setShowGroupMembers(v => !v)} style={{ background: "none", border: "1px solid rgba(255,255,255,0.1)", borderRadius: 8, padding: "6px 12px", color: "#BBBBBB", cursor: "pointer", fontSize: 12, flexShrink: 0 }}>👥 {roomMembers.length}</button>
         )}
@@ -5344,6 +5350,52 @@ function AgreementGate({ title, intro, sections, agreeLabel, onAgree, onDecline 
   );
 }
 
+function ProfileCompletionGate({ profile, onDone, onSignOut }) {
+  const [username, setUsername] = useState(profile.username || "");
+  const [state, setState] = useState(profile.state || "");
+  const [city, setCity] = useState(profile.city || "");
+  const [err, setErr] = useState("");
+  const [saving, setSaving] = useState(false);
+  async function save() {
+    const clean = username.toLowerCase().replace(/[^a-z0-9_]/g, "");
+    if (clean.length < 3) { setErr("Pick a username — at least 3 letters, numbers, or underscores."); return; }
+    if (!state.trim()) { setErr("Please enter your state."); return; }
+    setSaving(true);
+    if (clean !== profile.username) {
+      const { data: taken } = await supabase.from("profiles").select("id").ilike("username", clean).neq("id", profile.id).maybeSingle();
+      if (taken) { setErr(`"${clean}" is already taken — try another.`); setSaving(false); return; }
+    }
+    const upd = { username: clean, state: state.trim(), city: city.trim() };
+    await supabase.from("profiles").update(upd).eq("id", profile.id);
+    onDone({ ...profile, ...upd });
+    setSaving(false);
+  }
+  return (
+    <div style={{ minHeight: "100vh", background: "#0d1117", display: "flex", justifyContent: "center", padding: "28px 16px", boxSizing: "border-box" }}>
+      <div style={{ maxWidth: 460, width: "100%", marginTop: 16 }}>
+        <h1 style={{ ...S.h2, textAlign: "center", marginBottom: 4 }}>Finish your profile</h1>
+        <p style={{ ...S.muted, textAlign: "center", marginBottom: 20 }}>Just a couple things before you jump in.</p>
+        <div style={S.card}>
+          <div style={{ marginBottom: 16 }}>
+            <label style={S.label}>Username (required)</label>
+            <input style={S.input} placeholder="your_username" value={username} onChange={e => setUsername(e.target.value.toLowerCase().replace(/[^a-z0-9_]/g, ""))} />
+            <p style={{ color: "#8A8A8A", fontSize: 11, marginTop: 4 }}>Shown publicly. Letters, numbers, underscores. No repeats.</p>
+          </div>
+          <div style={S.grid2}>
+            <div style={{ marginBottom: 16 }}><label style={S.label}>State (required)</label><input style={S.input} placeholder="State" value={state} onChange={e => setState(e.target.value)} /></div>
+            <div style={{ marginBottom: 16 }}><label style={S.label}>City (optional)</label><input style={S.input} placeholder="City" value={city} onChange={e => setCity(e.target.value)} /></div>
+          </div>
+          {err && <p style={S.error}>{err}</p>}
+          <div style={S.flex}>
+            <button style={S.btn} onClick={save} disabled={saving}>{saving ? "Saving…" : "Continue"}</button>
+            <button style={S.btnGhost} onClick={onSignOut}>Sign Out</button>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}
+
 export default function App() {
   const [user, setUser] = useState(null);
   const [profile, setProfile] = useState(null);
@@ -5510,6 +5562,9 @@ export default function App() {
       onDecline={signOut}
     />
   );
+  if (profile && (!profile.username || profile.username.length < 3 || !profile.state || !profile.state.trim())) {
+    return <ProfileCompletionGate profile={profile} onDone={(p) => setProfile(p)} onSignOut={signOut} />;
+  }
   if (showWelcome && profile?.group_id) return <WelcomeModal profile={profile} onClose={() => setShowWelcome(false)} />;
   if (showShare) return <ShareESix10 profile={profile} onClose={() => setShowShare(false)} />;
 
