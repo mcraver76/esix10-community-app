@@ -2135,8 +2135,11 @@ function Messages({ profile, members, onRead }) {
           <div key={room.id} onClick={() => isMobileChat ? selectRoomMobile(room.id) : selectRoom(room.id)}
             style={{ padding: "12px 16px", borderRadius: 4, cursor: "pointer", marginBottom: 4, background: activeRoom === room.id ? "rgba(255,102,0,0.1)" : "rgba(255,255,255,0.02)", color: activeRoom === room.id ? "#FF6600" : "#CCCCCC", fontSize: 14, display: "flex", alignItems: "center", gap: 12, border: "1px solid rgba(255,255,255,0.04)" }}>
             <span style={{ fontSize: 20 }}>{room.icon}</span>
-            <span>{room.label}</span>
-            {isMobileChat && <span style={{ marginLeft: "auto", color: "#8A8A8A", fontSize: 16 }}>›</span>}
+            <div style={{ flex: 1, minWidth: 0 }}>
+              <div>{room.label}</div>
+              {room.subtitle && <div style={{ color: "#FF7E33", fontSize: 9, letterSpacing: "0.12em", textTransform: "uppercase", fontWeight: 700, marginTop: 1 }}>{room.subtitle}</div>}
+            </div>
+            {isMobileChat && <span style={{ color: "#8A8A8A", fontSize: 16 }}>›</span>}
           </div>
         ))}
       </div>
@@ -5622,6 +5625,9 @@ export default function App() {
                 </button>
               ))}
             </div>
+          )}
+          {isMobile && GROUPS.find(g => g.id === feedGroup)?.subtitle && (
+            <p style={{ color: "#FF7E33", fontSize: 11, letterSpacing: "0.2em", textTransform: "uppercase", fontWeight: 700, margin: "-6px 0 16px 2px" }}>{GROUPS.find(g => g.id === feedGroup).subtitle}</p>
           )}
           <Feed profile={profile} activeGroup={feedGroup} onNavigate={setTab} />
         </div>
