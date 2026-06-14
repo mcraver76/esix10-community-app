@@ -1137,7 +1137,13 @@ function Feed({ profile, activeGroup, isNewMember, onNavigate }) {
   const memberGroups = profile.group_ids && profile.group_ids.length > 0 ? profile.group_ids : [profile.group_id];
   const canPost = true;
   const [selectedPostGroup, setSelectedPostGroup] = useState(profile.group_id);
-  const postTarget = activeGroup && activeGroup !== "all" ? activeGroup : selectedPostGroup;
+  const postTarget = selectedPostGroup;
+
+  // When the top filter switches to a specific group, default the composer to it —
+  // but the composer's own group tabs can still override where you post.
+  useEffect(() => {
+    if (activeGroup && activeGroup !== "all") setSelectedPostGroup(activeGroup);
+  }, [activeGroup]);
 
   useEffect(() => {
     loadPosts();
