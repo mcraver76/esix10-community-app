@@ -5545,7 +5545,7 @@ export default function App() {
         }
         setProfile(data);
         // Check for unread messages
-        checkUnread(data.id);
+        checkUnread(data);
         // Show welcome modal on first login
         const welcomeKey = `esix10_welcomed_${u.id}`;
         if (!localStorage.getItem(welcomeKey) && data.status === "approved" && data.group_id) {
@@ -5559,14 +5559,38 @@ export default function App() {
     setLoading(false);
   }
 
-  async function checkUnread(userId) {
+  async function checkUnread(p) {
     try {
+      const userId = typeof p === "string" ? p : p?.id;
+      if (!userId) return;
       const lastRead = JSON.parse(localStorage.getItem(`esix10_lastread_${userId}`) || "{}");
+
+      // Build the set of rooms this user actually belongs to. Without this we'd
+      // count other people's DMs and group chats the user isn't in — rooms they
+      // can never open to clear, so the badge gets stuck.
+      const myRooms = new Set();
+      if (p && typeof p === "object") {
+        myRooms.add(`group_${p.group_id}`);
+        (p.group_ids || []).forEach(g => myRooms.add(`group_${g}`));
+        if (p.role === "admin") {
+          GROUPS.forEach(g => myRooms.add(`group_${g.id}`));
+          myRooms.add("group_all");
+        }
+      }
+      // Private/casual rooms the user has been added to.
+      const { data: memRows } = await supabase.from("room_members").select("room_id").eq("user_id", userId);
+      (memRows || []).forEach(r => myRooms.add(r.room_id));
+
+      const isMine = (roomId) =>
+        myRooms.has(roomId) ||
+        (roomId.startsWith("dm_") && roomId.slice(3).split("_").includes(userId));
+
       const { data: messages } = await supabase.from("messages").select("room_id, created_at, user_id").order("created_at", { ascending: false }).limit(200);
       if (!messages) return;
       let unread = 0;
       const rooms = [...new Set(messages.map(m => m.room_id))];
       rooms.forEach(roomId => {
+        if (!isMine(roomId)) return; // skip conversations that aren't this user's
         const roomMessages = messages.filter(m => m.room_id === roomId);
         // only the latest message from someone OTHER than me counts — your own messages never show as unread
         const lastFromOther = roomMessages.find(m => m.user_id !== userId);
