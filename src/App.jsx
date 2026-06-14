@@ -1485,7 +1485,7 @@ function Events({ profile }) {
   );
 }
 
-function MemberProfileModal({ m, me, onClose }) {
+function MemberProfileModal({ m, me, onClose, onMessage }) {
   const groups = (m.group_ids && m.group_ids.length ? m.group_ids : [m.group_id]).map(id => GROUPS.find(g => g.id === id)?.label).filter(Boolean);
   return (
     <div onClick={onClose} style={{ position: "fixed", inset: 0, background: "rgba(0,0,0,0.65)", zIndex: 9998, display: "flex", alignItems: "center", justifyContent: "center", padding: 16 }}>
@@ -1502,6 +1502,11 @@ function MemberProfileModal({ m, me, onClose }) {
           </div>
           {GROUPS.find(g => g.id === m.group_id)?.subtitle && <p style={{ color: "#FF7E33", fontSize: 11, letterSpacing: "0.18em", textTransform: "uppercase", fontWeight: 700, marginTop: 10 }}>{GROUPS.find(g => g.id === m.group_id).subtitle}</p>}
         </div>
+        {onMessage && m.id !== me.id && (
+          <button onClick={() => { onClose(); onMessage(m); }} style={{ width: "100%", marginTop: 18, background: "#FF6600", border: "none", borderRadius: 10, color: "#fff", fontSize: 15, fontWeight: 600, padding: "13px", cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center", gap: 8 }}>
+            <MessageCircle size={18} /> Message {m.username ? `@${m.username}` : formatName(m.full_name).split(" ")[0]}
+          </button>
+        )}
         <div style={{ marginTop: 16, display: "flex", flexDirection: "column", gap: 8, fontSize: 14 }}>
           {(m.city || m.state) && <div style={{ color: "#c8cdd6" }}><MapPin size={13} color="#FF7E33" style={{ verticalAlign: "-2px", marginRight: 6 }} />{[m.city, m.state].filter(Boolean).join(", ")}</div>}
           {m.marital_status && <div style={{ color: "#c8cdd6" }}><span style={{ color: "#9aa4b2" }}>Status:</span> {m.marital_status}</div>}
@@ -1515,7 +1520,7 @@ function MemberProfileModal({ m, me, onClose }) {
   );
 }
 
-function Members({ profile }) {
+function Members({ profile, onNavigate }) {
   const [members, setMembers] = useState([]);
   const [expandedId, setExpandedId] = useState(null);
   const [viewMember, setViewMember] = useState(null);
@@ -1547,6 +1552,17 @@ function Members({ profile }) {
     await supabase.from("kudos").insert({ from_user_id: profile.id, to_user_id: toUserId });
     const btn = document.getElementById(`kudos_${toUserId}`);
     if (btn) { btn.textContent = "👊 Sent!"; setTimeout(() => { btn.textContent = "👊 Kudos"; }, 2000); }
+  }
+
+  // Open a direct message with this member and jump straight to the Chat tab.
+  // The Chat tab restores its active room from localStorage on open, so we set
+  // the DM room here, then navigate.
+  function messageMember(m) {
+    if (!requireApproved(profile)) return;
+    if (m.id === profile.id) return;
+    const roomId = `dm_${[profile.id, m.id].sort().join("_")}`;
+    localStorage.setItem(`esix10_room_${profile.id}`, roomId);
+    if (onNavigate) onNavigate("messages");
   }
 
   async function removeMember(id) {
@@ -1834,7 +1850,10 @@ function Members({ profile }) {
                 {(m.city || m.state) && <div style={{ color: "#FF7E33", fontSize: 12, marginTop: 2 }}><MapPin size={11} style={{ verticalAlign: "-1px", marginRight: 2 }} /> {[m.city, m.state].filter(Boolean).join(", ")}</div>}
                 <div style={{ marginTop: 6 }}><Badges userId={m.id} size="small" /></div>
                 {m.id !== profile.id && (
-                  <button onClick={() => flagMember(m)} style={{ background: "none", border: "none", cursor: "pointer", color: "#8A8A8A", fontSize: 11, padding: "4px 0", marginTop: 4 }} title="Report this member"><Flag size={12} style={{ verticalAlign: "-2px", marginRight: 3 }} /> Report</button>
+                  <div style={{ display: "flex", alignItems: "center", gap: 14, marginTop: 8, flexWrap: "wrap" }}>
+                    <button onClick={() => messageMember(m)} style={{ background: "rgba(255,102,0,0.12)", border: "1px solid rgba(255,102,0,0.35)", borderRadius: 8, cursor: "pointer", color: "#FF7E33", fontSize: 12, fontWeight: 600, padding: "7px 14px", display: "inline-flex", alignItems: "center", gap: 6 }} title={`Message ${displayName(m)}`}><MessageCircle size={14} /> Message</button>
+                    <button onClick={() => flagMember(m)} style={{ background: "none", border: "none", cursor: "pointer", color: "#8A8A8A", fontSize: 11, padding: "4px 0" }} title="Report this member"><Flag size={12} style={{ verticalAlign: "-2px", marginRight: 3 }} /> Report</button>
+                  </div>
                 )}
                 {isStaff(profile) && m.avatar_pending && (
                   <div style={{ marginTop: 8, display: "flex", alignItems: "center", gap: 8, flexWrap: "wrap", background: "rgba(255,102,0,0.06)", border: "1px solid rgba(255,102,0,0.2)", borderRadius: 8, padding: 8 }}>
@@ -1862,7 +1881,7 @@ function Members({ profile }) {
           </div>
         ))}
       </div>
-      {viewMember && <MemberProfileModal m={viewMember} me={profile} onClose={() => setViewMember(null)} />}
+      {viewMember && <MemberProfileModal m={viewMember} me={profile} onClose={() => setViewMember(null)} onMessage={messageMember} />}
     </div>
   );
 }
@@ -5651,7 +5670,7 @@ export default function App() {
       {tab === "devotion" && <Devotion profile={profile} />}
       {tab === "events" && <Events profile={profile} />}
       {tab === "messages" && <Messages profile={profile} members={allMembers} onRead={() => setUnreadCount(0)} />}
-      {tab === "members" && <Members profile={profile} />}
+      {tab === "members" && <Members profile={profile} onNavigate={setTab} />}
       {tab === "media" && <Media profile={profile} />}
       {tab === "local" && <LocalChapter profile={profile} />}
       {tab === "social" && <SocialFeed profile={profile} />}
