@@ -63,6 +63,14 @@ const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBh
 
 const supabase = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
+// Message timestamps come back from Postgres WITHOUT a timezone
+// (e.g. "2026-06-14T14:01:51.8"), which new Date() interprets as LOCAL time.
+// Our "last read" values are UTC (Date.toISOString → trailing "Z"). Comparing
+// the two directly breaks for anyone not on UTC (e.g. US users), making chats
+// look permanently unread. Read the DB value as UTC by appending "Z" if it has
+// no timezone marker.
+const msgTime = (s) => new Date(/[Zz]$|[+-]\d{2}:?\d{2}$/.test(s || "") ? s : (s || "") + "Z");
+
 // New members are let into the app immediately but limited until an admin
 // approves their profile. "Approved" = status 'approved' (admins always count).
 const isApproved = (p) => p?.role === "admin" || p?.status === "approved";
@@ -2097,7 +2105,7 @@ function Messages({ profile, members, onRead }) {
         const lastFromOther = msgs.find(m => m.user_id !== profile.id); // newest-first
         if (!lastFromOther) return;
         const lrt = lastRead[roomId] || "2000-01-01";
-        if (new Date(lastFromOther.created_at) > new Date(lrt)) next.add(roomId);
+        if (msgTime(lastFromOther.created_at) > new Date(lrt)) next.add(roomId);
       });
       setUnreadRooms(next);
     } catch (e) {}
@@ -5677,7 +5685,7 @@ export default function App() {
         const lastFromOther = roomMessages.find(m => m.user_id !== userId);
         if (!lastFromOther) return;
         const lastReadTime = lastRead[roomId] || "2000-01-01";
-        if (new Date(lastFromOther.created_at) > new Date(lastReadTime)) unread++;
+        if (msgTime(lastFromOther.created_at) > new Date(lastReadTime)) unread++;
       });
       setUnreadCount(unread);
     } catch(e) {}
