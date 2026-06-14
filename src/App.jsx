@@ -1929,9 +1929,11 @@ function Messages({ profile, members, onRead }) {
   const msgPhotoRef = useRef();
   const bottomRef = useRef(null);
 
+  // Every group this member belongs to gets its own chat (not just the primary one).
+  const myGroupIds = (profile.group_ids && profile.group_ids.length ? profile.group_ids : [profile.group_id]).filter(Boolean);
   const GROUP_ROOMS = [
-    { id: `group_${profile.group_id}`, label: `${GROUPS.find(g => g.id === profile.group_id)?.label} Chat`, subtitle: GROUPS.find(g => g.id === profile.group_id)?.subtitle, icon: "💬", type: "group" },
-    ...(profile.role === "admin" ? GROUPS.filter(g => g.id !== profile.group_id).map(g => ({ id: `group_${g.id}`, label: `${g.label} Chat`, subtitle: g.subtitle, icon: "💬", type: "group" })) : []),
+    ...myGroupIds.map(gid => ({ id: `group_${gid}`, label: `${GROUPS.find(g => g.id === gid)?.label} Chat`, subtitle: GROUPS.find(g => g.id === gid)?.subtitle, icon: "💬", type: "group" })),
+    ...(profile.role === "admin" ? GROUPS.filter(g => !myGroupIds.includes(g.id)).map(g => ({ id: `group_${g.id}`, label: `${g.label} Chat`, subtitle: g.subtitle, icon: "💬", type: "group" })) : []),
     ...(profile.role === "admin" ? [{ id: "group_all", label: "Leadership Chat", icon: "📢", type: "group" }] : []),
   ];
 
