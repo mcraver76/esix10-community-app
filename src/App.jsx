@@ -2025,14 +2025,21 @@ function Messages({ profile, members, onRead }) {
       .limit(50);
     if (error) { console.error("Messages error:", error); return; }
     setMessages(data || []);
-    // keep the open room marked read (covers messages that arrive while you're viewing it)
-    try {
-      const lr = JSON.parse(localStorage.getItem(`esix10_lastread_${profile.id}`) || "{}");
-      lr[activeRoom] = new Date().toISOString();
-      localStorage.setItem(`esix10_lastread_${profile.id}`, JSON.stringify(lr));
-    } catch(e) {}
-    // Clear the unread dot for the room we just opened.
-    setUnreadRooms(prev => { if (!prev.has(activeRoom)) return prev; const n = new Set(prev); n.delete(activeRoom); return n; });
+    // Only mark the room read when its conversation is actually ON SCREEN.
+    // On mobile the list and the conversation share this component and activeRoom
+    // is restored from the last session, so without this guard just viewing the
+    // chat LIST would auto-dismiss new messages in the last-opened room. We read
+    // the view state from a ref so the realtime callback never uses a stale value.
+    const viewingConversation = !isMobileChat || !showRoomListRef.current;
+    if (viewingConversation) {
+      try {
+        const lr = JSON.parse(localStorage.getItem(`esix10_lastread_${profile.id}`) || "{}");
+        lr[activeRoom] = new Date().toISOString();
+        localStorage.setItem(`esix10_lastread_${profile.id}`, JSON.stringify(lr));
+      } catch(e) {}
+      // Clear the unread dot for the room being viewed.
+      setUnreadRooms(prev => { if (!prev.has(activeRoom)) return prev; const n = new Set(prev); n.delete(activeRoom); return n; });
+    }
   }
 
   async function send() {
@@ -2085,6 +2092,10 @@ function Messages({ profile, members, onRead }) {
     }
     return true;
   });
+  // Always-current view state, so loadMessages (called from a realtime callback
+  // captured when activeRoom last changed) never reads a stale showRoomList.
+  const showRoomListRef = useRef(showRoomList);
+  showRoomListRef.current = showRoomList;
 
   function selectRoomMobile(roomId) {
     selectRoom(roomId);
