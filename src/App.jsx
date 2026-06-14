@@ -1247,7 +1247,7 @@ function Feed({ profile, activeGroup, isNewMember, onNavigate }) {
           <button onClick={() => setShowWelcome(false)} style={{ position: "absolute", top: 12, right: 16, background: "none", border: "none", color: "#666", cursor: "pointer", fontSize: 18 }}>x</button>
           <span style={S.eyebrow}>Welcome to ESix10</span>
           <h3 style={{ fontFamily: "'Inter', sans-serif", fontSize: 20, color: "#fff", marginBottom: 8 }}>You are in. Now stand firm.</h3>
-          <p style={{ color: "#FFFFFF", fontSize: 14, lineHeight: 1.7 }}>You have joined the {GROUPS.find(g => g.id === profile.group_id)?.label}. Introduce yourself, engage with the community, and stand firm. Ephesians 6:10</p>
+          <p style={{ color: "#FFFFFF", fontSize: 14, lineHeight: 1.7 }}>You have joined the <strong style={{ color: "#FF7E33" }}>{GROUPS.find(g => g.id === profile.group_id)?.label}</strong>{GROUPS.find(g => g.id === profile.group_id)?.subtitle ? ` — ${GROUPS.find(g => g.id === profile.group_id).subtitle}` : ""} Introduce yourself, engage with the community, and stand firm. Ephesians 6:10</p>
         </div>
       )}
       <HomeHero onNavigate={onNavigate} />
@@ -5792,8 +5792,12 @@ export default function App() {
               <p style={{ ...S.eyebrow, marginBottom: 12 }}>Feed</p>
               {[{ id: "all", label: "My Feed", icon: "◎" }, ...(profile.role === "admin" ? GROUPS : GROUPS.filter(g => (profile.group_ids && profile.group_ids.length > 0 ? profile.group_ids : [profile.group_id]).includes(g.id)))].map(g => (
                 <div key={g.id} onClick={() => { setTab("feed"); setFeedGroup(g.id); }}
-                  style={{ padding: "10px 12px", borderRadius: 4, cursor: "pointer", marginBottom: 2, background: tab === "feed" && feedGroup === g.id ? "rgba(255,102,0,0.1)" : "transparent", color: tab === "feed" && feedGroup === g.id ? "#FF6600" : "#888", fontSize: 13, display: "flex", alignItems: "center", gap: 8 }}>
-                  <NavIcon id={g.id} size={18} /> {g.label || "My Feed"}
+                  style={{ padding: "10px 12px", borderRadius: 4, cursor: "pointer", marginBottom: 2, background: tab === "feed" && feedGroup === g.id ? "rgba(255,102,0,0.1)" : "transparent", color: tab === "feed" && feedGroup === g.id ? "#FF6600" : "#c8cdd6", fontSize: 13, display: "flex", alignItems: "flex-start", gap: 8 }}>
+                  <NavIcon id={g.id} size={18} style={{ marginTop: 1, flexShrink: 0 }} />
+                  <div>
+                    <div>{g.label || "My Feed"}</div>
+                    {g.subtitle && <div style={{ fontSize: 9, color: "#FF7E33", letterSpacing: "0.1em", textTransform: "uppercase", fontWeight: 700, opacity: 0.85, marginTop: 1 }}>{g.subtitle}</div>}
+                  </div>
                 </div>
               ))}
             </div>
