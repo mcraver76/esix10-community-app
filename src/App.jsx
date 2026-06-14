@@ -2102,15 +2102,44 @@ function Messages({ profile, members, onRead }) {
       setUnreadRooms(next);
     } catch (e) {}
   }
+
+  // Track which DM conversations actually exist + their latest message time, so
+  // the DM list shows only real conversations, newest first (instead of listing
+  // every member — which won't scale to hundreds of people).
+  const [dmLatest, setDmLatest] = useState({});
+  async function loadDmThreads() {
+    try {
+      const { data } = await supabase.from("messages")
+        .select("room_id, created_at")
+        .like("room_id", "dm_%")
+        .order("created_at", { ascending: false })
+        .limit(400);
+      if (!data) return;
+      const latest = {};
+      for (const m of data) {
+        if (!m.room_id.slice(3).split("_").includes(profile.id)) continue; // only my DMs
+        if (!latest[m.room_id]) latest[m.room_id] = m.created_at; // first hit = newest
+      }
+      setDmLatest(latest);
+    } catch (e) {}
+  }
+
   useEffect(() => {
     refreshUnread();
+    loadDmThreads();
     const ch = supabase
       .channel(`messages-unread-${profile.id}`)
-      .on("postgres_changes", { event: "INSERT", schema: "public", table: "messages" }, () => refreshUnread())
+      .on("postgres_changes", { event: "INSERT", schema: "public", table: "messages" }, () => { refreshUnread(); loadDmThreads(); })
       .subscribe();
-    const iv = setInterval(refreshUnread, 45000);
+    const iv = setInterval(() => { refreshUnread(); loadDmThreads(); }, 45000);
     return () => { supabase.removeChannel(ch); clearInterval(iv); };
   }, []);
+
+  // Only show DMs that actually have a conversation, newest message first.
+  // (New conversations are started from the "DM" search button above.)
+  const activeDmRooms = dmRooms
+    .filter(r => dmLatest[r.id])
+    .sort((a, b) => new Date(dmLatest[b.id]) - new Date(dmLatest[a.id]));
 
   const ROOM_LIST = (
     <div style={{ width: isMobileChat ? "100%" : 230, borderRight: isMobileChat ? "none" : "1px solid rgba(255,255,255,0.06)", flexShrink: 0, overflowY: "auto", height: isMobileChat ? "calc(100dvh - 215px)" : "auto", background: "rgba(255,255,255,0.015)" }}>
@@ -2227,8 +2256,8 @@ function Messages({ profile, members, onRead }) {
       </div>
       <div style={{ padding: "0 12px 16px" }}>
         <p style={{ ...S.eyebrow, marginBottom: 12 }}>Direct Messages</p>
-        {dmRooms.length === 0 && <p style={{ ...S.muted, fontSize: 12 }}>No members yet</p>}
-        {dmRooms.map(room => (
+        {activeDmRooms.length === 0 && <p style={{ ...S.muted, fontSize: 12 }}>No conversations yet. Tap "DM" above to message someone.</p>}
+        {activeDmRooms.map(room => (
           <div key={room.id} onClick={() => isMobileChat ? selectRoomMobile(room.id) : selectRoom(room.id)}
             style={{ padding: "12px 16px", borderRadius: 4, cursor: "pointer", marginBottom: 4, background: activeRoom === room.id ? "rgba(255,102,0,0.1)" : "rgba(255,255,255,0.02)", color: activeRoom === room.id ? "#FF6600" : "#CCCCCC", fontSize: 14, display: "flex", alignItems: "center", gap: 12, border: "1px solid rgba(255,255,255,0.04)" }}>
             <div style={{ width: 32, height: 32, borderRadius: "50%", background: "rgba(255,102,0,0.15)", display: "flex", alignItems: "center", justifyContent: "center", color: "#FF7E33", fontSize: 13, fontWeight: 600, flexShrink: 0 }}>
