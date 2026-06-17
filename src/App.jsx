@@ -3319,7 +3319,7 @@ function LocalChapter({ profile }) {
   return (
     <div>
       <div style={{ marginBottom: 20 }}>
-        <span style={S.eyebrow}>Local Chapter</span>
+        <span style={S.eyebrow}>Local Community</span>
         <h2 style={{ ...S.h2, margin: 0 }}>📍 {city}</h2>
         <p style={{ color: "#BBBBBB", fontSize: 13, marginTop: 4 }}>{localMembers.length} member{localMembers.length !== 1 ? "s" : ""} in your area</p>
       </div>
@@ -5799,24 +5799,37 @@ export default function App() {
     { id: "more", label: "More", icon: "☰" },
   ];
 
-  const MORE_ITEMS = [
-    ...(isStaff(profile) ? [{ id: "admin", label: adminPending > 0 ? `Admin (${adminPending})` : "Admin", icon: "🛡️" }] : []),
-    { id: "prayer", label: "Prayer Wall", icon: "🙏" },
-    { id: "profile", label: "My Profile", icon: "👤" },
-    { id: "stats", label: "Stats Dashboard", icon: "📊" },
-    { id: "members", label: "Members", icon: "👥" },
-    { id: "shop", label: "Shop", icon: "🛒", external: "https://esix10.com/shop/" },
-    { id: "devotion", label: "Daily Devotion", icon: "📖" },
-    { id: "social", label: "Social Media", icon: "📱" },
-    { id: "share", label: "Share ESix10", icon: "📤" },
-    { id: "events", label: "Events", icon: "📅" },
-    { id: "privategroups", label: "Private Groups", icon: "🔒" },
-    { id: "local", label: "Local Chapter", icon: "📍" },
-    { id: "faith", label: "Statement of Faith", icon: "✝️" },
-    { id: "salvation", label: "Do You Know Him?", icon: "🙏" },
-    { id: "media", label: "Media", icon: "📺" },
-    { id: "legal", label: "Legal & Privacy", icon: "📜" },
+  const MORE_GROUPS = [
+    ...(isStaff(profile) ? [{ section: null, items: [{ id: "admin", label: adminPending > 0 ? `Admin (${adminPending})` : "Admin" }] }] : []),
+    { section: "My Account", items: [
+      { id: "profile", label: "My Profile" },
+      { id: "stats", label: "Stats Dashboard" },
+    ] },
+    { section: "Community", items: [
+      { id: "members", label: "Members" },
+      { id: "prayer", label: "Prayer Wall" },
+      { id: "events", label: "Events" },
+      { id: "local", label: "Local Community" },
+      { id: "privategroups", label: "Private Groups" },
+      { id: "social", label: "Social Media" },
+    ] },
+    { section: "Faith & Growth", items: [
+      { id: "devotion", label: "Daily Devotion" },
+      { id: "faith", label: "Statement of Faith" },
+      { id: "salvation", label: "Do You Know Him?" },
+    ] },
+    { section: "Media", items: [
+      { id: "media", label: "Media" },
+    ] },
+    { section: "ESix10", items: [
+      { id: "shop", label: "Shop", external: "https://esix10.com/shop/" },
+      { id: "share", label: "Share ESix10" },
+    ] },
+    { section: "Info", items: [
+      { id: "legal", label: "Legal & Privacy" },
+    ] },
   ];
+  const MORE_ITEMS = MORE_GROUPS.flatMap(g => g.items);
 
   const CONTENT = (
     <div style={{ flex: 1, padding: isMobile ? (tab === "messages" ? "0px" : "20px 16px 110px") : "32px 32px 60px", maxWidth: isMobile ? "100%" : 800, overflow: "hidden", boxSizing: "border-box" }}>
@@ -5898,13 +5911,20 @@ export default function App() {
                 <div style={{ fontFamily: "'Inter', sans-serif", fontSize: 11, letterSpacing: "0.3em", color: "#FF7E33", textTransform: "uppercase" }}>More</div>
                 <div onClick={() => setTab("feed")} style={{ color: "#9aa4b2", fontSize: 22, cursor: "pointer", lineHeight: 1 }}>✕</div>
               </div>
-              <div style={{ display: "flex", flexDirection: "column", gap: 8, padding: "0 20px" }}>
-                {MORE_ITEMS.map(item => (
-                  <div key={item.id} onClick={() => { if (item.external) { window.open(item.external, "_blank", "noopener,noreferrer"); } else if (item.id === "share") { setShowShare(true); } else { setTab(item.id); } }}
-                    style={{ padding: "16px 20px", background: "rgba(255,102,0,0.05)", border: "1px solid rgba(255,102,0,0.15)", borderRadius: 10, cursor: "pointer", display: "flex", alignItems: "center", gap: 16 }}>
-                    <NavIcon id={item.id} size={24} color="#FF7E33" />
-                    <span style={{ fontFamily: "'Inter', sans-serif", fontSize: 16, color: "#fff" }}>{item.label}</span>
-                    <span style={{ marginLeft: "auto", color: "#8A8A8A", fontSize: 18 }}>›</span>
+              <div style={{ display: "flex", flexDirection: "column", gap: 18, padding: "0 20px" }}>
+                {MORE_GROUPS.map(group => (
+                  <div key={group.section || "pinned"}>
+                    {group.section && <div style={{ fontFamily: "'Inter', sans-serif", fontSize: 10, letterSpacing: "0.2em", color: "#8A8A8A", textTransform: "uppercase", margin: "0 4px 10px" }}>{group.section}</div>}
+                    <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
+                      {group.items.map(item => (
+                        <div key={item.id} onClick={() => { if (item.external) { window.open(item.external, "_blank", "noopener,noreferrer"); } else if (item.id === "share") { setShowShare(true); } else { setTab(item.id); } }}
+                          style={{ padding: "16px 20px", background: "rgba(255,102,0,0.05)", border: "1px solid rgba(255,102,0,0.15)", borderRadius: 10, cursor: "pointer", display: "flex", alignItems: "center", gap: 16 }}>
+                          <NavIcon id={item.id} size={24} color="#FF7E33" />
+                          <span style={{ fontFamily: "'Inter', sans-serif", fontSize: 16, color: "#fff" }}>{item.label}</span>
+                          <span style={{ marginLeft: "auto", color: "#8A8A8A", fontSize: 18 }}>›</span>
+                        </div>
+                      ))}
+                    </div>
                   </div>
                 ))}
               </div>
