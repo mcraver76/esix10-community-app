@@ -6,7 +6,7 @@ import {
   CalendarDays, Lock, MapPin, Cross, HandHeart, Tv, Shield, Sword, PawPrint,
   Bird, Mountain, Anchor, Star, Dumbbell, Crown, Footprints, Award,
   Zap, Megaphone, Activity, Camera, Flag, Archive, Hourglass, Medal,
-  NotebookPen, Unlock, CheckCircle2, Eye, Pencil, Pin,
+  NotebookPen, Unlock, CheckCircle2, Eye, Pencil, Pin, ShoppingBag,
 } from "lucide-react";
 import { getTodaysDevotion } from "./dailyDevotions";
 import { LEGAL_VERSION, LEGAL_EFFECTIVE, TERMS, PRIVACY, MOD_AGREEMENT } from "./legalContent";
@@ -19,6 +19,7 @@ const NAV_ICONS = {
   profile: User, stats: BarChart3, members: Users, devotion: BookOpen,
   social: Smartphone, share: Share2, events: CalendarDays, privategroups: Lock,
   local: MapPin, faith: Cross, salvation: HandHeart, media: Tv, admin: Shield,
+  shop: ShoppingBag,
 };
 function NavIcon({ id, size = 18, color }) {
   const I = NAV_ICONS[id];
@@ -5804,6 +5805,7 @@ export default function App() {
     { id: "profile", label: "My Profile", icon: "👤" },
     { id: "stats", label: "Stats Dashboard", icon: "📊" },
     { id: "members", label: "Members", icon: "👥" },
+    { id: "shop", label: "Shop", icon: "🛒", external: "https://esix10.com/shop/" },
     { id: "devotion", label: "Daily Devotion", icon: "📖" },
     { id: "social", label: "Social Media", icon: "📱" },
     { id: "share", label: "Share ESix10", icon: "📤" },
@@ -5898,7 +5900,7 @@ export default function App() {
               </div>
               <div style={{ display: "flex", flexDirection: "column", gap: 8, padding: "0 20px" }}>
                 {MORE_ITEMS.map(item => (
-                  <div key={item.id} onClick={() => { if (item.id === "share") { setShowShare(true); } else { setTab(item.id); } }}
+                  <div key={item.id} onClick={() => { if (item.external) { window.open(item.external, "_blank", "noopener,noreferrer"); } else if (item.id === "share") { setShowShare(true); } else { setTab(item.id); } }}
                     style={{ padding: "16px 20px", background: "rgba(255,102,0,0.05)", border: "1px solid rgba(255,102,0,0.15)", borderRadius: 10, cursor: "pointer", display: "flex", alignItems: "center", gap: 16 }}>
                     <NavIcon id={item.id} size={24} color="#FF7E33" />
                     <span style={{ fontFamily: "'Inter', sans-serif", fontSize: 16, color: "#fff" }}>{item.label}</span>
