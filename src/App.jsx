@@ -4089,17 +4089,20 @@ function Media({ profile }) {
 
   async function uploadAudio(e) {
     const file = e.target.files[0];
+    e.target.value = '';
     if (!file) return;
+    if (!file.type.startsWith('audio/')) { alert('Please choose an audio file (MP3, M4A, WAV, etc.).'); return; }
     if (!audioForm.title) { alert('Add a title first'); return; }
     setUploading(true);
     setUploadProgress('Uploading audio...');
     const path = `audio/${profile.id}/${Date.now()}_${file.name}`;
     const { error } = await supabase.storage.from('avatars').upload(path, file);
-    if (error) { setUploadProgress('Upload failed'); setUploading(false); return; }
+    if (error) { setUploadProgress(''); setUploading(false); alert(`Audio upload failed: ${error.message}`); return; }
     const { data } = supabase.storage.from('avatars').getPublicUrl(path);
-    await supabase.from('media_audio').insert({ ...audioForm, audio_url: data.publicUrl, episode_number: parseInt(audioForm.episode_number) || 1, published: true, created_by: profile.id });
+    const { error: insErr } = await supabase.from('media_audio').insert({ ...audioForm, audio_url: data.publicUrl, episode_number: parseInt(audioForm.episode_number) || 1, published: true, created_by: profile.id });
     setUploadProgress('');
     setUploading(false);
+    if (insErr) { alert(`Audio uploaded but couldn't be saved: ${insErr.message}`); return; }
     setShowAddAudio(false);
     setAudioForm({ title: '', description: '', episode_number: '', premium: false });
     loadMedia();
