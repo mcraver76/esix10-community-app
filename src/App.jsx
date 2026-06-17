@@ -830,7 +830,12 @@ function GroupSelect({ user, onSelect }) {
     if (selected.length === 0) return;
     setLoading(true);
     const primaryGroup = selected.includes("brotherhood") ? "brotherhood" : selected.includes("sisterhood") ? "sisterhood" : "family";
-    await supabase.from("profiles").upsert({ id: user.id, group_id: primaryGroup, group_ids: selected });
+    const { error } = await supabase.from("profiles").upsert({ id: user.id, group_id: primaryGroup, group_ids: selected });
+    if (error) {
+      setLoading(false);
+      alert(`We couldn't save your group selection: ${error.message}. Please try again.`);
+      return;
+    }
     // Notify admin of new member
     const { data: p } = await supabase.from("profiles").select("full_name, email").eq("id", user.id).maybeSingle();
     try {
@@ -1063,7 +1068,7 @@ function HomeHero({ onNavigate }) {
     (async () => {
       const { data: ev } = await supabase.from("events").select("*").eq("approved", true).gte("event_date", new Date().toISOString()).order("event_date", { ascending: true }).limit(1);
       if (ev && ev[0]) setEvent(ev[0]);
-      const { data: ch } = await supabase.from("challenges").select("*").eq("scheduled_date", localDateStr()).limit(1);
+      const { data: ch } = await supabase.from("forge_challenges").select("*").eq("scheduled_date", localDateStr()).limit(1);
       if (ch && ch[0]) setChallenge(ch[0]);
     })();
   }, []);
@@ -1257,15 +1262,23 @@ function Feed({ profile, activeGroup, setActiveGroup, isNewMember, onNavigate })
     if (photoFile) {
       const ext = photoFile.name.split(".").pop();
       const path = `${profile.id}/post_${Date.now()}.${ext}`;
-      const { error } = await supabase.storage.from("avatars").upload(path, photoFile);
-      if (!error) {
-        const { data } = supabase.storage.from("avatars").getPublicUrl(path);
-        photoUrl = data.publicUrl;
+      const { error: upErr } = await supabase.storage.from("avatars").upload(path, photoFile);
+      if (upErr) {
+        setUploading(false); setPosting(false);
+        alert("Your photo couldn't upload — your post was not sent. Please try again.");
+        return;
       }
+      const { data } = supabase.storage.from("avatars").getPublicUrl(path);
+      photoUrl = data.publicUrl;
     }
     setUploading(false);
     const target = postTarget;
-    await supabase.from("posts").insert({ user_id: profile.id, group_id: target, body: body.trim(), photo_url: photoUrl, photo_approved: photoUrl ? false : true, reactions: {} });
+    const { error } = await supabase.from("posts").insert({ user_id: profile.id, group_id: target, body: body.trim(), photo_url: photoUrl, photo_approved: photoUrl ? false : true, reactions: {} });
+    if (error) {
+      setPosting(false);
+      alert(`Your post didn't send: ${error.message}. Please try again.`);
+      return;
+    }
     setBody(""); setPhotoFile(null); setPhotoPreview(null); setPosting(false);
     // If the feed is filtered to a different group than the one just posted to,
     // switch the filter to follow the post so the user sees it land.
@@ -1289,7 +1302,9 @@ function Feed({ profile, activeGroup, setActiveGroup, isNewMember, onNavigate })
 
   async function sendKudos(toUserId) {
     if (!requireApproved(profile)) return;
-    await supabase.from("kudos").insert({ from_user_id: profile.id, to_user_id: toUserId });
+    if (toUserId === profile.id) return; // no self-kudos
+    const { error } = await supabase.from("kudos").insert({ from_user_id: profile.id, to_user_id: toUserId });
+    if (error) return; // silently skip (e.g. duplicate) — don't show a false "Sent!"
     // Show brief confirmation
     const btn = document.getElementById(`kudos_${toUserId}`);
     if (btn) { btn.textContent = "👊 Sent!"; btn.style.color = "#FF6600"; setTimeout(() => { btn.textContent = "👊"; btn.style.color = "#555"; }, 2000); }
@@ -1456,7 +1471,12 @@ function Events({ profile }) {
   async function createEvent() {
     if (!requireApproved(profile)) return;
     setLoading(true);
-    const { data: ev } = await supabase.from("events").insert({ ...form, created_by: profile.id, approved: profile.role === "admin" }).select("id, approved").single();
+    const { data: ev, error } = await supabase.from("events").insert({ ...form, created_by: profile.id, approved: profile.role === "admin" }).select("id, approved").single();
+    if (error) {
+      setLoading(false);
+      alert(`Your event didn't save: ${error.message}. Please try again.`);
+      return;
+    }
     if (ev?.approved) notifyMembers({ kind: "event", item_id: ev.id, actor_id: profile.id, preview: form.title || "New event" });
     setShowForm(false);
     setForm({ title: "", description: "", group_id: "all", event_date: "", location: "" });
@@ -1598,7 +1618,10 @@ function Members({ profile, onNavigate }) {
   async function loadMembers() {
     let q = supabase.from("profiles").select("*").in("status", ["approved", "pending"]).order("state", { ascending: true });
     if (profile.role !== "admin") {
-      q = q.eq("group_id", profile.group_id).eq("status", "approved");
+      q = q.eq("status", "approved");
+      // Members who share ANY of my groups (multi-group aware), not just my primary.
+      if (profile.group_ids?.length) q = q.overlaps("group_ids", profile.group_ids);
+      else q = q.eq("group_id", profile.group_id);
     }
     const { data } = await q;
     setMembers(data || []);
@@ -1615,7 +1638,9 @@ function Members({ profile, onNavigate }) {
 
   async function sendKudosMember(toUserId) {
     if (!requireApproved(profile)) return;
-    await supabase.from("kudos").insert({ from_user_id: profile.id, to_user_id: toUserId });
+    if (toUserId === profile.id) return; // no self-kudos
+    const { error } = await supabase.from("kudos").insert({ from_user_id: profile.id, to_user_id: toUserId });
+    if (error) return; // don't show a false "Sent!"
     const btn = document.getElementById(`kudos_${toUserId}`);
     if (btn) { btn.textContent = "👊 Sent!"; setTimeout(() => { btn.textContent = "👊 Kudos"; }, 2000); }
   }
@@ -1669,7 +1694,9 @@ function Members({ profile, onNavigate }) {
   }
 
   async function updateRole(id, role) {
-    await supabase.from("profiles").update({ role }).eq("id", id);
+    if (profile.role !== "admin") return; // only admins change roles (mods can't)
+    const { error } = await supabase.from("profiles").update({ role }).eq("id", id);
+    if (error) { alert(`Couldn't update role: ${error.message}`); return; }
     loadMembers();
   }
 
@@ -2508,13 +2535,21 @@ function PrayerRequests({ profile }) {
     if (!body.trim()) return;
     setPosting(true);
     const authorName = anonymous ? "Anonymous" : (profile.username ? `@${profile.username}` : formatName(profile.full_name));
-    const { data: pr } = await supabase.from("prayers").insert({ user_id: profile.id, group_id: profile.group_id, body: body.trim(), anonymous, author_name: authorName, reactions: 0, pinned: false }).select("id").single();
+    const { data: pr, error } = await supabase.from("prayers").insert({ user_id: profile.id, group_id: profile.group_id, body: body.trim(), anonymous, author_name: authorName, reactions: 0, pinned: false }).select("id").single();
+    if (error) {
+      setPosting(false);
+      alert(`Your prayer request didn't post: ${error.message}. Please try again.`);
+      return;
+    }
     notifyMembers({ kind: "prayer", item_id: pr?.id, actor_id: profile.id, preview: anonymous ? "A new prayer request was posted" : body.trim().slice(0, 80) });
     setBody(""); setPosting(false); loadPrayers();
   }
 
   async function react(id, current) {
-    await supabase.from("prayers").update({ reactions: (current || 0) + 1 }).eq("id", id);
+    // Atomic server-side increment — prevents the lost-update race where two
+    // people praying at once overwrite each other's count.
+    const { error } = await supabase.rpc("increment_prayer_reactions", { prayer_id: id });
+    if (error) { console.log("prayer reaction error:", error.message); return; }
     loadPrayers();
   }
 
@@ -2761,7 +2796,12 @@ function ForgeWalk({ profile }) {
 
   async function logWalk() {
     setLogging(true);
-    await supabase.from('forge_walks').insert({ user_id: profile.id, date: today, distance_miles: form.distance_miles ? parseFloat(form.distance_miles) : null, duration_minutes: form.duration_minutes ? parseInt(form.duration_minutes) : null, notes: form.notes || null });
+    const { error } = await supabase.from('forge_walks').insert({ user_id: profile.id, date: today, distance_miles: form.distance_miles ? parseFloat(form.distance_miles) : null, duration_minutes: form.duration_minutes ? parseInt(form.duration_minutes) : null, notes: form.notes || null });
+    if (error) {
+      setLogging(false);
+      alert(`Couldn't log your walk: ${error.message}. Please try again.`);
+      return;
+    }
     // Share to feed if checked
     if (form.shareToFeed) {
       const name = profile.username ? `@${profile.username}` : formatName(profile.full_name);
@@ -2884,7 +2924,12 @@ function ForgeChallenge({ profile }) {
   async function complete() {
     if (completed || !challenge) return;
     setSubmitting(true);
-    await supabase.from('forge_challenge_completions').insert({ user_id: profile.id, challenge_id: challenge.id, note: note.trim() || null });
+    const { error } = await supabase.from('forge_challenge_completions').insert({ user_id: profile.id, challenge_id: challenge.id, note: note.trim() || null });
+    if (error) {
+      setSubmitting(false);
+      alert(`Couldn't log your challenge: ${error.message}. Please try again.`);
+      return;
+    }
     if (shareChallenge) {
       const name = profile.username ? `@${profile.username}` : formatName(profile.full_name);
       const msg = `⚡ ${name} completed today's challenge — "${challenge.title}"${note.trim() ? ` · "${note.trim()}"` : ''}`;
@@ -3067,7 +3112,12 @@ function ForgeWOD({ profile }) {
   async function completeWOD() {
     if (completed || !wod) return;
     setSubmitting(true);
-    await supabase.from('forge_wod_completions').insert({ user_id: profile.id, wod_id: wod.id, result: result.trim() || null });
+    const { error } = await supabase.from('forge_wod_completions').insert({ user_id: profile.id, wod_id: wod.id, result: result.trim() || null });
+    if (error) {
+      setSubmitting(false);
+      alert(`Couldn't log your WOD: ${error.message}. Please try again.`);
+      return;
+    }
     if (shareWOD) {
       const name = profile.username ? `@${profile.username}` : formatName(profile.full_name);
       const msg = `💪 ${name} crushed today's WOD — "${wod.title}"${result.trim() ? ` · ${result.trim()}` : ''}`;
@@ -3219,7 +3269,12 @@ function ForgeLog({ profile }) {
 
   async function saveEntry() {
     setSaving(true);
-    await supabase.from('forge_walks').insert({ user_id: profile.id, date: form.date, duration_minutes: form.duration ? parseInt(form.duration) : null, notes: `[${form.type}] ${form.notes}`.trim() });
+    const { error } = await supabase.from('forge_walks').insert({ user_id: profile.id, date: form.date, duration_minutes: form.duration ? parseInt(form.duration) : null, notes: `[${form.type}] ${form.notes}`.trim() });
+    if (error) {
+      setSaving(false);
+      alert(`Couldn't save your workout: ${error.message}. Please try again.`);
+      return;
+    }
     setShowForm(false); setForm({ type: 'Strength', duration: '', notes: '', date: new Date().toISOString().split('T')[0] });
     setSaving(false); loadLog();
   }
@@ -3644,15 +3699,26 @@ function PrivateGroups({ profile, allMembers }) {
 
   async function requestJoin(groupId) {
     if (!requireApproved(profile)) return;
-    await supabase.from('private_group_requests').insert({ group_id: groupId, user_id: profile.id, status: 'pending' });
+    const { error } = await supabase.from('private_group_requests').insert({ group_id: groupId, user_id: profile.id, status: 'pending' });
+    if (error) {
+      alert(`Couldn't send your request: ${error.message}. Please try again.`);
+      return;
+    }
     alert('Request sent. The group creator will review it.');
     loadGroups();
+  }
+
+  // Recompute member_count from the real DB count so it never drifts (and so
+  // removals actually decrement it).
+  async function syncGroupCount(groupId) {
+    const { count } = await supabase.from('private_group_members').select('id', { count: 'exact', head: true }).eq('group_id', groupId);
+    if (typeof count === 'number') await supabase.from('private_groups').update({ member_count: count }).eq('id', groupId);
   }
 
   async function approveRequest(reqId, userId, groupId) {
     await supabase.from('private_group_requests').update({ status: 'approved' }).eq('id', reqId);
     await supabase.from('private_group_members').insert({ group_id: groupId, user_id: userId, role: 'member' });
-    await supabase.from('private_groups').update({ member_count: members.length + 1 }).eq('id', groupId);
+    await syncGroupCount(groupId);
     loadRequests(); loadMembers();
   }
 
@@ -3666,13 +3732,14 @@ function PrivateGroups({ profile, allMembers }) {
     const exists = members.find(m => m.user_id === userId);
     if (exists) return;
     await supabase.from('private_group_members').insert({ group_id: activeGroup.id, user_id: userId, role: 'member' });
-    await supabase.from('private_groups').update({ member_count: members.length + 1 }).eq('id', activeGroup.id);
+    await syncGroupCount(activeGroup.id);
     setMemberSearch('');
     loadMembers();
   }
 
   async function removeMemberFromGroup(userId) {
     await supabase.from('private_group_members').delete().eq('group_id', activeGroup.id).eq('user_id', userId);
+    await syncGroupCount(activeGroup.id);
     loadMembers();
   }
 
@@ -5056,7 +5123,13 @@ function Profile({ profile, onUpdate, onSignOut }) {
     const isPhoto = currentAvatar && currentAvatar.startsWith("http");
     const photoPending = isPhoto && currentAvatar !== profile.avatar_url;
     const avatarFields = photoPending ? { avatar_pending: currentAvatar } : { avatar_url: currentAvatar, avatar_pending: null };
-    await supabase.from("profiles").update({ ...rest, ...avatarFields }).eq("id", profile.id);
+    const { error } = await supabase.from("profiles").update({ ...rest, ...avatarFields }).eq("id", profile.id);
+    if (error) {
+      setMsg(`Couldn't save: ${error.message}. Please try again.`);
+      setSaving(false);
+      setTimeout(() => setMsg(""), 5000);
+      return;
+    }
     setMsg(photoPending ? "Profile saved. Your new photo is pending admin approval." : "Profile saved.");
     onUpdate({ ...profile, ...rest, ...avatarFields });
     setSaving(false);
@@ -5703,7 +5776,12 @@ export default function App() {
   useEffect(() => {
     if (profile?.id) {
       let q = supabase.from("profiles").select("*").eq("status", "approved");
-      if (profile.role !== "admin") q = q.eq("group_id", profile.group_id);
+      if (profile.role !== "admin") {
+        // Show everyone who shares ANY group with me (not just my primary group),
+        // so multi-group members can find and DM each other.
+        if (profile.group_ids?.length) q = q.overlaps("group_ids", profile.group_ids);
+        else q = q.eq("group_id", profile.group_id);
+      }
       q.then(({ data }) => setAllMembers(data || []));
       // Update last seen
       supabase.from("profiles").update({ last_seen: new Date().toISOString() }).eq("id", profile.id);
@@ -5736,11 +5814,15 @@ export default function App() {
       if (data.session?.user) loadProfile(data.session.user);
       else setLoading(false);
     });
-    supabase.auth.onAuthStateChange((event, session) => {
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
       if (event === "PASSWORD_RECOVERY") setRecovering(true);
-      if (session?.user) loadProfile(session.user);
-      else { setUser(null); setProfile(null); setLoading(false); }
+      else if (event === "SIGNED_IN") { if (session?.user) loadProfile(session.user); }
+      else if (event === "SIGNED_OUT") { setUser(null); setProfile(null); setLoading(false); }
+      // Ignore TOKEN_REFRESHED / USER_UPDATED / INITIAL_SESSION: getSession() above
+      // handles the initial load, and re-fetching on every periodic token refresh
+      // would overwrite in-memory (just-saved) profile edits with a stale DB read.
     });
+    return () => subscription.unsubscribe();
   }, []);
 
   // Auto-update: phones (especially home-screen apps) cache the old bundle and
@@ -5796,7 +5878,12 @@ export default function App() {
         // onAuthStateChange firing SIGNED_IN/TOKEN_REFRESHED/etc.), which was
         // sending the admin multiple texts for a single signup.
       } else if (error) {
-        setShowSetup(true);
+        // Not "no row" (that's PGRST116, handled above) — a transient/network/RLS
+        // error loading an EXISTING profile. Retry once; only fall back to setup if
+        // there's genuinely no profile, so a blip never strands a real member.
+        const { data: retry } = await supabase.from("profiles").select("*").eq("id", u.id).maybeSingle();
+        if (retry) { setProfile(retry); checkUnread(retry); }
+        else if (!profile) { setShowSetup(true); }
       } else {
         if (u.email === ADMIN_EMAIL && (data.role !== "admin" || data.status !== "approved")) {
           await supabase.from("profiles").update({ role: "admin", status: "approved" }).eq("id", u.id);
@@ -5814,7 +5901,9 @@ export default function App() {
         }
       }
     } catch(e) {
-      setShowSetup(true);
+      // Network/unexpected error — don't strand an already-loaded member; only
+      // show setup if we have no profile at all.
+      if (!profile) setShowSetup(true);
     }
     setLoading(false);
   }
