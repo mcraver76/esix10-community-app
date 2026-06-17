@@ -1247,7 +1247,9 @@ function Feed({ profile, activeGroup, setActiveGroup, isNewMember, onNavigate })
 
   function handlePhotoSelect(e) {
     const file = e.target.files[0];
+    e.target.value = ""; // allow re-selecting the same file after removing it
     if (!file) return;
+    if (!file.type.startsWith("image/")) { alert("Please choose an image file (JPG, PNG, etc.)."); return; }
     if (file.size > 5 * 1024 * 1024) { alert("Photo must be under 5MB"); return; }
     setPhotoFile(file);
     setPhotoPreview(URL.createObjectURL(file));
@@ -1322,10 +1324,14 @@ function Feed({ profile, activeGroup, setActiveGroup, isNewMember, onNavigate })
   }
 
   async function addReaction(postId, emoji) {
-    const current = postReactions[postId] || {};
-    const updated = { ...current, [emoji]: (current[emoji] || 0) + 1 };
-    await supabase.from("posts").update({ reactions: updated }).eq("id", postId);
-    setPostReactions(prev => ({ ...prev, [postId]: updated }));
+    // Atomic per-emoji increment server-side (no lost-update race between users).
+    const { error } = await supabase.rpc("increment_post_reaction", { post_id: postId, emoji });
+    if (error) { console.log("reaction error:", error.message); return; }
+    // Optimistic local bump for instant feedback; real count syncs on next load.
+    setPostReactions(prev => {
+      const current = prev[postId] || {};
+      return { ...prev, [postId]: { ...current, [emoji]: (current[emoji] || 0) + 1 } };
+    });
   }
 
   const groupName = GROUPS.find(g => g.id === postTarget)?.label || "Your Group";
@@ -2483,7 +2489,7 @@ function Messages({ profile, members, onRead }) {
         </div>
       )}
       <div style={{ padding: "10px 12px", borderTop: "1px solid rgba(255,255,255,0.05)", display: "flex", gap: 8, alignItems: "center" }}>
-        <input ref={msgPhotoRef} type="file" accept="image/*" style={{ display: "none" }} onChange={e => { const f = e.target.files[0]; if (f && f.size <= 5*1024*1024) { setPhotoFile(f); setPhotoPreview(URL.createObjectURL(f)); } else if (f) alert("Max 5MB"); }} />
+        <input ref={msgPhotoRef} type="file" accept="image/*" style={{ display: "none" }} onChange={e => { const f = e.target.files[0]; e.target.value = ""; if (!f) return; if (!f.type.startsWith("image/")) { alert("Please choose an image."); return; } if (f.size > 5*1024*1024) { alert("Max 5MB"); return; } setPhotoFile(f); setPhotoPreview(URL.createObjectURL(f)); }} />
         <button onClick={() => msgPhotoRef.current.click()} style={{ background: "none", border: "1px solid rgba(255,255,255,0.08)", borderRadius: 8, padding: "8px 10px", color: "#BBBBBB", cursor: "pointer", fontSize: 16, flexShrink: 0 }}><Camera size={16} /></button>
         <input style={{ ...S.input, flex: 1, fontSize: 16, padding: "10px 14px" }} placeholder="Type a message..." value={body} onChange={e => setBody(e.target.value)} onKeyDown={e => { if (e.key === "Enter" && !e.shiftKey) { e.preventDefault(); send(); }}} />
         <button style={{ ...S.btn, padding: "10px 16px", flexShrink: 0 }} onClick={send} disabled={posting || uploading || (!body.trim() && !photoFile)}>{uploading ? "⏳" : "Send"}</button>
@@ -2646,7 +2652,8 @@ function Devotion({ profile }) {
   }
 
   async function react(id, current) {
-    await supabase.from("devotions").update({ reactions: (current || 0) + 1 }).eq("id", id);
+    const { error } = await supabase.rpc("increment_devotion_reactions", { devotion_id: id });
+    if (error) { console.log("devotion reaction error:", error.message); return; }
     loadDevotions();
   }
 
@@ -3222,7 +3229,7 @@ function ForgeWOD({ profile }) {
               <h3 style={{ fontFamily: "'Inter', sans-serif", fontSize: 22, color: '#fff' }}>{wod.title}</h3>
               <div style={S.flex}>
                 {wod.estimated_minutes && <span style={S.badge}>⏱ {wod.estimated_minutes}min</span>}
-                {wod.difficulty && <span style={{ ...S.badge, background: `${diffColor[wod.difficulty]}20`, color: diffColor[wod.difficulty] }}>{'●'.repeat(wod.difficulty)} {diffLabel[wod.difficulty]}</span>}
+                {(() => { const d = Math.max(0, Math.min(5, parseInt(wod.difficulty) || 0)); return d ? <span style={{ ...S.badge, background: `${diffColor[d]}20`, color: diffColor[d] }}>{'●'.repeat(d)} {diffLabel[d]}</span> : null; })()}
               </div>
             </div>
             {wod.warmup && <div style={{ marginBottom: 16 }}><span style={S.eyebrow}>Warm Up</span><p style={{ color: '#CCCCCC', fontSize: 15, lineHeight: 1.8, whiteSpace: 'pre-line' }}>{wod.warmup}</p></div>}
@@ -3985,7 +3992,7 @@ function PrivateGroups({ profile, allMembers }) {
             </div>
           )}
           <div style={{ padding: '10px 12px', borderTop: '1px solid rgba(255,255,255,0.05)', display: 'flex', gap: 8, alignItems: 'center' }}>
-            <input ref={msgPhotoRef} type="file" accept="image/*" style={{ display: 'none' }} onChange={e => { const f = e.target.files[0]; if (f && f.size <= 5 * 1024 * 1024) { setPhotoFile(f); setPhotoPreview(URL.createObjectURL(f)); } else if (f) alert('Max 5MB'); }} />
+            <input ref={msgPhotoRef} type="file" accept="image/*" style={{ display: 'none' }} onChange={e => { const f = e.target.files[0]; e.target.value = ''; if (!f) return; if (!f.type.startsWith('image/')) { alert('Please choose an image.'); return; } if (f.size > 5 * 1024 * 1024) { alert('Max 5MB'); return; } setPhotoFile(f); setPhotoPreview(URL.createObjectURL(f)); }} />
             <button onClick={() => msgPhotoRef.current.click()} style={{ background: 'none', border: '1px solid rgba(255,255,255,0.08)', borderRadius: 8, padding: '8px 10px', color: '#BBBBBB', cursor: 'pointer', flexShrink: 0 }}><Camera size={16} /></button>
             <input style={{ ...S.input, flex: 1, fontSize: 14, padding: '10px 14px' }} placeholder="Message..." value={body} onChange={e => setBody(e.target.value)} onKeyDown={e => { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); sendMessage(); }}} />
             <button style={{ ...S.btn, padding: '10px 16px', flexShrink: 0 }} onClick={sendMessage} disabled={sending || uploading || (!body.trim() && !photoFile)}>{uploading ? '...' : 'Send'}</button>
@@ -5138,16 +5145,21 @@ function Profile({ profile, onUpdate, onSignOut }) {
 
   async function uploadPhoto(e) {
     const file = e.target.files[0];
+    e.target.value = "";
     if (!file) return;
+    if (!file.type.startsWith("image/")) { alert("Please choose an image file (JPG, PNG, etc.)."); return; }
     if (file.size > 2 * 1024 * 1024) { alert("Photo must be under 2MB"); return; }
     setUploading(true);
     const ext = file.name.split('.').pop();
     const path = `${profile.id}/avatar.${ext}`;
     const { error } = await supabase.storage.from("avatars").upload(path, file, { upsert: true });
-    if (!error) {
-      const { data } = supabase.storage.from("avatars").getPublicUrl(path);
-      setCurrentAvatar(data.publicUrl + "?t=" + Date.now());
+    if (error) {
+      setUploading(false);
+      alert(`Photo upload failed: ${error.message}. Please try again.`);
+      return;
     }
+    const { data } = supabase.storage.from("avatars").getPublicUrl(path);
+    setCurrentAvatar(data.publicUrl + "?t=" + Date.now());
     setUploading(false);
   }
 
