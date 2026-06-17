@@ -3554,16 +3554,22 @@ function LocalChapter({ profile }) {
 const CF_FUNCTION_URL = 'https://bffcrhjdibxqfmdreksi.supabase.co/functions/v1/cloudflare';
 
 async function callCloudflare(action, data = {}) {
-  const response = await fetch(CF_FUNCTION_URL, {
-    method: 'POST',
-    headers: { 
-      'Content-Type': 'application/json',
-      'apikey': SUPABASE_ANON_KEY,
-      'Authorization': `Bearer ${SUPABASE_ANON_KEY}`
-    },
-    body: JSON.stringify({ action, data })
-  });
-  return response.json();
+  try {
+    const response = await fetch(CF_FUNCTION_URL, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'apikey': SUPABASE_ANON_KEY,
+        'Authorization': `Bearer ${SUPABASE_ANON_KEY}`
+      },
+      body: JSON.stringify({ action, data })
+    });
+    const json = await response.json().catch(() => ({}));
+    if (!response.ok) return { error: json.error || json.message || `Cloudflare request failed (${response.status})` };
+    return json;
+  } catch (e) {
+    return { error: e.message || "Network error reaching Cloudflare." };
+  }
 }
 
 function formatDuration(seconds) {
@@ -4103,12 +4109,18 @@ function Media({ profile }) {
     if (!liveForm.title) return;
     setUploading(true);
     const result = await callCloudflare('create_livestream', { title: liveForm.title });
-    await supabase.from('media_livestreams').insert({ ...liveForm, stream_key: result.streamKey, playback_id: result.uid, status: 'offline', created_by: profile.id });
+    if (!result || result.error || !result.streamKey || !result.uid) {
+      setUploading(false);
+      alert(`Couldn't create the live stream: ${result?.error || "Cloudflare didn't return stream details — check the Cloudflare setup."}`);
+      return;
+    }
+    const { error } = await supabase.from('media_livestreams').insert({ ...liveForm, stream_key: result.streamKey, playback_id: result.uid, status: 'offline', created_by: profile.id });
     setUploading(false);
+    if (error) { alert(`Stream created on Cloudflare but couldn't be saved: ${error.message}`); return; }
     setShowAddLive(false);
     setLiveForm({ title: '', description: '', scheduled_at: '' });
     loadMedia();
-    alert(`Stream Key: ${result.streamKey}\nRTMPS URL: ${result.rtmpsUrl}\n\nPaste stream key into OBS.`);
+    alert(`✅ Live stream created!\n\nRTMPS URL:\n${result.rtmpsUrl}\n\nStream Key:\n${result.streamKey}\n\nPaste these into StreamYard / Restream (as a "Custom RTMP" destination) — alongside Facebook & LinkedIn — or into OBS. Then tap "Go Live" here to show it to members.`);
   }
 
   const filteredVideos = category === 'All' ? videos : videos.filter(v => v.category === category);
