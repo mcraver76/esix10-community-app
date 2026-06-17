@@ -64,6 +64,61 @@ const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBh
 
 const supabase = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
+// Fire-and-forget: ask the backend to email members about new activity.
+// Wrapped so it can never break the action that triggered it (and is a
+// safe no-op until the "notify-members" edge function is deployed).
+async function notifyMembers(payload) {
+  try { await supabase.functions.invoke("notify-members", { body: payload }); }
+  catch (e) { console.log("notify-members error:", e); }
+}
+
+// ── Web Push ────────────────────────────────────────────────────────────────
+// Public VAPID key (safe to ship). The matching private key lives only in the
+// Supabase send function as a secret.
+const VAPID_PUBLIC_KEY = "BD4U8hOdNy1T-MTOC_6BUK7-4dMOow5R62aS1FRlotr5rGZgVY9yxNG7_qx-YOVS12OfeKLWARdwYpbt4phZ71Q";
+
+function urlBase64ToUint8Array(base64String) {
+  const padding = "=".repeat((4 - (base64String.length % 4)) % 4);
+  const base64 = (base64String + padding).replace(/-/g, "+").replace(/_/g, "/");
+  const raw = atob(base64);
+  const arr = new Uint8Array(raw.length);
+  for (let i = 0; i < raw.length; i++) arr[i] = raw.charCodeAt(i);
+  return arr;
+}
+const isIOS = () => /iphone|ipad|ipod/i.test(navigator.userAgent);
+const isStandalone = () =>
+  window.matchMedia("(display-mode: standalone)").matches || window.navigator.standalone === true;
+
+// Ask permission, subscribe this device, save the subscription to Supabase.
+// Returns a short status string for the UI. Safe no-op until the table/function exist.
+async function enablePush(profile) {
+  if (!("serviceWorker" in navigator) || !("PushManager" in window)) return "unsupported";
+  if (isIOS() && !isStandalone()) return "ios-needs-install";
+  const perm = await Notification.requestPermission();
+  if (perm !== "granted") return "denied";
+  try {
+    const reg = await navigator.serviceWorker.ready;
+    let sub = await reg.pushManager.getSubscription();
+    if (!sub) {
+      sub = await reg.pushManager.subscribe({
+        userVisibleOnly: true,
+        applicationServerKey: urlBase64ToUint8Array(VAPID_PUBLIC_KEY),
+      });
+    }
+    const json = sub.toJSON();
+    try {
+      await supabase.from("push_subscriptions").upsert(
+        { user_id: profile.id, endpoint: json.endpoint, p256dh: json.keys?.p256dh, auth: json.keys?.auth },
+        { onConflict: "endpoint" }
+      );
+    } catch (e) { console.log("save push sub error:", e); }
+    return "enabled";
+  } catch (e) {
+    console.log("push subscribe error:", e);
+    return "error";
+  }
+}
+
 // Message timestamps come back from Postgres WITHOUT a timezone
 // (e.g. "2026-06-14T14:01:51.8"), which new Date() interprets as LOCAL time.
 // Our "last read" values are UTC (Date.toISOString → trailing "Z"). Comparing
@@ -1401,7 +1456,8 @@ function Events({ profile }) {
   async function createEvent() {
     if (!requireApproved(profile)) return;
     setLoading(true);
-    await supabase.from("events").insert({ ...form, created_by: profile.id, approved: profile.role === "admin" });
+    const { data: ev } = await supabase.from("events").insert({ ...form, created_by: profile.id, approved: profile.role === "admin" }).select("id, approved").single();
+    if (ev?.approved) notifyMembers({ kind: "event", item_id: ev.id, actor_id: profile.id, preview: form.title || "New event" });
     setShowForm(false);
     setForm({ title: "", description: "", group_id: "all", event_date: "", location: "" });
     loadEvents();
@@ -1410,6 +1466,7 @@ function Events({ profile }) {
 
   async function approveEvent(id) {
     await supabase.from("events").update({ approved: true }).eq("id", id);
+    notifyMembers({ kind: "event", item_id: id, actor_id: profile.id, preview: "New event" });
     loadEvents();
   }
 
@@ -2071,6 +2128,7 @@ function Messages({ profile, members, onRead }) {
     if (error) {
       alert(`Message failed: ${error.message}`);
     } else {
+      notifyMembers({ kind: "message", room_id: activeRoom, actor_id: profile.id, preview: body.trim() || "📷" });
       setBody(""); setPhotoFile(null); setPhotoPreview(null);
       setTimeout(() => loadMessages(), 300);
     }
@@ -2450,7 +2508,8 @@ function PrayerRequests({ profile }) {
     if (!body.trim()) return;
     setPosting(true);
     const authorName = anonymous ? "Anonymous" : (profile.username ? `@${profile.username}` : formatName(profile.full_name));
-    await supabase.from("prayers").insert({ user_id: profile.id, group_id: profile.group_id, body: body.trim(), anonymous, author_name: authorName, reactions: 0, pinned: false });
+    const { data: pr } = await supabase.from("prayers").insert({ user_id: profile.id, group_id: profile.group_id, body: body.trim(), anonymous, author_name: authorName, reactions: 0, pinned: false }).select("id").single();
+    notifyMembers({ kind: "prayer", item_id: pr?.id, actor_id: profile.id, preview: anonymous ? "A new prayer request was posted" : body.trim().slice(0, 80) });
     setBody(""); setPosting(false); loadPrayers();
   }
 
@@ -3638,6 +3697,7 @@ function PrivateGroups({ profile, allMembers }) {
     }
     const senderName = profile.username ? `@${profile.username}` : formatName(profile.full_name);
     await supabase.from('messages').insert({ room_id: `private_${activeGroup.id}`, user_id: profile.id, body: body.trim(), sender_name: senderName, photo_url: photoUrl });
+    notifyMembers({ kind: "message", room_id: `private_${activeGroup.id}`, actor_id: profile.id, preview: body.trim() || "📷" });
     setBody(''); setPhotoFile(null); setPhotoPreview(null);
     setSending(false);
     loadMessages();
@@ -4956,6 +5016,30 @@ function Profile({ profile, onUpdate, onSignOut }) {
   const [newEmail, setNewEmail] = useState("");
   const [newPass, setNewPass] = useState("");
   const [acctMsg, setAcctMsg] = useState("");
+  const [emailPrefs, setEmailPrefs] = useState(profile.email_prefs || { dm: true, group: true, events: true, prayers: true });
+
+  async function toggleEmailPref(key) {
+    const next = { ...emailPrefs, [key]: !emailPrefs[key] };
+    setEmailPrefs(next);
+    await supabase.from("profiles").update({ email_prefs: next }).eq("id", profile.id);
+    onUpdate({ ...profile, email_prefs: next });
+  }
+
+  const [pushMsg, setPushMsg] = useState("");
+  const [pushBusy, setPushBusy] = useState(false);
+  async function handleEnablePush() {
+    setPushBusy(true); setPushMsg("");
+    const r = await enablePush(profile);
+    const map = {
+      enabled: "✓ Push enabled on this device — you'll get lock-screen alerts when the app is closed.",
+      denied: "Notifications are blocked. Turn them on in your browser/site settings, then try again.",
+      "ios-needs-install": "On iPhone, first add ESix10 to your Home Screen: tap the Share button → 'Add to Home Screen', open it from there, then come back and enable push.",
+      unsupported: "This browser doesn't support push notifications.",
+      error: "Couldn't enable push — please try again.",
+    };
+    setPushMsg(map[r] || "");
+    setPushBusy(false);
+  }
 
   async function save() {
     setSaving(true);
@@ -5152,6 +5236,41 @@ function Profile({ profile, onUpdate, onSignOut }) {
         </div>
       </div>
 
+      {/* Email notifications — per-member on/off */}
+      <div style={{ ...S.card, marginTop: 16 }}>
+        <span style={S.eyebrow}>Email Notifications</span>
+        <p style={{ color: "#8A8A8A", fontSize: 12, margin: "8px 0 14px", lineHeight: 1.5 }}>
+          Get an email when there's new activity while the app is closed. Busy chats are throttled so your inbox won't get flooded.
+        </p>
+        {[
+          { key: "dm", label: "Direct messages" },
+          { key: "group", label: "Group & community chats" },
+          { key: "events", label: "Events & announcements" },
+          { key: "prayers", label: "Prayer requests" },
+        ].map(row => {
+          const on = emailPrefs[row.key] !== false;
+          return (
+            <div key={row.key} style={{ display: "flex", alignItems: "center", justifyContent: "space-between", padding: "11px 0", borderBottom: "1px solid rgba(255,255,255,0.06)" }}>
+              <span style={{ fontFamily: "'Inter', sans-serif", fontSize: 14, color: "#fff" }}>{row.label}</span>
+              <button aria-label={`Toggle ${row.label}`} onClick={() => toggleEmailPref(row.key)}
+                style={{ width: 46, height: 26, borderRadius: 13, border: "none", cursor: "pointer", position: "relative", flexShrink: 0, background: on ? "#FF6600" : "rgba(255,255,255,0.15)", transition: "background .15s" }}>
+                <span style={{ position: "absolute", top: 3, left: on ? 23 : 3, width: 20, height: 20, borderRadius: "50%", background: "#fff", transition: "left .15s" }} />
+              </button>
+            </div>
+          );
+        })}
+        <div style={{ marginTop: 16, paddingTop: 16, borderTop: "1px solid rgba(255,255,255,0.06)" }}>
+          <div style={{ fontFamily: "'Inter', sans-serif", fontSize: 14, color: "#fff", marginBottom: 4 }}>Lock-screen push (beta)</div>
+          <p style={{ color: "#8A8A8A", fontSize: 12, margin: "0 0 12px", lineHeight: 1.5 }}>
+            Get instant banner alerts on this device, even when the app is closed.{isIOS() ? " On iPhone you must add ESix10 to your Home Screen first (Share → Add to Home Screen)." : ""}
+          </p>
+          <button onClick={handleEnablePush} disabled={pushBusy} style={S.btnGhost}>
+            {pushBusy ? "Enabling…" : "Enable push on this device"}
+          </button>
+          {pushMsg && <p style={{ color: "#BBBBBB", fontSize: 12, marginTop: 10, lineHeight: 1.5 }}>{pushMsg}</p>}
+        </div>
+      </div>
+
       {/* Account & Login — self-service email/password */}
       <div style={{ ...S.card, marginTop: 16 }}>
         <span style={S.eyebrow}>Account &amp; Login</span>
@@ -5237,6 +5356,7 @@ function AdminDashboard({ profile }) {
   }
   async function approveEvent(id) {
     await supabase.from("events").update({ approved: true }).eq("id", id);
+    notifyMembers({ kind: "event", item_id: id, actor_id: profile.id, preview: "New event" });
     loadAll();
   }
   async function removeEvent(id) {

@@ -1,0 +1,16 @@
+{
+  "name": "ESix10 Community",
+  "short_name": "ESix10",
+  "description": "Prepared. Equipped. Unshaken. A faith-based community built on Ephesians 6:10.",
+  "start_url": "/",
+  "scope": "/",
+  "display": "standalone",
+  "orientation": "portrait",
+  "background_color": "#0a0a0a",
+  "theme_color": "#0a0a0a",
+  "icons": [
+    { "src": "/esix10logo.png", "sizes": "192x192", "type": "image/png", "purpose": "any" },
+    { "src": "/esix10logo.png", "sizes": "512x512", "type": "image/png", "purpose": "any" },
+    { "src": "/esix10logo.png", "sizes": "512x512", "type": "image/png", "purpose": "maskable" }
+  ]
+}
