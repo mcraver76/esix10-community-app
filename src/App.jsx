@@ -701,7 +701,12 @@ function AuthScreen({ onAuth }) {
         const { data, error } = await supabase.auth.signUp({ email, password, options: { data: { full_name: name } } });
         if (error) throw error;
         if (data.user) {
-          await supabase.from("profiles").upsert({ id: data.user.id, email, full_name: name, username: cleanU, role: email === ADMIN_EMAIL ? "admin" : "member", terms_accepted_at: new Date().toISOString(), terms_version: LEGAL_VERSION });
+          const { error: pErr } = await supabase.from("profiles").upsert({ id: data.user.id, email, full_name: name, username: cleanU, role: email === ADMIN_EMAIL ? "admin" : "member", terms_accepted_at: new Date().toISOString(), terms_version: LEGAL_VERSION });
+          if (pErr) {
+            setError(pErr.code === "23505" ? `"${cleanU}" was just taken — please log in and pick another username.` : `Couldn't finish setup: ${pErr.message}`);
+            setLoading(false);
+            return;
+          }
           if (email !== ADMIN_EMAIL) {
             fetch("/api/send-email", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ to: email, name, type: "signup" }) }).catch(e => console.error("signup email failed", e));
           }
@@ -1735,7 +1740,8 @@ function Members({ profile, onNavigate }) {
   }
 
   async function approve(id) {
-    await supabase.from("profiles").update({ status: "approved" }).eq("id", id);
+    const { error } = await supabase.from("profiles").update({ status: "approved" }).eq("id", id);
+    if (error) { alert(`Couldn't approve this member: ${error.message}`); return; }
     const m = members.find(x => x.id === id);
     if (m?.email) {
       fetch("/api/send-email", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ to: m.email, name: m.full_name, type: "approval" }) }).catch(e => console.error("approval email failed", e));
@@ -1744,7 +1750,8 @@ function Members({ profile, onNavigate }) {
   }
 
   async function deny(id) {
-    await supabase.from("profiles").update({ status: "denied" }).eq("id", id);
+    const { error } = await supabase.from("profiles").update({ status: "denied" }).eq("id", id);
+    if (error) { alert(`Couldn't update this member: ${error.message}`); return; }
     loadMembers();
   }
 
@@ -2064,7 +2071,7 @@ function Messages({ profile, members, onRead }) {
     const { data } = await supabase.from("messages").select("room_id, body").in("room_id", ids).order("created_at", { ascending: false });
     const roomMap = {};
     ids.forEach(id => { roomMap[id] = { id, label: "Group Chat", icon: "👥", type: "custom_group" }; });
-    (data || []).forEach(m => { if (m.body && m.body.includes("[GROUP:") && roomMap[m.room_id]) roomMap[m.room_id].label = m.body.split("[GROUP:")[1].split("]")[0]; });
+    (data || []).forEach(m => { if (m.body && m.body.startsWith("📢 [GROUP:") && roomMap[m.room_id]) roomMap[m.room_id].label = m.body.split("[GROUP:")[1].split("]")[0]; });
     setCustomRooms(Object.values(roomMap));
   }
   async function loadRoomMembers(roomId) {
@@ -2441,8 +2448,8 @@ function Messages({ profile, members, onRead }) {
         );
       })()}
       <div style={{ flex: 1, overflowY: "auto", padding: "12px 16px", display: "flex", flexDirection: "column", gap: 8 }}>
-        {messages.filter(m => !m.body?.includes('[GROUP:')).length === 0 && <div style={{ textAlign: "center", padding: 40 }}><p style={S.muted}>No messages yet. Start the conversation.</p></div>}
-        {messages.filter(m => !m.body?.includes('[GROUP:')).map(msg => {
+        {messages.filter(m => !m.body?.startsWith('📢 [GROUP:')).length === 0 && <div style={{ textAlign: "center", padding: 40 }}><p style={S.muted}>No messages yet. Start the conversation.</p></div>}
+        {messages.filter(m => !m.body?.startsWith('📢 [GROUP:')).map(msg => {
           const isOwn = msg.user_id === profile.id;
           const senderName = msg.sender_name || "Member";
           return (
@@ -3644,7 +3651,7 @@ function PrivateGroups({ profile, allMembers }) {
   const [requests, setRequests] = useState([]);
   const bottomRef = useRef();
   const msgPhotoRef = useRef();
-  const isMobile = window.innerWidth <= 768;
+  const isMobile = useMobile();
   const [showList, setShowList] = useState(true);
   const [photoFile, setPhotoFile] = useState(null);
   const [photoPreview, setPhotoPreview] = useState(null);
@@ -5420,14 +5427,16 @@ function AdminDashboard({ profile }) {
   }
 
   async function approveMember(mem) {
-    await supabase.from("profiles").update({ status: "approved" }).eq("id", mem.id);
+    const { error } = await supabase.from("profiles").update({ status: "approved" }).eq("id", mem.id);
+    if (error) { alert(`Couldn't approve this member: ${error.message}`); return; }
     if (mem.email) {
       fetch("/api/send-email", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ to: mem.email, name: mem.full_name, type: "approval" }) }).catch(e => console.error("approval email failed", e));
     }
     loadAll();
   }
   async function denyMember(id) {
-    await supabase.from("profiles").update({ status: "denied" }).eq("id", id);
+    const { error } = await supabase.from("profiles").update({ status: "denied" }).eq("id", id);
+    if (error) { alert(`Couldn't update this member: ${error.message}`); return; }
     loadAll();
   }
   async function removeFlaggedPost(flagId, postId) {
