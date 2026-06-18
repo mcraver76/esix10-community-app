@@ -698,15 +698,13 @@ function AuthScreen({ onAuth }) {
         if (cleanU.length < 3) { setError("Pick a username — at least 3 letters, numbers, or underscores."); setLoading(false); return; }
         const { data: taken } = await supabase.from("profiles").select("id").ilike("username", cleanU).maybeSingle();
         if (taken) { setError(`"${cleanU}" is already taken — try another username.`); setLoading(false); return; }
-        const { data, error } = await supabase.auth.signUp({ email, password, options: { data: { full_name: name } } });
+        const { data, error } = await supabase.auth.signUp({ email, password, options: { data: { full_name: name, username: cleanU, terms_version: LEGAL_VERSION, terms_accepted_at: new Date().toISOString() } } });
         if (error) throw error;
         if (data.user) {
-          const { error: pErr } = await supabase.from("profiles").upsert({ id: data.user.id, email, full_name: name, username: cleanU, role: email === ADMIN_EMAIL ? "admin" : "member", terms_accepted_at: new Date().toISOString(), terms_version: LEGAL_VERSION });
-          if (pErr) {
-            setError(pErr.code === "23505" ? `"${cleanU}" was just taken — please log in and pick another username.` : `Couldn't finish setup: ${pErr.message}`);
-            setLoading(false);
-            return;
-          }
+          // We do NOT create the profiles row here: with email confirmation on,
+          // there's no session yet, so RLS (correctly) blocks writing it. The
+          // profile is created from this metadata on first authenticated login
+          // (see loadProfile's "no profile yet" branch).
           if (email !== ADMIN_EMAIL) {
             fetch("/api/send-email", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ to: email, name, type: "signup" }) }).catch(e => console.error("signup email failed", e));
           }
@@ -5898,13 +5896,16 @@ export default function App() {
       const { data, error } = await supabase.from("profiles").select("*").eq("id", u.id).single();
       if (error && error.code === "PGRST116") {
         const isAdmin = u.email === ADMIN_EMAIL;
-        const fullName = u.user_metadata?.full_name || "";
-        await supabase.from("profiles").insert({ 
-          id: u.id, 
-          email: u.email, 
-          full_name: fullName, 
+        const md = u.user_metadata || {};
+        await supabase.from("profiles").insert({
+          id: u.id,
+          email: u.email,
+          full_name: md.full_name || "",
+          username: md.username || null,
           role: isAdmin ? "admin" : "member",
-          status: isAdmin ? "approved" : "pending"
+          status: isAdmin ? "approved" : "pending",
+          terms_accepted_at: md.terms_accepted_at || null,
+          terms_version: md.terms_version || null
         });
         const { data: newProfile } = await supabase.from("profiles").select("*").eq("id", u.id).single();
         setProfile(newProfile);
