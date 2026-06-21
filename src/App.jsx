@@ -3156,8 +3156,8 @@ function ForgeWOD({ profile }) {
         method: 'POST',
         headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${SUPABASE_ANON_KEY}` },
         body: JSON.stringify({
-          prompt: 'Generate 7 bodyweight WODs for a faith-based fitness community. Return ONLY a JSON array, no markdown: [{"title":"","warmup":"","main_work":"","cooldown":"","coaching_notes":"","estimated_minutes":30,"difficulty":3}]. difficulty 1-5. Keep each field concise.',
-          max_tokens: 2000
+          prompt: 'Generate 7 bodyweight workouts for a faith-based fitness community of EVERYDAY people of all ages and fitness levels (NOT athletes or CrossFitters). CRITICAL RULE: use ONLY plain, common movement names that anyone instantly understands — push-ups, squats, lunges, planks, jumping jacks, sit-ups, wall sits, mountain climbers, glute bridges, calf raises, high knees, marching in place, arm circles, etc. Do NOT use gym jargon or acronyms (no AMRAP, EMOM, RFT, "thrusters", "burpees over bar", etc.) and do NOT use cryptic codename titles or movements. If you ever include a less-common move, explain it in one short plain sentence right where it appears so nobody has to look it up. Titles must be clear and motivating (e.g. "Foundation Strength", "Steady and Strong"), never codenames. Vary the difficulty across the week. Keep each field concise and beginner-friendly; coaching_notes may add a brief faith encouragement. Return ONLY a JSON array, no markdown: [{"title":"","warmup":"","main_work":"","cooldown":"","coaching_notes":"","estimated_minutes":30,"difficulty":3}]. difficulty 1-5 (1=very easy, 5=hard).',
+          max_tokens: 2500
         })
       });
       const data = await response.json();
@@ -3168,9 +3168,10 @@ function ForgeWOD({ profile }) {
         const d = new Date(); d.setDate(d.getDate() + i + 1);
         return { ...w, scheduled_date: d.toISOString().split('T')[0], created_by: profile.id };
       });
-      await supabase.from('forge_wods').insert(insertData);
-      loadWOD();
-    } catch(e) { console.error(e); }
+      const { error: insErr } = await supabase.from('forge_wods').insert(insertData);
+      if (insErr) { alert("Generated, but couldn't save: " + insErr.message); }
+      else loadWOD();
+    } catch(e) { console.error(e); alert("Couldn't generate workouts — please try again."); }
     setGenerating(false);
   }
 
