@@ -2898,6 +2898,7 @@ function ForgeChallenge({ profile }) {
   const [generating, setGenerating] = useState(false);
   const [streak, setStreak] = useState(0);
   const today = localDateStr();
+  const autoStocked = React.useRef(false);
 
   useEffect(() => { loadChallenge(); loadStreak(); }, []);
 
@@ -2930,6 +2931,12 @@ function ForgeChallenge({ profile }) {
     if (profile.role === 'admin') {
       const { data: upcoming } = await supabase.from('forge_challenges').select('*').gte('scheduled_date', today).order('scheduled_date', { ascending: true }).limit(14);
       setQueue(upcoming || []);
+      // Auto-scheduling: if fewer than 7 days are queued ahead, quietly top up a week.
+      // Runs at most once per app-open; appends after the last date (never doubles up).
+      if ((upcoming?.length || 0) < 7 && !autoStocked.current) {
+        autoStocked.current = true;
+        generateChallenges(true);
+      }
     }
   }
 
@@ -2961,14 +2968,17 @@ function ForgeChallenge({ profile }) {
     loadChallenge();
   }
 
-  async function generateChallenges() {
-    setGenerating(true);
+  async function generateChallenges(silent) {
+    if (!silent) setGenerating(true);
     try {
+      // Append after the last already-scheduled date so dates are never doubled up.
+      const { data: last } = await supabase.from('forge_challenges').select('scheduled_date').order('scheduled_date', { ascending: false }).limit(1).maybeSingle();
+      const start = (last && last.scheduled_date >= today) ? new Date(last.scheduled_date + 'T12:00:00') : new Date();
       const response = await fetch('https://bffcrhjdibxqfmdreksi.supabase.co/functions/v1/generate', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${SUPABASE_ANON_KEY}` },
         body: JSON.stringify({
-          prompt: 'Generate 7 daily challenges for ESix10 Initiative — a faith-based community built on Ephesians 6:10. Mix categories: Scripture (priority), Physical, Mental, Preparedness, Leadership. Each challenge doable in one day, direct faith-forward voice. Return ONLY JSON array, no markdown: [{"title":"","description":"","category":"Scripture|Physical|Mental|Preparedness|Leadership"}]',
+          prompt: 'Generate 7 daily challenges for ESix10 — a faith-based community of everyday people built on Ephesians 6:10. Mix categories: Scripture (priority), Physical, Mental, Preparedness, Leadership. RULES: each challenge must be a CLEAR, SPECIFIC, one-day action anyone can do and understand immediately — plain everyday language, no vague spiritual jargon or insider church terms. Title = short and motivating. Description = exactly what to do today, in one or two simple, concrete sentences. Faith-forward but accessible to newcomers. Return ONLY a JSON array, no markdown: [{"title":"","description":"","category":"Scripture|Physical|Mental|Preparedness|Leadership"}]',
           max_tokens: 2000
         })
       });
@@ -2977,13 +2987,14 @@ function ForgeChallenge({ profile }) {
       const text = data.content.replace(/```json|```/g, '').trim();
       const challenges = JSON.parse(text);
       const insertData = challenges.map((c, i) => {
-        const d = new Date(); d.setDate(d.getDate() + i + 1);
-        return { ...c, scheduled_date: d.toISOString().split('T')[0], created_by: profile.id };
+        const d = new Date(start); d.setDate(d.getDate() + i + 1);
+        return { ...c, scheduled_date: localDateStr(d), created_by: profile.id };
       });
-      await supabase.from('forge_challenges').insert(insertData);
-      loadChallenge();
-    } catch(e) { console.error('Generate error:', e); }
-    setGenerating(false);
+      const { error: insErr } = await supabase.from('forge_challenges').insert(insertData);
+      if (insErr) { if (!silent) alert("Generated, but couldn't save: " + insErr.message); }
+      else loadChallenge();
+    } catch(e) { console.error('Generate error:', e); if (!silent) alert("Couldn't generate challenges — please try again."); }
+    if (!silent) setGenerating(false);
   }
 
   return (
@@ -2999,7 +3010,7 @@ function ForgeChallenge({ profile }) {
         {profile.role === 'admin' && (
           <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap' }}>
             <button style={{ ...S.btnSm, background: 'rgba(255,102,0,0.15)', color: '#FF6600', border: '1px solid rgba(255,102,0,0.3)' }} onClick={() => setShowQueue(!showQueue)}>📅 {queue.length}</button>
-            <button style={S.btnSm} onClick={generateChallenges} disabled={generating}>{generating ? '⏳' : '✨ AI Week'}</button>
+            <button style={S.btnSm} onClick={() => generateChallenges()} disabled={generating}>{generating ? '⏳' : '✨ AI Week'}</button>
             <button style={S.btnSm} onClick={() => setShowForm(!showForm)}>+ Add</button>
           </div>
         )}
@@ -3088,6 +3099,7 @@ function ForgeWOD({ profile }) {
   const [generating, setGenerating] = useState(false);
   const [streak, setStreak] = useState(0);
   const today = localDateStr();
+  const autoStocked = React.useRef(false);
 
   useEffect(() => { loadWOD(); loadStreak(); }, []);
 
@@ -3118,6 +3130,12 @@ function ForgeWOD({ profile }) {
     if (profile.role === 'admin') {
       const { data: upcoming } = await supabase.from('forge_wods').select('*').gte('scheduled_date', today).order('scheduled_date', { ascending: true }).limit(14);
       setQueue(upcoming || []);
+      // Auto-scheduling: top up a week silently when the queue runs low (≤7 days),
+      // once per app-open, appended after the last date so nothing doubles up.
+      if ((upcoming?.length || 0) < 7 && !autoStocked.current) {
+        autoStocked.current = true;
+        generateWODs(true);
+      }
     }
   }
 
@@ -3149,9 +3167,11 @@ function ForgeWOD({ profile }) {
     loadWOD();
   }
 
-  async function generateWODs() {
-    setGenerating(true);
+  async function generateWODs(silent) {
+    if (!silent) setGenerating(true);
     try {
+      const { data: last } = await supabase.from('forge_wods').select('scheduled_date').order('scheduled_date', { ascending: false }).limit(1).maybeSingle();
+      const start = (last && last.scheduled_date >= today) ? new Date(last.scheduled_date + 'T12:00:00') : new Date();
       const response = await fetch('https://bffcrhjdibxqfmdreksi.supabase.co/functions/v1/generate', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${SUPABASE_ANON_KEY}` },
@@ -3165,14 +3185,14 @@ function ForgeWOD({ profile }) {
       const text = data.content.replace(/```json|```/g, '').trim();
       const wods = JSON.parse(text);
       const insertData = wods.map((w, i) => {
-        const d = new Date(); d.setDate(d.getDate() + i + 1);
-        return { ...w, scheduled_date: d.toISOString().split('T')[0], created_by: profile.id };
+        const d = new Date(start); d.setDate(d.getDate() + i + 1);
+        return { ...w, scheduled_date: localDateStr(d), created_by: profile.id };
       });
       const { error: insErr } = await supabase.from('forge_wods').insert(insertData);
-      if (insErr) { alert("Generated, but couldn't save: " + insErr.message); }
+      if (insErr) { if (!silent) alert("Generated, but couldn't save: " + insErr.message); }
       else loadWOD();
-    } catch(e) { console.error(e); alert("Couldn't generate workouts — please try again."); }
-    setGenerating(false);
+    } catch(e) { console.error(e); if (!silent) alert("Couldn't generate workouts — please try again."); }
+    if (!silent) setGenerating(false);
   }
 
   const diffLabel = ['', 'Beginner', 'Easy', 'Moderate', 'Hard', 'Elite'];
@@ -3191,7 +3211,7 @@ function ForgeWOD({ profile }) {
         {profile.role === 'admin' && (
           <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap' }}>
             <button style={{ ...S.btnSm, background: 'rgba(255,102,0,0.15)', color: '#FF6600', border: '1px solid rgba(255,102,0,0.3)' }} onClick={() => setShowQueue(!showQueue)}>📅 {queue.length}</button>
-            <button style={S.btnSm} onClick={generateWODs} disabled={generating}>{generating ? '⏳' : '✨ AI Week'}</button>
+            <button style={S.btnSm} onClick={() => generateWODs()} disabled={generating}>{generating ? '⏳' : '✨ AI Week'}</button>
             <button style={S.btnSm} onClick={() => setShowForm(!showForm)}>+ Add</button>
           </div>
         )}
