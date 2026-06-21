@@ -2971,9 +2971,12 @@ function ForgeChallenge({ profile }) {
   async function generateChallenges(silent) {
     if (!silent) setGenerating(true);
     try {
-      // Append after the last already-scheduled date so dates are never doubled up.
+      // Fill from the day AFTER the last scheduled date; if nothing is scheduled
+      // for today or later, start from TODAY (so today never ends up empty).
       const { data: last } = await supabase.from('forge_challenges').select('scheduled_date').order('scheduled_date', { ascending: false }).limit(1).maybeSingle();
-      const start = (last && last.scheduled_date >= today) ? new Date(last.scheduled_date + 'T12:00:00') : new Date();
+      const hasFuture = last && last.scheduled_date >= today;
+      const base = hasFuture ? new Date(last.scheduled_date + 'T12:00:00') : new Date(today + 'T12:00:00');
+      const off = hasFuture ? 1 : 0;
       const response = await fetch('https://bffcrhjdibxqfmdreksi.supabase.co/functions/v1/generate', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${SUPABASE_ANON_KEY}` },
@@ -2987,7 +2990,7 @@ function ForgeChallenge({ profile }) {
       const text = data.content.replace(/```json|```/g, '').trim();
       const challenges = JSON.parse(text);
       const insertData = challenges.map((c, i) => {
-        const d = new Date(start); d.setDate(d.getDate() + i + 1);
+        const d = new Date(base); d.setDate(d.getDate() + i + off);
         return { ...c, scheduled_date: localDateStr(d), created_by: profile.id };
       });
       const { error: insErr } = await supabase.from('forge_challenges').insert(insertData);
@@ -3171,7 +3174,9 @@ function ForgeWOD({ profile }) {
     if (!silent) setGenerating(true);
     try {
       const { data: last } = await supabase.from('forge_wods').select('scheduled_date').order('scheduled_date', { ascending: false }).limit(1).maybeSingle();
-      const start = (last && last.scheduled_date >= today) ? new Date(last.scheduled_date + 'T12:00:00') : new Date();
+      const hasFuture = last && last.scheduled_date >= today;
+      const base = hasFuture ? new Date(last.scheduled_date + 'T12:00:00') : new Date(today + 'T12:00:00');
+      const off = hasFuture ? 1 : 0;
       const response = await fetch('https://bffcrhjdibxqfmdreksi.supabase.co/functions/v1/generate', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${SUPABASE_ANON_KEY}` },
@@ -3185,7 +3190,7 @@ function ForgeWOD({ profile }) {
       const text = data.content.replace(/```json|```/g, '').trim();
       const wods = JSON.parse(text);
       const insertData = wods.map((w, i) => {
-        const d = new Date(start); d.setDate(d.getDate() + i + 1);
+        const d = new Date(base); d.setDate(d.getDate() + i + off);
         return { ...w, scheduled_date: localDateStr(d), created_by: profile.id };
       });
       const { error: insErr } = await supabase.from('forge_wods').insert(insertData);
