@@ -5434,8 +5434,28 @@ function AdminDashboard({ profile }) {
   const [groupRequests, setGroupRequests] = useState([]);
   const [pendingPrivateGroups, setPendingPrivateGroups] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [broadcast, setBroadcast] = useState("");
+  const [broadcasting, setBroadcasting] = useState(false);
+  const [broadcastMsg, setBroadcastMsg] = useState("");
 
   useEffect(() => { loadAll(); }, []);
+
+  async function sendBroadcast() {
+    const text = broadcast.trim();
+    if (!text) return;
+    if (!window.confirm(`Send this announcement to ALL group chats (Brotherhood, Sisterhood, Family)?\n\n"${text.slice(0, 140)}${text.length > 140 ? "…" : ""}"`)) return;
+    setBroadcasting(true);
+    setBroadcastMsg("");
+    const senderName = profile.username ? `@${profile.username}` : formatName(profile.full_name);
+    const rows = GROUPS.map(g => ({ room_id: `group_${g.id}`, user_id: profile.id, body: `📢 ${text}`, sender_name: senderName }));
+    const { error } = await supabase.from("messages").insert(rows);
+    if (error) { setBroadcastMsg(`Couldn't send: ${error.message}`); setBroadcasting(false); return; }
+    // Notify each group (email/push); the admin is auto-excluded as the actor.
+    GROUPS.forEach(g => notifyMembers({ kind: "message", room_id: `group_${g.id}`, actor_id: profile.id, preview: text }));
+    setBroadcast("");
+    setBroadcastMsg(`✓ Sent to all ${GROUPS.length} group chats.`);
+    setBroadcasting(false);
+  }
 
   async function loadAll() {
     setLoading(true);
@@ -5560,6 +5580,24 @@ function AdminDashboard({ profile }) {
         <button style={S.btnGhost} onClick={loadAll}>Refresh</button>
       </div>
       <p style={S.muted}>{loading ? "Loading…" : total === 0 ? "All clear — nothing needs your attention." : `${total} item${total === 1 ? "" : "s"} need your attention.`}</p>
+
+      <div style={{ ...S.card, marginTop: 16, borderColor: "rgba(255,102,0,0.3)" }}>
+        <span style={S.eyebrow}>📢 Broadcast to All Groups</span>
+        <p style={{ ...S.muted, marginTop: 4, marginBottom: 12 }}>Post one announcement to every group chat at once — Brotherhood · Sisterhood · Family. Members get notified by email/push.</p>
+        <textarea
+          value={broadcast}
+          onChange={e => setBroadcast(e.target.value)}
+          placeholder="Type your announcement to all groups…"
+          rows={3}
+          style={{ ...S.input, resize: "vertical", fontSize: 15 }}
+        />
+        <div style={{ display: "flex", alignItems: "center", gap: 14, marginTop: 12, flexWrap: "wrap" }}>
+          <button style={{ ...S.btn, opacity: (broadcasting || !broadcast.trim()) ? 0.5 : 1 }} disabled={broadcasting || !broadcast.trim()} onClick={sendBroadcast}>
+            {broadcasting ? "Sending…" : "Send to All Groups"}
+          </button>
+          {broadcastMsg && <span style={{ color: broadcastMsg.startsWith("✓") ? "#5BD08A" : "#ff6b6b", fontSize: 13, fontWeight: 600 }}>{broadcastMsg}</span>}
+        </div>
+      </div>
 
       <Section title="Pending Members" icon="👤" count={pendingMembers.length}>
         {pendingMembers.map(m => (
