@@ -3665,6 +3665,17 @@ function AudioPlayer({ episode }) {
 }
 
 // ─── Private Groups ───────────────────────────────────────────────────────────
+const GROUP_POLICY = {
+  open:     { label: "Open to all", icon: "🌐", color: "#5BD08A" },
+  approval: { label: "By request",  icon: "✋", color: "#FF9E33" },
+  private:  { label: "Private",     icon: "🔒", color: "#9AA0A6" },
+};
+const groupPolicy = (g) => GROUP_POLICY[g?.join_policy] || GROUP_POLICY.approval;
+function PolicyBadge({ g }) {
+  const m = groupPolicy(g);
+  return <span style={{ display: "inline-flex", alignItems: "center", gap: 4, background: "rgba(255,255,255,0.06)", color: m.color, fontSize: 10, fontWeight: 700, letterSpacing: "0.06em", textTransform: "uppercase", padding: "3px 8px", borderRadius: 20, whiteSpace: "nowrap" }}>{m.icon} {m.label}</span>;
+}
+
 function PrivateGroups({ profile, allMembers }) {
   const [groups, setGroups] = useState([]);
   const [myGroups, setMyGroups] = useState([]);
@@ -3782,7 +3793,8 @@ function PrivateGroups({ profile, allMembers }) {
   }
 
   async function addMember(userId) {
-    if (members.length >= 15) { alert('Maximum 15 members per group'); return; }
+    const cap = activeGroup?.join_policy === 'private' ? 15 : null;
+    if (cap && members.length >= cap) { alert(`This private group is limited to ${cap} members.`); return; }
     const exists = members.find(m => m.user_id === userId);
     if (exists) return;
     await supabase.from('private_group_members').insert({ group_id: activeGroup.id, user_id: userId, role: 'member' });
@@ -3896,7 +3908,7 @@ function PrivateGroups({ profile, allMembers }) {
               onClick={() => { setActiveGroup(g); if (isMobile) setShowList(false); }}>
               <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
                 <div>
-                  <div style={{ color: '#fff', fontFamily: "'Inter', sans-serif", fontSize: 15 }}>{g.name}</div>
+                  <div style={{ color: '#fff', fontFamily: "'Inter', sans-serif", fontSize: 15, display: 'flex', alignItems: 'center', gap: 8, flexWrap: 'wrap' }}>{g.name} <PolicyBadge g={g} /></div>
                   {g.description && <div style={{ color: '#888', fontSize: 12, marginTop: 2 }}>{g.description}</div>}
                 </div>
                 <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
@@ -3916,15 +3928,18 @@ function PrivateGroups({ profile, allMembers }) {
         )}
         {groups.filter(g => g.approved && !myGroups.find(m => m.id === g.id)).map(g => {
           const open = g.join_policy === 'open';
+          const priv = g.join_policy === 'private';
           return (
           <div key={g.id} style={{ ...S.card, marginBottom: 8 }}>
-            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-              <div>
-                <div style={{ color: '#fff', fontFamily: "'Inter', sans-serif", fontSize: 15 }}>{open ? '🌐' : '🔒'} {g.name}</div>
+            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 12 }}>
+              <div style={{ minWidth: 0 }}>
+                <div style={{ color: '#fff', fontFamily: "'Inter', sans-serif", fontSize: 15, display: 'flex', alignItems: 'center', gap: 8, flexWrap: 'wrap' }}>{g.name} <PolicyBadge g={g} /></div>
                 {g.description && <div style={{ color: '#888', fontSize: 12, marginTop: 2 }}>{g.description}</div>}
-                <div style={{ color: '#555', fontSize: 12, marginTop: 4 }}>{g.member_count || 1} members · {open ? 'Open to all' : 'Approval required'}</div>
+                <div style={{ color: '#555', fontSize: 12, marginTop: 4 }}>{g.member_count || 1} members</div>
               </div>
-              <button style={S.btnSm} onClick={() => open ? joinOpenGroup(g.id) : requestJoin(g.id)}>{open ? 'Join' : 'Request'}</button>
+              {priv
+                ? <span style={{ color: '#888', fontSize: 12, whiteSpace: 'nowrap' }}>Invite only</span>
+                : <button style={S.btnSm} onClick={() => open ? joinOpenGroup(g.id) : requestJoin(g.id)}>{open ? 'Join' : 'Request'}</button>}
             </div>
           </div>
         );})}
@@ -3938,8 +3953,8 @@ function PrivateGroups({ profile, allMembers }) {
       <div style={{ padding: '12px 16px', borderBottom: '1px solid rgba(255,255,255,0.05)', display: 'flex', alignItems: 'center', gap: 12 }}>
         {isMobile && <button onClick={() => setShowList(true)} style={{ background: 'none', border: 'none', color: '#FF6600', cursor: 'pointer', fontSize: 20, padding: 0 }}>←</button>}
         <div style={{ flex: 1 }}>
-          <div style={{ fontFamily: "'Inter', sans-serif", fontSize: 15, color: '#fff' }}>🔒 {activeGroup.name}</div>
-          <div style={{ color: '#555', fontSize: 11 }}>{members.length} members</div>
+          <div style={{ fontFamily: "'Inter', sans-serif", fontSize: 15, color: '#fff' }}>{groupPolicy(activeGroup).icon} {activeGroup.name}</div>
+          <div style={{ color: '#555', fontSize: 11 }}>{members.length} members · {groupPolicy(activeGroup).label}</div>
         </div>
         <div style={{ display: 'flex', gap: 6 }}>
           {canManage && (
@@ -3962,7 +3977,7 @@ function PrivateGroups({ profile, allMembers }) {
             </div>
           ))}
           <div style={{ marginTop: 8 }}>
-            <span style={{ color: '#555', fontSize: 11 }}>Members ({members.length}/15): </span>
+            <span style={{ color: '#555', fontSize: 11 }}>Members ({members.length}{activeGroup?.join_policy === 'private' ? '/15' : ''}): </span>
             {members.map(m => (
               <span key={m.id} style={{ color: '#888', fontSize: 11, marginRight: 8 }}>
                 {m.profiles?.username ? `@${m.profiles.username}` : formatName(m.profiles?.full_name)}
@@ -3998,7 +4013,9 @@ function PrivateGroups({ profile, allMembers }) {
         <div style={{ flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center', flexDirection: 'column', gap: 12, padding: 32 }}>
           <span style={{ fontSize: 40 }}>🔒</span>
           <p style={{ color: '#888', textAlign: 'center' }}>You are not a member of this group.</p>
-          <button style={S.btn} onClick={() => activeGroup.join_policy === 'open' ? joinOpenGroup(activeGroup.id) : requestJoin(activeGroup.id)}>{activeGroup.join_policy === 'open' ? 'Join Group' : 'Request to Join'}</button>
+          {activeGroup.join_policy === 'private'
+            ? <p style={{ color: '#666', fontSize: 13, textAlign: 'center' }}>This group is invite only.</p>
+            : <button style={S.btn} onClick={() => activeGroup.join_policy === 'open' ? joinOpenGroup(activeGroup.id) : requestJoin(activeGroup.id)}>{activeGroup.join_policy === 'open' ? 'Join Group' : 'Request to Join'}</button>}
         </div>
       )}
 
@@ -5637,8 +5654,9 @@ function AdminDashboard({ profile }) {
         <textarea style={{ ...S.input, resize: "vertical", fontSize: 15, marginBottom: 10 }} rows={2} placeholder="Short description of who it's for…" value={cgDesc} onChange={e => setCgDesc(e.target.value)} />
         <label style={S.label}>Who can join?</label>
         <select style={{ ...S.input, marginBottom: 12 }} value={cgPolicy} onChange={e => setCgPolicy(e.target.value)}>
-          <option value="approval">By approval — members request, you approve each</option>
-          <option value="open">Open to all — any member joins instantly</option>
+          <option value="open">🌐 Open to all — any member joins instantly (unlimited)</option>
+          <option value="approval">✋ By request — members request, you approve each (unlimited)</option>
+          <option value="private">🔒 Private — invite only, you add members (max 15)</option>
         </select>
         <div style={{ display: "flex", alignItems: "center", gap: 14, flexWrap: "wrap" }}>
           <button style={{ ...S.btn, opacity: (cgSaving || !cgName.trim()) ? 0.5 : 1 }} disabled={cgSaving || !cgName.trim()} onClick={createCommunityGroup}>
