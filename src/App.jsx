@@ -2332,7 +2332,10 @@ function Messages({ profile, members, onRead }) {
                 const roomId = `group_custom_${Date.now()}`;
                 const senderName = profile.username ? `@${profile.username}` : formatName(profile.full_name);
                 await supabase.from("messages").insert({ room_id: roomId, user_id: profile.id, body: `📢 [GROUP:${newGroupName}] Members: ${newGroupMembers.map(m => m.username ? `@${m.username}` : formatName(m.full_name)).join(", ")}`, sender_name: senderName });
-                await supabase.from("room_members").insert([{ room_id: roomId, user_id: profile.id, added_by: profile.id, is_creator: true }, ...newGroupMembers.map(m => ({ room_id: roomId, user_id: m.id, added_by: profile.id }))]);
+                // Insert the creator first (establishes the room), then the invited members —
+                // this lets the security rule verify "you created this room" before adding others.
+                await supabase.from("room_members").insert({ room_id: roomId, user_id: profile.id, added_by: profile.id, is_creator: true });
+                if (newGroupMembers.length) await supabase.from("room_members").insert(newGroupMembers.map(m => ({ room_id: roomId, user_id: m.id, added_by: profile.id })));
                 await loadCustomRooms();
                 isMobileChat ? selectRoomMobile(roomId) : selectRoom(roomId);
                 setShowNewGroup(false); setNewGroupName(""); setNewGroupMembers([]); setCreatingGroup(false);
