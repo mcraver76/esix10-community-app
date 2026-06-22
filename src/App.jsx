@@ -3752,6 +3752,16 @@ function PrivateGroups({ profile, allMembers }) {
     loadGroups();
   }
 
+  // Open community groups: any approved member joins instantly (no request).
+  async function joinOpenGroup(groupId) {
+    if (!requireApproved(profile)) return;
+    const { error } = await supabase.from('private_group_members').insert({ group_id: groupId, user_id: profile.id, role: 'member' });
+    if (error) { alert(`Couldn't join: ${error.message}. Please try again.`); return; }
+    await syncGroupCount(groupId);
+    await loadGroups();
+    if (activeGroup && activeGroup.id === groupId) loadMembers();
+  }
+
   // Recompute member_count from the real DB count so it never drifts (and so
   // removals actually decrement it).
   async function syncGroupCount(groupId) {
@@ -3839,7 +3849,7 @@ function PrivateGroups({ profile, allMembers }) {
       <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 20 }}>
         <div>
           <span style={S.eyebrow}>Community</span>
-          <h2 style={{ ...S.h2, margin: 0 }}>Private Groups</h2>
+          <h2 style={{ ...S.h2, margin: 0 }}>Community Groups</h2>
         </div>
         <button style={S.btn} onClick={() => setShowCreate(!showCreate)}>+ Create Group</button>
       </div>
@@ -3904,18 +3914,20 @@ function PrivateGroups({ profile, allMembers }) {
         {groups.filter(g => g.approved && !myGroups.find(m => m.id === g.id)).length === 0 && (
           <p style={S.muted}>No other groups to discover yet.</p>
         )}
-        {groups.filter(g => g.approved && !myGroups.find(m => m.id === g.id)).map(g => (
+        {groups.filter(g => g.approved && !myGroups.find(m => m.id === g.id)).map(g => {
+          const open = g.join_policy === 'open';
+          return (
           <div key={g.id} style={{ ...S.card, marginBottom: 8 }}>
             <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
               <div>
-                <div style={{ color: '#fff', fontFamily: "'Inter', sans-serif", fontSize: 15 }}>🔒 {g.name}</div>
+                <div style={{ color: '#fff', fontFamily: "'Inter', sans-serif", fontSize: 15 }}>{open ? '🌐' : '🔒'} {g.name}</div>
                 {g.description && <div style={{ color: '#888', fontSize: 12, marginTop: 2 }}>{g.description}</div>}
-                <div style={{ color: '#555', fontSize: 12, marginTop: 4 }}>{g.member_count || 1} members</div>
+                <div style={{ color: '#555', fontSize: 12, marginTop: 4 }}>{g.member_count || 1} members · {open ? 'Open to all' : 'Approval required'}</div>
               </div>
-              <button style={S.btnSm} onClick={() => requestJoin(g.id)}>Request</button>
+              <button style={S.btnSm} onClick={() => open ? joinOpenGroup(g.id) : requestJoin(g.id)}>{open ? 'Join' : 'Request'}</button>
             </div>
           </div>
-        ))}
+        );})}
       </div>
     </div>
   );
@@ -3986,7 +3998,7 @@ function PrivateGroups({ profile, allMembers }) {
         <div style={{ flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center', flexDirection: 'column', gap: 12, padding: 32 }}>
           <span style={{ fontSize: 40 }}>🔒</span>
           <p style={{ color: '#888', textAlign: 'center' }}>You are not a member of this group.</p>
-          <button style={S.btn} onClick={() => requestJoin(activeGroup.id)}>Request to Join</button>
+          <button style={S.btn} onClick={() => activeGroup.join_policy === 'open' ? joinOpenGroup(activeGroup.id) : requestJoin(activeGroup.id)}>{activeGroup.join_policy === 'open' ? 'Join Group' : 'Request to Join'}</button>
         </div>
       )}
 
@@ -5437,8 +5449,27 @@ function AdminDashboard({ profile }) {
   const [broadcast, setBroadcast] = useState("");
   const [broadcasting, setBroadcasting] = useState(false);
   const [broadcastMsg, setBroadcastMsg] = useState("");
+  const [cgName, setCgName] = useState("");
+  const [cgDesc, setCgDesc] = useState("");
+  const [cgPolicy, setCgPolicy] = useState("approval");
+  const [cgSaving, setCgSaving] = useState(false);
+  const [cgMsg, setCgMsg] = useState("");
 
   useEffect(() => { loadAll(); }, []);
+
+  async function createCommunityGroup() {
+    const name = cgName.trim();
+    if (!name) return;
+    setCgSaving(true); setCgMsg("");
+    const { data, error } = await supabase.from("private_groups").insert({
+      name, description: cgDesc.trim(), created_by: profile.id, approved: true, member_count: 1, join_policy: cgPolicy,
+    }).select().single();
+    if (error || !data) { setCgMsg(`Couldn't create: ${error?.message || "unknown error"}`); setCgSaving(false); return; }
+    await supabase.from("private_group_members").insert({ group_id: data.id, user_id: profile.id, role: "creator" });
+    setCgName(""); setCgDesc(""); setCgPolicy("approval");
+    setCgMsg(`✓ "${name}" is live — members will find it under Community Groups.`);
+    setCgSaving(false);
+  }
 
   async function sendBroadcast() {
     const text = broadcast.trim();
@@ -5596,6 +5627,24 @@ function AdminDashboard({ profile }) {
             {broadcasting ? "Sending…" : "Send to All Groups"}
           </button>
           {broadcastMsg && <span style={{ color: broadcastMsg.startsWith("✓") ? "#5BD08A" : "#ff6b6b", fontSize: 13, fontWeight: 600 }}>{broadcastMsg}</span>}
+        </div>
+      </div>
+
+      <div style={{ ...S.card, marginTop: 16, borderColor: "rgba(255,102,0,0.3)" }}>
+        <span style={S.eyebrow}>👥 Create Community Group</span>
+        <p style={{ ...S.muted, marginTop: 4, marginBottom: 12 }}>Create a group for the community (e.g. Veterans &amp; First Responders) and choose how members join. It appears under Community Groups for everyone to discover.</p>
+        <input style={{ ...S.input, marginBottom: 10 }} placeholder="Group name (e.g. Veterans & First Responders)" value={cgName} onChange={e => setCgName(e.target.value)} />
+        <textarea style={{ ...S.input, resize: "vertical", fontSize: 15, marginBottom: 10 }} rows={2} placeholder="Short description of who it's for…" value={cgDesc} onChange={e => setCgDesc(e.target.value)} />
+        <label style={S.label}>Who can join?</label>
+        <select style={{ ...S.input, marginBottom: 12 }} value={cgPolicy} onChange={e => setCgPolicy(e.target.value)}>
+          <option value="approval">By approval — members request, you approve each</option>
+          <option value="open">Open to all — any member joins instantly</option>
+        </select>
+        <div style={{ display: "flex", alignItems: "center", gap: 14, flexWrap: "wrap" }}>
+          <button style={{ ...S.btn, opacity: (cgSaving || !cgName.trim()) ? 0.5 : 1 }} disabled={cgSaving || !cgName.trim()} onClick={createCommunityGroup}>
+            {cgSaving ? "Creating…" : "Create Group"}
+          </button>
+          {cgMsg && <span style={{ color: cgMsg.startsWith("✓") ? "#5BD08A" : "#ff6b6b", fontSize: 13, fontWeight: 600 }}>{cgMsg}</span>}
         </div>
       </div>
 
