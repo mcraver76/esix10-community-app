@@ -147,6 +147,18 @@ const GROUPS = [
 ];
 
 const ADMIN_EMAIL = "admin@esix10.com";
+// Every profile column EXCEPT email — used everywhere we read profiles, so the
+// email column is never pulled to the client (it's walled off at the DB too).
+const PROFILE_COLS = "id, full_name, group_id, role, city, bio, created_at, state, status, last_seen, username, avatar_url, group_ids, updated_at, requested_group_id, requested_group_at, marital_status, avatar_pending, terms_accepted_at, terms_version, mod_agreement_at, email_prefs";
+// Staff-only secure email lookup (DB function returns emails only to staff/admin).
+async function fetchStaffEmails() {
+  try {
+    const { data } = await supabase.rpc("staff_emails");
+    const map = {};
+    (data || []).forEach(r => { map[r.id] = r.email; });
+    return map;
+  } catch { return {}; }
+}
 
 const REACTIONS = ["🔥", "💪", "🙏", "❤️", "✝️"];
 
@@ -840,10 +852,10 @@ function GroupSelect({ user, onSelect }) {
       return;
     }
     // Notify admin of new member
-    const { data: p } = await supabase.from("profiles").select("full_name, email").eq("id", user.id).maybeSingle();
+    const { data: p } = await supabase.from("profiles").select("full_name").eq("id", user.id).maybeSingle();
     try {
       await supabase.functions.invoke("notify", {
-        body: { full_name: p?.full_name || user.email, email: p?.email || user.email, group_id: primaryGroup }
+        body: { full_name: p?.full_name || user.email, email: user.email, group_id: primaryGroup }
       });
     } catch(e) { console.log("Notify error:", e); }
     onSelect(primaryGroup, selected);
@@ -1625,7 +1637,7 @@ function Members({ profile, onNavigate }) {
   useEffect(() => { loadMembers(); }, []);
 
   async function loadMembers() {
-    let q = supabase.from("profiles").select("*").in("status", ["approved", "pending"]).order("state", { ascending: true });
+    let q = supabase.from("profiles").select(PROFILE_COLS).in("status", ["approved", "pending"]).order("state", { ascending: true });
     if (profile.role !== "admin") {
       q = q.eq("status", "approved");
       // Members who share ANY of my groups (multi-group aware), not just my primary.
@@ -1633,7 +1645,9 @@ function Members({ profile, onNavigate }) {
       else q = q.eq("group_id", profile.group_id);
     }
     const { data } = await q;
-    setMembers(data || []);
+    let rows = data || [];
+    if (isStaff(profile)) { const em = await fetchStaffEmails(); rows = rows.map(m => ({ ...m, email: em[m.id] })); }
+    setMembers(rows);
   }
 
   async function flagMember(m) {
@@ -1763,8 +1777,9 @@ function Members({ profile, onNavigate }) {
   }, []);
 
   async function loadRemoved() {
-    const { data } = await supabase.from("profiles").select("*").in("status", ["denied", "removed"]).order("updated_at", { ascending: false });
-    setRemoved(data || []);
+    const { data } = await supabase.from("profiles").select(PROFILE_COLS).in("status", ["denied", "removed"]).order("updated_at", { ascending: false });
+    const em = await fetchStaffEmails();
+    setRemoved((data || []).map(m => ({ ...m, email: em[m.id] })));
   }
 
   async function loadFlags() {
@@ -3444,7 +3459,7 @@ function LocalChapter({ profile }) {
     setLoading(true);
     if (!profile.state) { setLoading(false); return; }
     const [{ data: members }, { data: events }, { data: posts }, { data: recs }] = await Promise.all([
-      supabase.from("profiles").select("*").eq("state", profile.state).eq("status", "approved").neq("id", profile.id).order("city", { ascending: true }),
+      supabase.from("profiles").select(PROFILE_COLS).eq("state", profile.state).eq("status", "approved").neq("id", profile.id).order("city", { ascending: true }),
       supabase.from("events").select("*").ilike("location", `%${profile.state}%`).gte("event_date", new Date().toISOString()).order("event_date", { ascending: true }).limit(10),
       supabase.from("posts").select("*, profiles(full_name, username, avatar_url, group_id)").in("group_id", profile.group_ids || [profile.group_id]).order("created_at", { ascending: false }).limit(20),
       supabase.from("local_recommendations").select("*, profiles(username, full_name)").eq("state", profile.state).eq("approved", true).order("created_at", { ascending: false })
@@ -4996,8 +5011,8 @@ function StatsDashboard({ profile }) {
       { count: profileStatsRows },
       { data: statsRows },
     ] = await Promise.all([
-      supabase.from("profiles").select("*", { count: "exact", head: true }).eq("status", "approved"),
-      supabase.from("profiles").select("*", { count: "exact", head: true }).eq("status", "pending"),
+      supabase.from("profiles").select("id", { count: "exact", head: true }).eq("status", "approved"),
+      supabase.from("profiles").select("id", { count: "exact", head: true }).eq("status", "pending"),
       supabase.from("profile_stats").select("*", { count: "exact", head: true }),
       supabase.from("profile_stats").select("post_count, walk_count, prayer_count, kudos_count, challenge_count, wod_count, total_miles, xp"),
     ]);
@@ -5511,12 +5526,12 @@ function AdminDashboard({ profile }) {
   async function loadAll() {
     setLoading(true);
     const [m, f, e, r, mf, gr, pg] = await Promise.all([
-      supabase.from("profiles").select("*").eq("status", "pending").order("created_at", { ascending: true }),
+      supabase.from("profiles").select(PROFILE_COLS).eq("status", "pending").order("created_at", { ascending: true }),
       supabase.from("post_flags").select("*, posts(body, user_id, group_id)").eq("reviewed", false).order("created_at", { ascending: false }),
       supabase.from("events").select("*").eq("approved", false).order("created_at", { ascending: false }),
       supabase.from("local_recommendations").select("*, profiles(username, full_name)").eq("approved", false).order("created_at", { ascending: false }),
       supabase.from("member_flags").select("*").eq("reviewed", false).order("created_at", { ascending: false }),
-      supabase.from("profiles").select("*").not("requested_group_id", "is", null).order("requested_group_at", { ascending: true }),
+      supabase.from("profiles").select(PROFILE_COLS).not("requested_group_id", "is", null).order("requested_group_at", { ascending: true }),
       supabase.from("private_groups").select("*, profiles(username, full_name)").eq("approved", false).order("created_at", { ascending: false }),
     ]);
     setPendingPrivateGroups(pg.data || []);
@@ -5529,7 +5544,8 @@ function AdminDashboard({ profile }) {
       (profs || []).forEach(p => { nameMap[p.id] = p; });
     }
     setMemberFlags(flagRows.map(x => ({ ...x, reported: nameMap[x.flagged_user_id], reporter: nameMap[x.flagged_by] })));
-    setPendingMembers(m.data || []);
+    const pendEmails = await fetchStaffEmails();
+    setPendingMembers((m.data || []).map(x => ({ ...x, email: pendEmails[x.id] })));
     setFlags(f.data || []);
     setPendingEvents(e.data || []);
     setPendingRecs(r.data || []);
@@ -5943,7 +5959,7 @@ export default function App() {
 
   useEffect(() => {
     if (profile?.id) {
-      let q = supabase.from("profiles").select("*").eq("status", "approved");
+      let q = supabase.from("profiles").select(PROFILE_COLS).eq("status", "approved");
       if (profile.role !== "admin") {
         // Show everyone who shares ANY group with me (not just my primary group),
         // so multi-group members can find and DM each other.
@@ -6027,7 +6043,7 @@ export default function App() {
   async function loadProfile(u) {
     setUser(u);
     try {
-      const { data, error } = await supabase.from("profiles").select("*").eq("id", u.id).single();
+      const { data, error } = await supabase.from("profiles").select(PROFILE_COLS).eq("id", u.id).single();
       if (error && error.code === "PGRST116") {
         const isAdmin = u.email === ADMIN_EMAIL;
         const md = u.user_metadata || {};
@@ -6041,7 +6057,8 @@ export default function App() {
           terms_accepted_at: md.terms_accepted_at || null,
           terms_version: md.terms_version || null
         });
-        const { data: newProfile } = await supabase.from("profiles").select("*").eq("id", u.id).single();
+        const { data: newProfile } = await supabase.from("profiles").select(PROFILE_COLS).eq("id", u.id).single();
+        if (newProfile) newProfile.email = u.email;   // own email from session, not the DB
         setProfile(newProfile);
         // NOTE: the admin "new member" text is sent once from GroupSelect.confirm()
         // when the member picks their group. We intentionally do NOT notify here —
@@ -6052,8 +6069,8 @@ export default function App() {
         // Not "no row" (that's PGRST116, handled above) — a transient/network/RLS
         // error loading an EXISTING profile. Retry once; only fall back to setup if
         // there's genuinely no profile, so a blip never strands a real member.
-        const { data: retry } = await supabase.from("profiles").select("*").eq("id", u.id).maybeSingle();
-        if (retry) { setProfile(retry); checkUnread(retry); }
+        const { data: retry } = await supabase.from("profiles").select(PROFILE_COLS).eq("id", u.id).maybeSingle();
+        if (retry) { retry.email = u.email; setProfile(retry); checkUnread(retry); }
         else if (!profile) { setShowSetup(true); }
       } else {
         if (u.email === ADMIN_EMAIL && (data.role !== "admin" || data.status !== "approved")) {
@@ -6061,6 +6078,7 @@ export default function App() {
           data.role = "admin";
           data.status = "approved";
         }
+        data.email = u.email;   // own email from session, not the DB
         setProfile(data);
         // Check for unread messages
         checkUnread(data);
