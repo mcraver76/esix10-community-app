@@ -5547,6 +5547,8 @@ function AdminDashboard({ profile }) {
     const rows = GROUPS.map(g => ({ room_id: `group_${g.id}`, user_id: profile.id, body: text ? `📢 ${text}` : "📢", sender_name: senderName, ...(photoUrl && { photo_url: photoUrl }) }));
     const { error } = await supabase.from("messages").insert(rows);
     if (error) { setBroadcastMsg(`Couldn't send: ${error.message}`); setBroadcasting(false); return; }
+    const postRows = GROUPS.map(g => ({ user_id: profile.id, group_id: g.id, body: text ? `📢 ${text}` : "📢", ...(photoUrl && { photo_url: photoUrl }), photo_approved: true, reactions: {} }));
+    await supabase.from("posts").insert(postRows);
     GROUPS.forEach(g => notifyMembers({ kind: "message", room_id: `group_${g.id}`, actor_id: profile.id, preview: text || "📷 Photo" }));
     setBroadcast("");
     setBroadcastPhoto(null);
