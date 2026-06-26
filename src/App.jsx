@@ -5499,6 +5499,7 @@ function AdminDashboard({ profile }) {
   const [memberFlags, setMemberFlags] = useState([]);
   const [groupRequests, setGroupRequests] = useState([]);
   const [pendingPrivateGroups, setPendingPrivateGroups] = useState([]);
+  const [pendingAvatars, setPendingAvatars] = useState([]);
   const [loading, setLoading] = useState(true);
   const [broadcast, setBroadcast] = useState("");
   const [broadcasting, setBroadcasting] = useState(false);
@@ -5570,7 +5571,7 @@ function AdminDashboard({ profile }) {
 
   async function loadAll() {
     setLoading(true);
-    const [m, f, e, r, mf, gr, pg] = await Promise.all([
+    const [m, f, e, r, mf, gr, pg, av] = await Promise.all([
       supabase.from("profiles").select(PROFILE_COLS).eq("status", "pending").order("created_at", { ascending: true }),
       supabase.from("post_flags").select("*, posts(body, user_id, group_id)").eq("reviewed", false).order("created_at", { ascending: false }),
       supabase.from("events").select("*").eq("approved", false).order("created_at", { ascending: false }),
@@ -5578,8 +5579,10 @@ function AdminDashboard({ profile }) {
       supabase.from("member_flags").select("*").eq("reviewed", false).order("created_at", { ascending: false }),
       supabase.from("profiles").select(PROFILE_COLS).not("requested_group_id", "is", null).order("requested_group_at", { ascending: true }),
       supabase.from("private_groups").select("*, profiles(username, full_name)").eq("approved", false).order("created_at", { ascending: false }),
+      supabase.from("profiles").select(PROFILE_COLS).not("avatar_pending", "is", null).order("updated_at", { ascending: false }),
     ]);
     setPendingPrivateGroups(pg.data || []);
+    setPendingAvatars(av.data || []);
     setGroupRequests((gr.data || []).filter(x => x.requested_group_id));
     const flagRows = mf.data || [];
     const ids = [...new Set(flagRows.flatMap(x => [x.flagged_user_id, x.flagged_by]))];
@@ -5663,7 +5666,17 @@ function AdminDashboard({ profile }) {
     loadAll();
   }
 
-  const total = pendingMembers.length + flags.length + pendingEvents.length + pendingRecs.length + memberFlags.length + groupRequests.length + pendingPrivateGroups.length;
+  const total = pendingMembers.length + flags.length + pendingEvents.length + pendingRecs.length + memberFlags.length + groupRequests.length + pendingPrivateGroups.length + pendingAvatars.length;
+
+  async function approveAvatar(m) {
+    await supabase.from("profiles").update({ avatar_url: m.avatar_pending, avatar_pending: null }).eq("id", m.id);
+    loadAll();
+  }
+  async function rejectAvatar(m) {
+    if (!window.confirm("Reject this photo? The member keeps their current picture.")) return;
+    await supabase.from("profiles").update({ avatar_pending: null }).eq("id", m.id);
+    loadAll();
+  }
 
   const Section = ({ title, icon, count, children }) => (
     <div style={{ ...S.card, marginTop: 16 }}>
@@ -5757,6 +5770,24 @@ function AdminDashboard({ profile }) {
             actions={<>
               <button style={S.btnSm} onClick={() => approveMember(m)}>Approve</button>
               <button style={S.btnDanger} onClick={() => denyMember(m.id)}>Deny</button>
+            </>}
+          />
+        ))}
+      </Section>
+
+      <Section title="Pending Profile Photos" icon="🖼️" count={pendingAvatars.length}>
+        {pendingAvatars.map(m => (
+          <Row key={m.id}
+            main={<div style={{ display: "flex", alignItems: "center", gap: 12 }}>
+              <img src={m.avatar_pending} alt="pending" style={{ width: 52, height: 52, borderRadius: "50%", objectFit: "cover", border: "2px solid #FF6600" }} />
+              <div>
+                <div style={{ fontWeight: 600, color: "#fff" }}>{displayName(m)}</div>
+                <div style={{ fontSize: 12, color: "#8A8A8A" }}>New profile photo</div>
+              </div>
+            </div>}
+            actions={<>
+              <button style={S.btnSm} onClick={() => approveAvatar(m)}>Approve</button>
+              <button style={S.btnDanger} onClick={() => rejectAvatar(m)}>Reject</button>
             </>}
           />
         ))}
