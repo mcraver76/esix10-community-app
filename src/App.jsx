@@ -5484,6 +5484,8 @@ function AdminDashboard({ profile }) {
   const [broadcast, setBroadcast] = useState("");
   const [broadcasting, setBroadcasting] = useState(false);
   const [broadcastMsg, setBroadcastMsg] = useState("");
+  const [broadcastPhoto, setBroadcastPhoto] = useState(null);
+  const [broadcastPhotoPreview, setBroadcastPhotoPreview] = useState("");
   const [cgName, setCgName] = useState("");
   const [cgDesc, setCgDesc] = useState("");
   const [cgPolicy, setCgPolicy] = useState("approval");
@@ -5508,17 +5510,26 @@ function AdminDashboard({ profile }) {
 
   async function sendBroadcast() {
     const text = broadcast.trim();
-    if (!text) return;
+    if (!text && !broadcastPhoto) return;
     if (!window.confirm(`Send this announcement to ALL group chats (Brotherhood, Sisterhood, Family)?\n\n"${text.slice(0, 140)}${text.length > 140 ? "…" : ""}"`)) return;
     setBroadcasting(true);
     setBroadcastMsg("");
+    let photoUrl = "";
+    if (broadcastPhoto) {
+      const path = `broadcast_${Date.now()}_${broadcastPhoto.name}`;
+      const { error: upErr } = await supabase.storage.from("avatars").upload(path, broadcastPhoto);
+      if (upErr) { setBroadcastMsg(`Photo upload failed: ${upErr.message}`); setBroadcasting(false); return; }
+      const { data } = supabase.storage.from("avatars").getPublicUrl(path);
+      photoUrl = data.publicUrl;
+    }
     const senderName = profile.username ? `@${profile.username}` : formatName(profile.full_name);
-    const rows = GROUPS.map(g => ({ room_id: `group_${g.id}`, user_id: profile.id, body: `📢 ${text}`, sender_name: senderName }));
+    const rows = GROUPS.map(g => ({ room_id: `group_${g.id}`, user_id: profile.id, body: text ? `📢 ${text}` : "📢", sender_name: senderName, ...(photoUrl && { photo_url: photoUrl }) }));
     const { error } = await supabase.from("messages").insert(rows);
     if (error) { setBroadcastMsg(`Couldn't send: ${error.message}`); setBroadcasting(false); return; }
-    // Notify each group (email/push); the admin is auto-excluded as the actor.
-    GROUPS.forEach(g => notifyMembers({ kind: "message", room_id: `group_${g.id}`, actor_id: profile.id, preview: text }));
+    GROUPS.forEach(g => notifyMembers({ kind: "message", room_id: `group_${g.id}`, actor_id: profile.id, preview: text || "📷 Photo" }));
     setBroadcast("");
+    setBroadcastPhoto(null);
+    setBroadcastPhotoPreview("");
     setBroadcastMsg(`✓ Sent to all ${GROUPS.length} group chats.`);
     setBroadcasting(false);
   }
@@ -5658,8 +5669,23 @@ function AdminDashboard({ profile }) {
           rows={3}
           style={{ ...S.input, resize: "vertical", fontSize: 15 }}
         />
+        {broadcastPhotoPreview && (
+          <div style={{ position: "relative", display: "inline-block", marginTop: 10 }}>
+            <img src={broadcastPhotoPreview} alt="preview" style={{ maxWidth: 220, maxHeight: 160, borderRadius: 8, objectFit: "cover", display: "block" }} />
+            <button onClick={() => { setBroadcastPhoto(null); setBroadcastPhotoPreview(""); }} style={{ position: "absolute", top: 4, right: 4, background: "rgba(0,0,0,0.7)", border: "none", color: "#fff", borderRadius: "50%", width: 22, height: 22, cursor: "pointer", fontSize: 12, lineHeight: "22px", textAlign: "center" }}>✕</button>
+          </div>
+        )}
         <div style={{ display: "flex", alignItems: "center", gap: 14, marginTop: 12, flexWrap: "wrap" }}>
-          <button style={{ ...S.btn, opacity: (broadcasting || !broadcast.trim()) ? 0.5 : 1 }} disabled={broadcasting || !broadcast.trim()} onClick={sendBroadcast}>
+          <label style={{ cursor: "pointer", display: "flex", alignItems: "center", gap: 6, color: "#FF6600", fontWeight: 600, fontSize: 14, padding: "8px 14px", border: "1px solid rgba(255,102,0,0.4)", borderRadius: 8 }}>
+            📷 Add Photo
+            <input type="file" accept="image/*,video/*" style={{ display: "none" }} onChange={e => {
+              const f = e.target.files[0];
+              if (!f) return;
+              setBroadcastPhoto(f);
+              setBroadcastPhotoPreview(URL.createObjectURL(f));
+            }} />
+          </label>
+          <button style={{ ...S.btn, opacity: (broadcasting || (!broadcast.trim() && !broadcastPhoto)) ? 0.5 : 1 }} disabled={broadcasting || (!broadcast.trim() && !broadcastPhoto)} onClick={sendBroadcast}>
             {broadcasting ? "Sending…" : "Send to All Groups"}
           </button>
           {broadcastMsg && <span style={{ color: broadcastMsg.startsWith("✓") ? "#5BD08A" : "#ff6b6b", fontSize: 13, fontWeight: 600 }}>{broadcastMsg}</span>}
