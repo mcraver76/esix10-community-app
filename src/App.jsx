@@ -1240,7 +1240,7 @@ function Feed({ profile, activeGroup, setActiveGroup, isNewMember, onNavigate })
 
   async function loadPosts() {
     setLoading(true);
-    let q = supabase.from("posts").select("*, profiles(full_name, username, group_id, role)").order("created_at", { ascending: false }).limit(50);
+    let q = supabase.from("posts").select("*, profiles(full_name, username, avatar_url, group_id, role)").order("created_at", { ascending: false }).limit(50);
     if (profile.role !== "admin") {
       if (activeGroup && activeGroup !== "all" && activeGroup !== profile.group_id) {
         // Specific group selected
