@@ -5526,10 +5526,20 @@ function AdminDashboard({ profile }) {
     setBroadcastMsg("");
     let photoUrl = "";
     if (broadcastPhoto) {
+      const maxBytes = 500 * 1024 * 1024;
+      if (broadcastPhoto.size > maxBytes) {
+        setBroadcastMsg("File too large — max 500 MB. Trim the video or use a shorter clip.");
+        setBroadcasting(false); return;
+      }
       const ext = broadcastPhoto.name.split('.').pop();
       const path = `${profile.id}/broadcast_${Date.now()}.${ext}`;
       const { error: upErr } = await supabase.storage.from("avatars").upload(path, broadcastPhoto);
-      if (upErr) { setBroadcastMsg(`Photo upload failed: ${upErr.message}`); setBroadcasting(false); return; }
+      if (upErr) {
+        const msg = upErr.message?.toLowerCase().includes("size") || upErr.message?.toLowerCase().includes("limit")
+          ? "File too large for storage. Go to Supabase → Storage → avatars bucket → increase the file size limit."
+          : `Upload failed: ${upErr.message}`;
+        setBroadcastMsg(msg); setBroadcasting(false); return;
+      }
       const { data } = supabase.storage.from("avatars").getPublicUrl(path);
       photoUrl = data.publicUrl;
     }
