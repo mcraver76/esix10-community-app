@@ -1215,6 +1215,7 @@ function Feed({ profile, activeGroup, setActiveGroup, isNewMember, onNavigate })
   const [photoFile, setPhotoFile] = useState(null);
   const [photoPreview, setPhotoPreview] = useState(null);
   const [uploading, setUploading] = useState(false);
+  const [lightbox, setLightbox] = useState(null);
   const photoRef = useRef();
   const bottomRef = useRef(null);
   const verse = getTodayVerse();
@@ -1448,7 +1449,10 @@ function Feed({ profile, activeGroup, setActiveGroup, isNewMember, onNavigate })
               {post.photo_url && (
                 (post.photo_approved !== false || post.user_id === profile?.id || isStaff(profile)) ? (
                   <div style={{ marginTop: 12, borderRadius: 10, overflow: "hidden", position: "relative" }}>
-                    <img src={post.photo_url} alt="post" style={{ width: "100%", maxHeight: 320, objectFit: "cover", display: "block" }} />
+                    {isVideoUrl(post.photo_url)
+                      ? <video src={post.photo_url} controls style={{ width: "100%", maxHeight: 320, display: "block", background: "#000" }} />
+                      : <img src={post.photo_url} alt="post" onClick={() => setLightbox(post.photo_url)} style={{ width: "100%", maxHeight: 320, objectFit: "cover", display: "block", cursor: "pointer" }} />
+                    }
                     {post.photo_approved === false && (
                       <div style={{ position: "absolute", top: 8, left: 8, background: "rgba(0,0,0,0.7)", color: "#FF7E33", fontSize: 11, padding: "3px 8px", borderRadius: 6 }}>⏳ Pending approval</div>
                     )}
@@ -1473,6 +1477,12 @@ function Feed({ profile, activeGroup, setActiveGroup, isNewMember, onNavigate })
         })}
       </div>
       <div ref={bottomRef} />
+      {lightbox && (
+        <div onClick={() => setLightbox(null)} style={{ position: "fixed", inset: 0, background: "rgba(0,0,0,0.92)", zIndex: 9999, display: "flex", alignItems: "center", justifyContent: "center", cursor: "zoom-out" }}>
+          <img src={lightbox} alt="full size" style={{ maxWidth: "95vw", maxHeight: "90vh", borderRadius: 10, objectFit: "contain" }} />
+          <button onClick={() => setLightbox(null)} style={{ position: "fixed", top: 20, right: 24, background: "rgba(255,255,255,0.12)", border: "none", color: "#fff", fontSize: 22, width: 44, height: 44, borderRadius: "50%", cursor: "pointer" }}>✕</button>
+        </div>
+      )}
     </div>
   );
 }
