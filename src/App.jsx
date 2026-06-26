@@ -5526,7 +5526,8 @@ function AdminDashboard({ profile }) {
     setBroadcastMsg("");
     let photoUrl = "";
     if (broadcastPhoto) {
-      const path = `broadcast_${Date.now()}_${broadcastPhoto.name}`;
+      const ext = broadcastPhoto.name.split('.').pop();
+      const path = `${profile.id}/broadcast_${Date.now()}.${ext}`;
       const { error: upErr } = await supabase.storage.from("avatars").upload(path, broadcastPhoto);
       if (upErr) { setBroadcastMsg(`Photo upload failed: ${upErr.message}`); setBroadcasting(false); return; }
       const { data } = supabase.storage.from("avatars").getPublicUrl(path);
