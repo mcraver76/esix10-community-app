@@ -2483,7 +2483,9 @@ function Messages({ profile, members, onRead }) {
                   </div>
                 )}
                 {msg.photo_url && (
-                  <img src={msg.photo_url} alt="shared photo" onClick={() => setLightbox(msg.photo_url)} style={{ marginTop: 6, maxWidth: 220, maxHeight: 220, borderRadius: 8, objectFit: "cover", cursor: "pointer", display: "block", marginLeft: isOwn ? "auto" : 0 }} />
+                  isVideoUrl(msg.photo_url)
+                    ? <video src={msg.photo_url} controls style={{ marginTop: 6, maxWidth: 220, borderRadius: 8, display: "block", marginLeft: isOwn ? "auto" : 0 }} />
+                    : <img src={msg.photo_url} alt="shared photo" onClick={() => setLightbox(msg.photo_url)} style={{ marginTop: 6, maxWidth: 220, maxHeight: 220, borderRadius: 8, objectFit: "cover", cursor: "pointer", display: "block", marginLeft: isOwn ? "auto" : 0 }} />
                 )}
                 <div style={{ display: "flex", gap: 12, justifyContent: isOwn ? "flex-end" : "flex-start", marginTop: 2 }}>
                   {(isOwn || profile.role === "admin") && (
@@ -3614,6 +3616,11 @@ async function callCloudflare(action, data = {}) {
   }
 }
 
+function isVideoUrl(url) {
+  if (!url) return false;
+  return /\.(mp4|mov|webm|m4v|avi|mkv)(\?|$)/i.test(url);
+}
+
 function formatDuration(seconds) {
   if (!seconds) return '';
   const m = Math.floor(seconds / 60);
@@ -4051,7 +4058,9 @@ function PrivateGroups({ profile, allMembers }) {
                     </div>
                   )}
                   {msg.photo_url && (
-                    <img src={msg.photo_url} alt="shared photo" onClick={() => setLightbox(msg.photo_url)} style={{ marginTop: 4, maxWidth: 220, maxHeight: 220, borderRadius: 8, objectFit: 'cover', cursor: 'pointer' }} />
+                    isVideoUrl(msg.photo_url)
+                      ? <video src={msg.photo_url} controls style={{ marginTop: 4, maxWidth: 220, borderRadius: 8, display: 'block' }} />
+                      : <img src={msg.photo_url} alt="shared photo" onClick={() => setLightbox(msg.photo_url)} style={{ marginTop: 4, maxWidth: 220, maxHeight: 220, borderRadius: 8, objectFit: 'cover', cursor: 'pointer' }} />
                   )}
                   {!isOwn && (
                     <button onClick={() => flagPGMessage(msg)} style={{ background: 'none', border: 'none', cursor: 'pointer', fontSize: 10, color: '#8A8A8A', marginTop: 2 }}>⚑ report</button>
@@ -5486,6 +5495,7 @@ function AdminDashboard({ profile }) {
   const [broadcastMsg, setBroadcastMsg] = useState("");
   const [broadcastPhoto, setBroadcastPhoto] = useState(null);
   const [broadcastPhotoPreview, setBroadcastPhotoPreview] = useState("");
+  const [broadcastMediaIsVideo, setBroadcastMediaIsVideo] = useState(false);
   const [cgName, setCgName] = useState("");
   const [cgDesc, setCgDesc] = useState("");
   const [cgPolicy, setCgPolicy] = useState("approval");
@@ -5530,6 +5540,7 @@ function AdminDashboard({ profile }) {
     setBroadcast("");
     setBroadcastPhoto(null);
     setBroadcastPhotoPreview("");
+    setBroadcastMediaIsVideo(false);
     setBroadcastMsg(`✓ Sent to all ${GROUPS.length} group chats.`);
     setBroadcasting(false);
   }
@@ -5671,18 +5682,22 @@ function AdminDashboard({ profile }) {
         />
         {broadcastPhotoPreview && (
           <div style={{ position: "relative", display: "inline-block", marginTop: 10 }}>
-            <img src={broadcastPhotoPreview} alt="preview" style={{ maxWidth: 220, maxHeight: 160, borderRadius: 8, objectFit: "cover", display: "block" }} />
-            <button onClick={() => { setBroadcastPhoto(null); setBroadcastPhotoPreview(""); }} style={{ position: "absolute", top: 4, right: 4, background: "rgba(0,0,0,0.7)", border: "none", color: "#fff", borderRadius: "50%", width: 22, height: 22, cursor: "pointer", fontSize: 12, lineHeight: "22px", textAlign: "center" }}>✕</button>
+            {broadcastMediaIsVideo
+              ? <video src={broadcastPhotoPreview} controls style={{ maxWidth: 220, maxHeight: 160, borderRadius: 8, display: "block" }} />
+              : <img src={broadcastPhotoPreview} alt="preview" style={{ maxWidth: 220, maxHeight: 160, borderRadius: 8, objectFit: "cover", display: "block" }} />
+            }
+            <button onClick={() => { setBroadcastPhoto(null); setBroadcastPhotoPreview(""); setBroadcastMediaIsVideo(false); }} style={{ position: "absolute", top: 4, right: 4, background: "rgba(0,0,0,0.7)", border: "none", color: "#fff", borderRadius: "50%", width: 22, height: 22, cursor: "pointer", fontSize: 12, lineHeight: "22px", textAlign: "center" }}>✕</button>
           </div>
         )}
         <div style={{ display: "flex", alignItems: "center", gap: 14, marginTop: 12, flexWrap: "wrap" }}>
           <label style={{ cursor: "pointer", display: "flex", alignItems: "center", gap: 6, color: "#FF6600", fontWeight: 600, fontSize: 14, padding: "8px 14px", border: "1px solid rgba(255,102,0,0.4)", borderRadius: 8 }}>
-            📷 Add Photo
+            📷 Add Photo / Video
             <input type="file" accept="image/*,video/*" style={{ display: "none" }} onChange={e => {
               const f = e.target.files[0];
               if (!f) return;
               setBroadcastPhoto(f);
               setBroadcastPhotoPreview(URL.createObjectURL(f));
+              setBroadcastMediaIsVideo(f.type.startsWith("video/"));
             }} />
           </label>
           <button style={{ ...S.btn, opacity: (broadcasting || (!broadcast.trim() && !broadcastPhoto)) ? 0.5 : 1 }} disabled={broadcasting || (!broadcast.trim() && !broadcastPhoto)} onClick={sendBroadcast}>
