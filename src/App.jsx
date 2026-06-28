@@ -180,6 +180,9 @@ const localDateStr = (d = new Date()) => {
   return date.toISOString().split("T")[0];
 };
 
+// Strip a leading weekday (and optional time-of-day) from a WOD title — we don't show the day on the card
+const cleanWodTitle = (t) => (t || "").replace(/^\s*(mon|tues|wednes|thurs|fri|satur|sun)day\s+(morning|afternoon|evening|night\s+)?/i, "").trim() || t;
+
 const getTodayVerse = () => {
   const day = new Date().getDay();
   return VERSES[day % VERSES.length];
@@ -3183,7 +3186,7 @@ function ForgeWOD({ profile }) {
     }
     if (shareWOD) {
       const name = profile.username ? `@${profile.username}` : formatName(profile.full_name);
-      const msg = `💪 ${name} crushed today's WOD — "${wod.title}"${result.trim() ? ` · ${result.trim()}` : ''}`;
+      const msg = `💪 ${name} crushed today's WOD — "${cleanWodTitle(wod.title)}"${result.trim() ? ` · ${result.trim()}` : ''}`;
       await supabase.from('posts').insert({ user_id: profile.id, group_id: profile.group_id, body: msg, reactions: {} });
     }
     setCompleted(true); setSubmitting(false); loadWOD(); loadStreak();
@@ -3211,7 +3214,7 @@ function ForgeWOD({ profile }) {
         method: 'POST',
         headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${SUPABASE_ANON_KEY}` },
         body: JSON.stringify({
-          prompt: 'Generate 7 bodyweight workouts for a faith-based fitness community of EVERYDAY people of all ages and fitness levels (NOT athletes or CrossFitters). CRITICAL RULE: use ONLY plain, common movement names that anyone instantly understands — push-ups, squats, lunges, planks, jumping jacks, sit-ups, wall sits, mountain climbers, glute bridges, calf raises, high knees, marching in place, arm circles, etc. Do NOT use gym jargon or acronyms (no AMRAP, EMOM, RFT, "thrusters", "burpees over bar", etc.) and do NOT use cryptic codename titles or movements. If you ever include a less-common move, explain it in one short plain sentence right where it appears so nobody has to look it up. Titles must be clear and motivating (e.g. "Foundation Strength", "Steady and Strong"), never codenames. Vary the difficulty across the week. Keep each field concise and beginner-friendly; coaching_notes may add a brief faith encouragement. Return ONLY a JSON array, no markdown: [{"title":"","warmup":"","main_work":"","cooldown":"","coaching_notes":"","estimated_minutes":30,"difficulty":3}]. difficulty 1-5 (1=very easy, 5=hard).',
+          prompt: 'Generate 7 bodyweight workouts for a faith-based fitness community of EVERYDAY people of all ages and fitness levels (NOT athletes or CrossFitters). CRITICAL RULE: use ONLY plain, common movement names that anyone instantly understands — push-ups, squats, lunges, planks, jumping jacks, sit-ups, wall sits, mountain climbers, glute bridges, calf raises, high knees, marching in place, arm circles, etc. Do NOT use gym jargon or acronyms (no AMRAP, EMOM, RFT, "thrusters", "burpees over bar", etc.) and do NOT use cryptic codename titles or movements. If you ever include a less-common move, explain it in one short plain sentence right where it appears so nobody has to look it up. Titles must be clear and motivating (e.g. "Foundation Strength", "Steady and Strong"), never codenames, and must NOT include any day of the week or time of day (no "Monday", "Morning", etc.). Vary the difficulty across the week. Keep each field concise and beginner-friendly; coaching_notes may add a brief faith encouragement. Return ONLY a JSON array, no markdown: [{"title":"","warmup":"","main_work":"","cooldown":"","coaching_notes":"","estimated_minutes":30,"difficulty":3}]. difficulty 1-5 (1=very easy, 5=hard).',
           max_tokens: 2500
         })
       });
@@ -3271,7 +3274,7 @@ function ForgeWOD({ profile }) {
           <span style={S.eyebrow}>Queue</span>
           {queue.map(q => (
             <div key={q.id} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '8px 0', borderBottom: '1px solid rgba(255,255,255,0.05)' }}>
-              <span style={{ color: '#fff', fontSize: 13 }}><span style={{ color: diffColor[q.difficulty] }}>●</span> {q.title} <span style={{ color: '#555', fontSize: 11 }}>{q.scheduled_date} · {q.estimated_minutes}min</span></span>
+              <span style={{ color: '#fff', fontSize: 13 }}><span style={{ color: diffColor[q.difficulty] }}>●</span> {cleanWodTitle(q.title)} <span style={{ color: '#555', fontSize: 11 }}>{q.scheduled_date} · {q.estimated_minutes}min</span></span>
               <button style={S.btnDanger} onClick={() => deleteWOD(q.id)}>✕</button>
             </div>
           ))}
@@ -3287,7 +3290,7 @@ function ForgeWOD({ profile }) {
         ) : (
           <div style={{ ...S.card, borderTop: `3px solid ${completed ? '#51cf66' : '#FF6600'}` }}>
             <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 16, flexWrap: 'wrap', gap: 8 }}>
-              <h3 style={{ fontFamily: "'Inter', sans-serif", fontSize: 22, color: '#fff' }}>{wod.title}</h3>
+              <h3 style={{ fontFamily: "'Inter', sans-serif", fontSize: 22, color: '#fff' }}>{cleanWodTitle(wod.title)}</h3>
               <div style={S.flex}>
                 {wod.estimated_minutes && <span style={S.badge}>⏱ {wod.estimated_minutes}min</span>}
                 {(() => { const d = Math.max(0, Math.min(5, parseInt(wod.difficulty) || 0)); return d ? <span style={{ ...S.badge, background: `${diffColor[d]}20`, color: diffColor[d] }}>{'●'.repeat(d)} {diffLabel[d]}</span> : null; })()}
