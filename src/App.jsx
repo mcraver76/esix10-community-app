@@ -1381,7 +1381,7 @@ export default function App() {
 
       {/* NAV */}
       <nav style={{ ...S.nav, height: isMobile ? 60 : 72, padding: isMobile ? "0 12px" : "0 32px" }}>
-        <img src="/esix10logo.png" alt="ESix10" style={{ height: isMobile ? 60 : 88, width: "auto", objectFit: "contain" }} />
+        <img src="/esix10logo-dark.png" alt="ESix10" style={{ height: isMobile ? 60 : 88, width: "auto", objectFit: "contain" }} />
         <div style={S.navRight}>
           <button onClick={() => window.location.reload()} style={{ background: "none", border: "none", color: "#BBBBBB", fontSize: 18, cursor: "pointer", padding: "4px 6px", lineHeight: 1, display: "flex", alignItems: "center" }} title="Refresh">↻</button>
           <span style={{ ...S.badge, fontSize: 10 }}>

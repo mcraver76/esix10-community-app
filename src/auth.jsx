@@ -42,7 +42,7 @@ export function PendingScreen({ profile, onSignOut }) {
   return (
     <div style={{ minHeight: "100vh", background: "#0a0a0a", display: "flex", alignItems: "center", justifyContent: "center", padding: 24 }}>
       <div style={{ maxWidth: 480, width: "100%", textAlign: "center" }}>
-        <img src="/esix10logo.png" alt="ESix10" style={{ height: 134, width: "auto", objectFit: "contain", marginBottom: 8 }} />
+        <img src="/esix10logo-dark.png" alt="ESix10" style={{ height: 134, width: "auto", objectFit: "contain", marginBottom: 8 }} />
         <span style={{ color: "#FF7E33", fontSize: 10, display: "block", letterSpacing: "0.35em", textTransform: "uppercase", marginBottom: 32 }}>Community</span>
         <div style={{ ...S.card, textAlign: "left" }}>
           <div style={{ textAlign: "center", marginBottom: 24 }}>
@@ -134,7 +134,7 @@ export function AuthScreen({ onAuth }) {
     <div style={{ minHeight: "100vh", background: "#0a0a0a", display: "flex", alignItems: "center", justifyContent: "center", padding: 24 }}>
       <div style={{ width: "100%", maxWidth: 420 }}>
         <div style={{ textAlign: "center", marginBottom: 40 }}>
-          <img src="/esix10logo.png" alt="ESix10" style={{ height: 144, width: "auto", objectFit: "contain", marginBottom: 8 }} />
+          <img src="/esix10logo-dark.png" alt="ESix10" style={{ height: 144, width: "auto", objectFit: "contain", marginBottom: 8 }} />
           <span style={{ color: "#FF7E33", fontSize: 10, display: "block", letterSpacing: "0.35em", textTransform: "uppercase" }}>Community</span>
           <div style={{ width: 40, height: 2, background: "#FF6600", margin: "16px auto" }} />
           <p style={S.grey}>Prepared. Equipped. Unshaken.</p>
@@ -319,7 +319,7 @@ export function PasswordResetScreen({ onDone }) {
     <div style={{ minHeight: "100vh", background: "#0a0a0a", display: "flex", alignItems: "center", justifyContent: "center", padding: 24 }}>
       <div style={{ width: "100%", maxWidth: 420 }}>
         <div style={{ textAlign: "center", marginBottom: 32 }}>
-          <img src="/esix10logo.png" alt="ESix10" style={{ height: 120, width: "auto", objectFit: "contain" }} />
+          <img src="/esix10logo-dark.png" alt="ESix10" style={{ height: 120, width: "auto", objectFit: "contain" }} />
         </div>
         <div style={S.card}>
           <h2 style={{ ...S.h2, marginTop: 0 }}>Set a New Password</h2>
