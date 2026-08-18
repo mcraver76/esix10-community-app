@@ -39,7 +39,11 @@ export function freeVars(code) {
   traverse(ast, {
     Identifier(p) { if (p.isReferencedIdentifier() && !p.scope.hasBinding(p.node.name, true)) free.add(p.node.name); },
     JSXIdentifier(p) {
-      if (p.parent.type === "JSXAttribute") return;
+      if (p.parent.type === "JSXAttribute") return;       // prop names
+      // `<React.StrictMode>` is a member expression: only the OBJECT (`React`) is a variable.
+      // Counting the property as one reports StrictMode, Fragment etc. as undefined.
+      if (p.parent.type === "JSXMemberExpression" && p.parent.property === p.node) return;
+      if (p.parent.type === "JSXNamespacedName") return;
       const n = p.node.name;
       if (/^[a-z]/.test(n)) return;                       // html tags
       if (!p.scope.hasBinding(n, true)) free.add(n);
