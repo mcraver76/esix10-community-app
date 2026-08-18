@@ -2,6 +2,7 @@
 
 _Design agreed 18 Aug 2026. Target: Michael's church initiative launches **January 2027**._
 _Status: **planning only — nothing built yet.**_
+_Scale: 1,000+ weekly attendance; **~400 expected app users** in month one, **10–20 life groups**._
 
 ---
 
@@ -83,6 +84,35 @@ Order matters — each phase depends on the one before.
   be readable by people outside the church. Much easier now than retrofitted.
 - Scope switcher UI + a "current organization" context the whole app reads from.
 
+### Phase 0.5 — Make it hold 400 people
+The church has **1,000+ weekly attendance; expect ~400 app users in month one and
+10–20 life groups.** The app has run at roughly a dozen members until now, so a few
+things need attention before January. Measured, not assumed:
+
+- **`profile_stats` is a live VIEW** — 98 lines, 16 sub-queries, scanning posts, prayers,
+  kudos, walks, challenge completions and WOD completions — recomputed **on every read**,
+  and the Profile screen reads it (leaderboard included). Convert to a **stored table
+  updated on write**. The urgency is not the 400 rows; it is that the view's cost also
+  grows with accumulated *content*, so it gets slower every month.
+- **Nothing paginates.** The member directory selects every approved+pending profile with
+  no limit, and there are **zero `.range()` calls in the codebase**. 400 profiles plus 400
+  avatars in one request, on a core tab. Add paging + search.
+- **Email fan-out.** 400 recipients per announcement needs batching and a paid Resend plan.
+  Also unblocks the still-unset `SUPABASE_SERVICE_ROLE_KEY`, which currently leaves branded
+  signup emails off — and January is a signup spike.
+- **Write the org RLS policies with helpers wrapped as `(select fn())`** so Postgres
+  init-plans them once rather than per row. Free to do now; miserable to retrofit on a live
+  400-person org. (Lesson carried from RhinoScore.)
+
+**Deliberately NOT doing:** group browse/filter (10–20 groups is a list), a push queue (400
+sends is survivable), feed pagination beyond the current 50 (add "load more" when they
+outgrow it).
+
+**Scale note on the trust ladder:** with hundreds of self-attested members, church-wide
+prayer is effectively a public bulletin board. The open-join decision is still right, but it
+makes the trust ladder load-bearing — sensitive things belong in gated life groups, and the
+church-wide prayer box should say so in plain words.
+
 ### Phase 1 — Groups become data
 - Org-owned groups table; seed ESix10's three so nothing changes for existing members.
 - Unpick the 179 hardcoded references; a member's primary group becomes optional and org-defined.
@@ -108,6 +138,7 @@ deferred** — build it when church #2 asks, not for a free customer.
 ## Timeline & risk
 
 ~4.5 months to January. Phases 0–2 are the bulk; Phase 3 is self-contained and can run late.
+Phase 0.5 is four contained fixes, one of which (RLS phrasing) is free if done from the start.
 
 **What makes this feasible now** (and would not have been three weeks ago): the database has real
 migrations, so schema changes are safe and reversible; and `App.jsx` went from one 6,600-line file
