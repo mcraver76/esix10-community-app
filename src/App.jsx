@@ -64,6 +64,30 @@ const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBh
 
 const supabase = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
+// Transactional email goes through /api/send-email, which since 18 Aug checks
+// who is asking before it will send anything (see the note at the top of that
+// file). Approval emails carry the staff member's sign-in token. The signup
+// email carries the brand-new account's id instead, because at that moment
+// nobody is signed in yet — email confirmation is on, so signUp() gives us a
+// user but no session.
+async function sendMemberEmail({ to, name, type, userId }) {
+  try {
+    const headers = { "Content-Type": "application/json" };
+    if (type === "approval") {
+      const { data: { session } } = await supabase.auth.getSession();
+      if (session?.access_token) headers.Authorization = `Bearer ${session.access_token}`;
+    }
+    const res = await fetch("/api/send-email", {
+      method: "POST",
+      headers,
+      body: JSON.stringify({ to, name, type, userId }),
+    });
+    if (!res.ok) console.error(`${type} email failed`, res.status, await res.text());
+  } catch (e) {
+    console.error(`${type} email failed`, e);
+  }
+}
+
 // Fire-and-forget: ask the backend to email members about new activity.
 // Wrapped so it can never break the action that triggered it (and is a
 // safe no-op until the "notify-members" edge function is deployed).
@@ -712,8 +736,12 @@ function AuthScreen({ onAuth }) {
         if (!agreed) { setError("You must agree to the Community Standards to join."); setLoading(false); return; }
         const cleanU = username.toLowerCase().replace(/[^a-z0-9_]/g, "");
         if (cleanU.length < 3) { setError("Pick a username — at least 3 letters, numbers, or underscores."); setLoading(false); return; }
-        const { data: taken } = await supabase.from("profiles").select("id").ilike("username", cleanU).maybeSingle();
-        if (taken) { setError(`"${cleanU}" is already taken — try another username.`); setLoading(false); return; }
+        // Signed-out visitors cannot read the profiles table, so this check has
+        // to go through username_available() — a function that answers yes/no
+        // without handing out anyone's profile. See sql/fix_username_check.sql.
+        const { data: available, error: uErr } = await supabase.rpc("username_available", { u: cleanU });
+        if (uErr) { setError("Couldn't check that username right now — please try again."); setLoading(false); return; }
+        if (available === false) { setError(`"${cleanU}" is already taken — try another username.`); setLoading(false); return; }
         const { data, error } = await supabase.auth.signUp({ email, password, options: { data: { full_name: name, username: cleanU, terms_version: LEGAL_VERSION, terms_accepted_at: new Date().toISOString() } } });
         if (error) throw error;
         if (data.user) {
@@ -722,7 +750,7 @@ function AuthScreen({ onAuth }) {
           // profile is created from this metadata on first authenticated login
           // (see loadProfile's "no profile yet" branch).
           if (email !== ADMIN_EMAIL) {
-            fetch("/api/send-email", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ to: email, name, type: "signup" }) }).catch(e => console.error("signup email failed", e));
+            sendMemberEmail({ to: email, name, type: "signup", userId: data.user.id });
           }
           setMsg("Account created! Check your email to confirm, then log in.");
           setMode("login");
@@ -1789,7 +1817,7 @@ function Members({ profile, onNavigate }) {
     if (error) { alert(`Couldn't approve this member: ${error.message}`); return; }
     const m = members.find(x => x.id === id);
     if (m?.email) {
-      fetch("/api/send-email", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ to: m.email, name: m.full_name, type: "approval" }) }).catch(e => console.error("approval email failed", e));
+      sendMemberEmail({ to: m.email, name: m.full_name, type: "approval" });
     }
     loadMembers();
   }
@@ -3769,10 +3797,17 @@ function PrivateGroups({ profile, allMembers }) {
   useEffect(() => { if (activeGroup) { loadMessages(); loadMembers(); loadRequests(); } }, [activeGroup]);
 
   async function loadGroups() {
-    const { data: all } = await supabase.from('private_groups').select('*, private_group_members(user_id)').eq('approved', true).order('created_at', { ascending: false });
+    // Membership rows are readable only for groups you belong to (see
+    // sql/fix_anon_exposure.sql), so we ask for OUR OWN memberships directly
+    // instead of pulling every group's member list down and filtering here.
+    // The member counts on screen come from private_groups.member_count.
+    const [{ data: all }, { data: mineRows }] = await Promise.all([
+      supabase.from('private_groups').select('*').eq('approved', true).order('created_at', { ascending: false }),
+      supabase.from('private_group_members').select('group_id').eq('user_id', profile.id),
+    ]);
+    const myIds = new Set((mineRows || []).map(r => r.group_id));
     setGroups(all || []);
-    const mine = (all || []).filter(g => g.private_group_members?.some(m => m.user_id === profile.id));
-    setMyGroups(mine);
+    setMyGroups((all || []).filter(g => myIds.has(g.id)));
   }
 
   async function loadMessages() {
@@ -5627,7 +5662,7 @@ function AdminDashboard({ profile }) {
     const { error } = await supabase.from("profiles").update({ status: "approved" }).eq("id", mem.id);
     if (error) { alert(`Couldn't approve this member: ${error.message}`); return; }
     if (mem.email) {
-      fetch("/api/send-email", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ to: mem.email, name: mem.full_name, type: "approval" }) }).catch(e => console.error("approval email failed", e));
+      sendMemberEmail({ to: mem.email, name: mem.full_name, type: "approval" });
     }
     loadAll();
   }

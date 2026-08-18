@@ -3,11 +3,97 @@ export const config = {
 };
 
 // Sends transactional email via Resend.
+//
 // Requires env vars on Vercel:
-//   RESEND_API_KEY  (required)  — from resend.com
-//   RESEND_FROM     (optional)  — e.g. "ESix10 Community <noreply@esix10.com>"
-//                                 the domain must be verified in Resend
-//   APP_URL         (optional)  — link used in emails (defaults to the vercel URL)
+//   RESEND_API_KEY             (required) — from resend.com
+//   SUPABASE_SERVICE_ROLE_KEY  (required) — Supabase dashboard > Settings > API.
+//                                           THE ONLY SECRET NEEDED HERE.
+//                                           Never put this in src/.
+//   SUPABASE_URL               (optional) — defaults to the project URL below
+//   SUPABASE_ANON_KEY          (optional) — defaults to the public anon key
+//   RESEND_FROM                (optional) — e.g. "ESix10 Community <noreply@esix10.com>"
+//                                           the domain must be verified in Resend
+//   APP_URL                    (optional) — link used in emails
+//
+// ---------------------------------------------------------------------------
+// WHY THERE IS A CHECK AT THE TOP (added 18 Aug 2026)
+//
+// This endpoint used to accept any request at all. Anyone who found the URL
+// could make it send ESix10-branded mail, from the verified esix10.com domain,
+// to any address they liked. The wording is fixed by the templates below, so
+// the risk was never nasty content going out in ESix10's name — it was the
+// domain's sending reputation. Enough junk from esix10.com and the mailbox
+// providers start putting the REAL approval emails in spam.
+//
+// The two kinds of email are proved differently, because they happen at
+// different moments:
+//
+//   approval — sent by a signed-in admin or moderator pressing Approve, so we
+//              require their sign-in token and check their role.
+//
+//   signup   — sent moments after someone creates an account, when they are not
+//              signed in yet (email confirmation is on, so there is no session).
+//              There is no token to check, so instead the caller passes the new
+//              account's id and we ask Supabase, using the service key: does
+//              this account exist, does its email match, was it made in the last
+//              15 minutes, and is it still unconfirmed? Only then do we send.
+//              A stranger cannot fake that — they would have to create a real
+//              account first, which already sends exactly one email to exactly
+//              that address.
+// ---------------------------------------------------------------------------
+
+const SIGNUP_WINDOW_MS = 15 * 60 * 1000;
+
+function deny(reason, status = 401) {
+  return new Response(JSON.stringify({ error: reason }), {
+    status,
+    headers: { 'Content-Type': 'application/json' },
+  });
+}
+
+// Is the person asking a signed-in admin or moderator?
+async function callerIsStaff(req, supabaseUrl, anonKey) {
+  const auth = req.headers.get('authorization') || '';
+  if (!auth.toLowerCase().startsWith('bearer ')) return false;
+  const token = auth.slice(7).trim();
+  if (!token || token === anonKey) return false; // the public key is not a sign-in
+
+  const who = await fetch(`${supabaseUrl}/auth/v1/user`, {
+    headers: { apikey: anonKey, Authorization: `Bearer ${token}` },
+  });
+  if (!who.ok) return false;
+  const user = await who.json();
+  if (!user?.id) return false;
+
+  const prof = await fetch(
+    `${supabaseUrl}/rest/v1/profiles?id=eq.${user.id}&select=role`,
+    { headers: { apikey: anonKey, Authorization: `Bearer ${token}` } }
+  );
+  if (!prof.ok) return false;
+  const rows = await prof.json();
+  return ['admin', 'moderator'].includes(rows?.[0]?.role);
+}
+
+// Was this account genuinely created in the last few minutes, for this address?
+async function isFreshSignup(userId, toAddress, supabaseUrl, serviceKey) {
+  if (!userId || !/^[0-9a-f-]{36}$/i.test(userId)) return false;
+
+  const res = await fetch(`${supabaseUrl}/auth/v1/admin/users/${userId}`, {
+    headers: { apikey: serviceKey, Authorization: `Bearer ${serviceKey}` },
+  });
+  if (!res.ok) return false;
+  const user = await res.json();
+  if (!user?.id) return false;
+
+  const sameAddress =
+    (user.email || '').trim().toLowerCase() === (toAddress || '').trim().toLowerCase();
+  const createdAt = Date.parse(user.created_at || '');
+  const isRecent = Number.isFinite(createdAt) && Date.now() - createdAt < SIGNUP_WINDOW_MS;
+  const notYetConfirmed = !user.email_confirmed_at;
+
+  return sameAddress && isRecent && notYetConfirmed;
+}
+
 export default async function handler(req) {
   if (req.method !== 'POST') {
     return new Response(JSON.stringify({ error: 'Method not allowed' }), { status: 405 });
@@ -18,15 +104,59 @@ export default async function handler(req) {
     return new Response(JSON.stringify({ error: 'Email not configured (RESEND_API_KEY missing)' }), { status: 500 });
   }
 
+  // The project URL and the anon key are already public — they ship inside the
+  // JavaScript every visitor downloads — so they are defaulted here to keep the
+  // server setup down to the ONE value that is genuinely secret. Either can
+  // still be overridden with an env var.
+  const SUPABASE_URL = process.env.SUPABASE_URL || 'https://bffcrhjdibxqfmdreksi.supabase.co';
+  const ANON_KEY = process.env.SUPABASE_ANON_KEY || 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImJmZmNyaGpkaWJ4cWZtZHJla3NpIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODEwNjkwMzgsImV4cCI6MjA5NjY0NTAzOH0.yZ7IunHcwTlMKu0uDvKnBnBLBpdDCsPLVWTygmaveEo';
+  const SERVICE_KEY = process.env.SUPABASE_SERVICE_ROLE_KEY;
+  // Only the SIGNUP path needs the service key (it verifies a brand-new,
+  // not-yet-signed-in account). Approval emails prove the caller with their own
+  // sign-in token, so they must keep working even if the key is not set yet.
+  // The check therefore lives in the signup branch below, not here.
+  if (!SUPABASE_URL || !ANON_KEY) {
+    // Fail closed. An unchecked send is what this change exists to prevent, so
+    // a missing setting must stop the email rather than wave it through.
+    return new Response(
+      JSON.stringify({
+        error: 'Email not configured (Supabase project URL/anon key missing on the server).',
+      }),
+      { status: 500 }
+    );
+  }
+
   const FROM = process.env.RESEND_FROM || 'ESix10 Community <onboarding@resend.dev>';
   const APP_URL = process.env.APP_URL || 'https://esix10-community-app.vercel.app';
   const LOGO = 'https://community.esix10.com/esix10logo.png';
 
   try {
-    const { to, name, type } = await req.json();
+    const { to, name, type, userId } = await req.json();
     if (!to) {
       return new Response(JSON.stringify({ error: 'Missing "to" address' }), { status: 400 });
     }
+    if (type !== 'approval' && type !== 'signup') {
+      return new Response(JSON.stringify({ error: 'Unknown email type' }), { status: 400 });
+    }
+
+    // ---- the gate -----------------------------------------------------------
+    if (type === 'approval') {
+      if (!(await callerIsStaff(req, SUPABASE_URL, ANON_KEY))) {
+        return deny('Approval emails can only be sent by a signed-in admin or moderator.');
+      }
+    } else {
+      if (!SERVICE_KEY) {
+        return deny(
+          'Signup emails are switched off until SUPABASE_SERVICE_ROLE_KEY is set in ' +
+          'Vercel > Settings > Environment Variables. Approval emails are unaffected.',
+          503
+        );
+      }
+      if (!(await isFreshSignup(userId, to, SUPABASE_URL, SERVICE_KEY))) {
+        return deny('Signup emails can only be sent for an account that was just created.');
+      }
+    }
+    // -------------------------------------------------------------------------
 
     const first = (name || '').trim().split(' ')[0] || 'brother';
 
