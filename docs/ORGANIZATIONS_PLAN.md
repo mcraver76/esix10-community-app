@@ -124,6 +124,26 @@ church-wide prayer box should say so in plain words.
 Feed, prayer, events, member directory, messages → all org-scoped. Per-org feature switches
 (Forge hidden for the church). This is where most of the 179-reference tax gets paid.
 
+### Sermons, video and live streaming — already built, just needs scoping
+The Media section already exists and works: **Watch** (`media_videos`), **Listen**
+(`media_audio`), **Live** (`media_livestreams`), plus watch history and a `premium` flag for
+member-only content later. So "watch the sermon" is **Phase 2 scoping work, not new
+construction** — the church gets its own Watch/Listen/Live shelf the same way it gets its own
+feed.
+
+**One decision to make.** The current live path creates a **Cloudflare live input** and hands
+back an RTMPS URL and stream key — i.e. the church streams *into* the app. Most churches
+already stream to YouTube or Facebook, so the cheaper route is usually:
+
+- **Paste a link / embed** an existing stream (YouTube, Vimeo, Facebook, Boxcast). Not
+  currently supported — no embed handling in `media.jsx` — but it is a small addition and it
+  fits what the church almost certainly already does on Sunday.
+- **Use the app's own Cloudflare pipeline.** More control and it keeps people in the app, but
+  the church has to restream to a second destination (Restream-style) or switch entirely.
+
+Ask what they stream with today before building either. Sermon *archive* (VOD) works as-is
+once scoped.
+
 ### Phase 3 — Study series (the one genuinely new feature)
 `study_series` → ordered `study_sessions` (title, scripture, body, optional video, discussion
 questions). Assignable to the whole org or to one life group. Per-session discussion thread.
