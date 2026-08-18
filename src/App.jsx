@@ -695,6 +695,7 @@ function AuthScreen({ onAuth }) {
   const [agreed, setAgreed] = useState(false);
   const [ageConfirmed, setAgeConfirmed] = useState(false);
   const [showTerms, setShowTerms] = useState(false);
+  const [showFaith, setShowFaith] = useState(false);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
   const [msg, setMsg] = useState("");
@@ -808,7 +809,7 @@ function AuthScreen({ onAuth }) {
           </div>
           {mode === "signup" && (
             <div style={{ marginBottom: 16, textAlign: "center" }}>
-<span style={{ color: "#8A8A8A", fontSize: 12 }}>By joining you agree to our </span><span style={{ color: "#FF7E33", fontSize: 12 }}>Statement of Faith</span>
+<span style={{ color: "#8A8A8A", fontSize: 12 }}>By joining you agree to our </span><span style={{ color: "#FF7E33", fontSize: 12, cursor: "pointer", textDecoration: "underline" }} onClick={() => setShowFaith(true)}>Statement of Faith</span>
             </div>
           )}
           {error && <p style={S.error}>{error}</p>}
@@ -823,6 +824,16 @@ function AuthScreen({ onAuth }) {
           )}
         </div>
       </div>
+      {showFaith && (
+        <div style={{ position: "fixed", inset: 0, background: "rgba(10,10,10,0.97)", zIndex: 500, display: "flex", flexDirection: "column", overflowY: "auto" }}>
+          <div style={{ padding: "18px 20px 0", display: "flex", justifyContent: "flex-end" }}>
+            <div onClick={() => setShowFaith(false)} style={{ color: "#9aa4b2", fontSize: 22, cursor: "pointer", lineHeight: 1 }}>✕</div>
+          </div>
+          <div style={{ padding: "0 20px 40px", width: "100%", maxWidth: 640, margin: "0 auto" }}>
+            <StatementOfFaith />
+          </div>
+        </div>
+      )}
     </div>
   );
 }
