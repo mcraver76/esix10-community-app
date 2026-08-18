@@ -695,7 +695,7 @@ function AuthScreen({ onAuth }) {
   const [agreed, setAgreed] = useState(false);
   const [ageConfirmed, setAgeConfirmed] = useState(false);
   const [showTerms, setShowTerms] = useState(false);
-  const [showFaith, setShowFaith] = useState(false);
+  const [legalView, setLegalView] = useState(null); // null | "faith" | "terms" | "privacy"
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
   const [msg, setMsg] = useState("");
@@ -779,7 +779,7 @@ function AuthScreen({ onAuth }) {
                   <input type="checkbox" checked={agreed} onChange={e => setAgreed(e.target.checked)} style={{ marginTop: 3, accentColor: "#FF6600", width: 16, height: 16, flexShrink: 0 }} />
                   <div>
                     <p style={{ color: "#FFFFFF", fontSize: 13, lineHeight: 1.7 }}>
-                      I have read and agree to the <span style={{ color: "#FF7E33", cursor: "pointer", textDecoration: "underline" }} onClick={() => setShowTerms(!showTerms)}>ESix10 Community Standards</span>, Terms of Use, and Privacy Policy.
+                      I have read and agree to the <span style={{ color: "#FF7E33", cursor: "pointer", textDecoration: "underline" }} onClick={() => setShowTerms(!showTerms)}>ESix10 Community Standards</span>, <span style={{ color: "#FF7E33", cursor: "pointer", textDecoration: "underline" }} onClick={() => setLegalView("terms")}>Terms of Use</span>, and <span style={{ color: "#FF7E33", cursor: "pointer", textDecoration: "underline" }} onClick={() => setLegalView("privacy")}>Privacy Policy</span>.
                     </p>
                     {showTerms && (
                       <div style={{ marginTop: 12, padding: 12, background: "rgba(0,0,0,0.3)", borderRadius: 4 }}>
@@ -809,7 +809,7 @@ function AuthScreen({ onAuth }) {
           </div>
           {mode === "signup" && (
             <div style={{ marginBottom: 16, textAlign: "center" }}>
-<span style={{ color: "#8A8A8A", fontSize: 12 }}>By joining you agree to our </span><span style={{ color: "#FF7E33", fontSize: 12, cursor: "pointer", textDecoration: "underline" }} onClick={() => setShowFaith(true)}>Statement of Faith</span>
+<span style={{ color: "#8A8A8A", fontSize: 12 }}>By joining you agree to our </span><span style={{ color: "#FF7E33", fontSize: 12, cursor: "pointer", textDecoration: "underline" }} onClick={() => setLegalView("faith")}>Statement of Faith</span>
             </div>
           )}
           {error && <p style={S.error}>{error}</p>}
@@ -824,13 +824,22 @@ function AuthScreen({ onAuth }) {
           )}
         </div>
       </div>
-      {showFaith && (
+      {legalView && (
         <div style={{ position: "fixed", inset: 0, background: "rgba(10,10,10,0.97)", zIndex: 500, display: "flex", flexDirection: "column", overflowY: "auto" }}>
           <div style={{ padding: "18px 20px 0", display: "flex", justifyContent: "flex-end" }}>
-            <div onClick={() => setShowFaith(false)} style={{ color: "#9aa4b2", fontSize: 22, cursor: "pointer", lineHeight: 1 }}>✕</div>
+            <div onClick={() => setLegalView(null)} style={{ color: "#9aa4b2", fontSize: 22, cursor: "pointer", lineHeight: 1 }}>✕</div>
           </div>
-          <div style={{ padding: "0 20px 40px", width: "100%", maxWidth: 640, margin: "0 auto" }}>
-            <StatementOfFaith />
+          <div style={{ padding: "0 20px 40px", width: "100%", maxWidth: 640, margin: "0 auto", boxSizing: "border-box" }}>
+            {legalView === "faith" ? <StatementOfFaith /> : (
+              <div className="tab-content">
+                <span style={S.eyebrow}>ESix10 Initiative</span>
+                <h2 style={{ ...S.h2, margin: "0 0 4px" }}>{legalView === "terms" ? "Terms of Use" : "Privacy Policy"}</h2>
+                <p style={{ ...S.muted, marginBottom: 16 }}>Effective {LEGAL_EFFECTIVE}</p>
+                <div style={S.card}>
+                  <LegalDoc sections={legalView === "terms" ? TERMS : PRIVACY} />
+                </div>
+              </div>
+            )}
           </div>
         </div>
       )}
