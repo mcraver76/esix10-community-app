@@ -101,16 +101,25 @@ and view plus the default privilege. **Always write `TO authenticated`.**
 `src/App.jsx` was one 6,608-line file with 77 top-level definitions. It is being split by
 feature, the same way RhinoScore's was (9,150 → 4,494 across 28 modules).
 
-**The rule that makes this safe:** `npm run check:imports`. **The build does NOT catch a
-dangling reference after moving code between files** — it can succeed while the app crashes
-at runtime. Run the import check after every move, and click through the app.
+**The build does NOT catch a dangling reference after moving code between files** — it
+compiles fine and crashes at runtime. So there is tooling for this; use it rather than
+moving code by hand:
 
 ```bash
-npm run check:imports && npm run build
+node scripts/split-deps.mjs "CompA,CompB"   # what does this block actually need?
+node scripts/split-extract.mjs plan.json    # move it by AST range; App's imports are derived
+npm run check:imports                       # every module must have zero unresolved refs
+npm run build
 ```
 
-When extracting a module: move the whole definition, add `export`, add the import at the top
-of `App.jsx`, then run the check above. One feature per commit.
+1. **Find dependencies by parsing, not reading** — `split-deps` reports the block's *free
+   variables*. `UNRESOLVED: none` means the list is complete.
+2. **Extract shared pieces downward first.** A feature importing a helper *from App.jsx*
+   creates a cycle (App→feature→App) — the thing RhinoScore had to unpick. That is why
+   `supabaseClient`, `helpers`, `stats`, `icons`, `ui` exist.
+3. **Never move by line number.** Regex boundaries mis-slice on brackets inside strings and
+   swallow the comment belonging to the next declaration.
+4. One feature per commit, and run the app afterwards.
 
 **Two group systems — keep both:** casual main-chat groups ("talk trash with buddies",
 low-stakes) and **Private/Community Groups** (`PrivateGroups`, serious/regulated — survivors,
