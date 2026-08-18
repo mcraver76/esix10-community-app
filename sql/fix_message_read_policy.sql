@@ -61,6 +61,8 @@ as $$
     -- so your own id must be one of the two.
     when left(rid, 3) = 'dm_' then
       auth.uid()::text in (split_part(rid, '_', 2), split_part(rid, '_', 3))
+      or exists (select 1 from profiles p
+                  where p.id = auth.uid() and p.role = 'admin')
 
     -- Leadership chat: admins only. Checked before the general group_ rule.
     when rid = 'group_all' then
@@ -84,11 +86,13 @@ as $$
                     or substring(rid from 7) = any(coalesce(p.group_ids, '{}')) ))
 
     -- Private groups: membership lives in private_group_members.
-    -- Note there is no admin override here — see the note at the bottom.
+    -- Admins can also read these — Michael's decision, 18 Aug (see bottom).
     when left(rid, 8) = 'private_' then
       exists (select 1 from private_group_members pgm
                where pgm.user_id = auth.uid()
                  and pgm.group_id::text = substring(rid from 9))
+      or exists (select 1 from profiles p
+                  where p.id = auth.uid() and p.role = 'admin')
 
     -- Anything we do not recognise is denied rather than allowed.
     else false
@@ -123,18 +127,24 @@ where  schemaname = 'public' and tablename = 'messages' and cmd = 'SELECT';
 
 
 -- ============================================================================
--- A DECISION WORTH MAKING DELIBERATELY
+-- THE DECISION THAT WAS MADE (18 Aug 2026)
 --
--- As written, an admin can read the community group chats and the leadership
--- chat, but NOT other members' direct messages and NOT private groups they
--- have not joined.
+-- Michael chose to keep ADMINS' FULL VIEW. An admin (profiles.role = 'admin')
+-- can read every room: direct messages, private groups they have not joined,
+-- community groups and the leadership chat. This policy is written that way.
 --
--- That is the stricter reading, and it matches your own Moderator Agreement
--- ("Don't look into people's information without a reason tied to your role")
--- and Terms §7. It is a real change from today, where an admin could read
--- everything. If you would rather admins retain a full view, say so and the
--- private_ branch can be widened — but consider that recovery, survivors and
--- accountability groups are exactly what lives behind that branch.
+-- Moderators are NOT included — only role = 'admin'. Everyone else can read
+-- only the rooms they actually belong to, which is the change that matters:
+-- before this, ANY signed-in member could read ANY conversation.
+--
+-- If you ever want to narrow admins later, delete the two
+--   `or exists (select 1 from profiles p where p.id = auth.uid()
+--               and p.role = 'admin')`
+-- clauses in the dm_ and private_ branches above and re-run this file.
+--
+-- Worth knowing: admin read access is invisible to members and leaves no
+-- record, because there is no audit log on this app. Your Moderator Agreement
+-- is the only thing governing its use.
 --
 --
 -- ROLLBACK

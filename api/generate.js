@@ -1,45 +1,22 @@
+// RETIRED 18 Aug 2026 — this endpoint is switched off.
+//
+// It used to forward any prompt it was given straight to Anthropic on the
+// ESix10 API key, with no check on who was asking. It sat on the live domain
+// where anyone could find it and run up the bill.
+//
+// Nothing in the app ever called it: the app uses the Supabase edge function
+// `generate` instead (see src/App.jsx, the /functions/v1/generate calls), which
+// requires a valid sign-in token before it will spend anything.
+//
+// The file is kept only as a gravestone so nobody wonders where it went. It can
+// be deleted outright with:  git rm api/generate.js
 export const config = {
   runtime: 'edge',
 };
 
-export default async function handler(req) {
-  if (req.method !== 'POST') {
-    return new Response(JSON.stringify({ error: 'Method not allowed' }), { status: 405 });
-  }
-
-  const apiKey = process.env.ANTHROPIC_API_KEY;
-  if (!apiKey) {
-    return new Response(JSON.stringify({ error: 'API key not configured' }), { status: 500 });
-  }
-
-  try {
-    const { prompt, max_tokens = 3000 } = await req.json();
-
-    const response = await fetch('https://api.anthropic.com/v1/messages', {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        'x-api-key': apiKey,
-        'anthropic-version': '2023-06-01',
-      },
-      body: JSON.stringify({
-        model: 'claude-sonnet-4-20250514',
-        max_tokens,
-        messages: [{ role: 'user', content: prompt }],
-      }),
-    });
-
-    const data = await response.json();
-
-    if (!response.ok) {
-      return new Response(JSON.stringify({ error: data }), { status: response.status });
-    }
-
-    return new Response(JSON.stringify({ content: data.content[0].text }), {
-      status: 200,
-      headers: { 'Content-Type': 'application/json' },
-    });
-  } catch (error) {
-    return new Response(JSON.stringify({ error: error.message }), { status: 500 });
-  }
+export default async function handler() {
+  return new Response(
+    JSON.stringify({ error: 'This endpoint has been retired. Use the Supabase `generate` function.' }),
+    { status: 410, headers: { 'Content-Type': 'application/json' } }
+  );
 }
