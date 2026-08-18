@@ -6,9 +6,11 @@ export const config = {
 //
 // Requires env vars on Vercel:
 //   RESEND_API_KEY             (required) — from resend.com
-//   SUPABASE_URL               (required) — https://bffcrhjdibxqfmdreksi.supabase.co
-//   SUPABASE_SERVICE_ROLE_KEY  (required) — Supabase dashboard > Settings > API
-//                                           SECRET. Never put this in src/.
+//   SUPABASE_SERVICE_ROLE_KEY  (required) — Supabase dashboard > Settings > API.
+//                                           THE ONLY SECRET NEEDED HERE.
+//                                           Never put this in src/.
+//   SUPABASE_URL               (optional) — defaults to the project URL below
+//   SUPABASE_ANON_KEY          (optional) — defaults to the public anon key
 //   RESEND_FROM                (optional) — e.g. "ESix10 Community <noreply@esix10.com>"
 //                                           the domain must be verified in Resend
 //   APP_URL                    (optional) — link used in emails
@@ -102,14 +104,24 @@ export default async function handler(req) {
     return new Response(JSON.stringify({ error: 'Email not configured (RESEND_API_KEY missing)' }), { status: 500 });
   }
 
-  const SUPABASE_URL = process.env.SUPABASE_URL;
+  // The project URL and the anon key are already public — they ship inside the
+  // JavaScript every visitor downloads — so they are defaulted here to keep the
+  // server setup down to the ONE value that is genuinely secret. Either can
+  // still be overridden with an env var.
+  const SUPABASE_URL = process.env.SUPABASE_URL || 'https://bffcrhjdibxqfmdreksi.supabase.co';
+  const ANON_KEY = process.env.SUPABASE_ANON_KEY || 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImJmZmNyaGpkaWJ4cWZtZHJla3NpIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODEwNjkwMzgsImV4cCI6MjA5NjY0NTAzOH0.yZ7IunHcwTlMKu0uDvKnBnBLBpdDCsPLVWTygmaveEo';
   const SERVICE_KEY = process.env.SUPABASE_SERVICE_ROLE_KEY;
-  const ANON_KEY = process.env.SUPABASE_ANON_KEY;
-  if (!SUPABASE_URL || !SERVICE_KEY || !ANON_KEY) {
+  // Only the SIGNUP path needs the service key (it verifies a brand-new,
+  // not-yet-signed-in account). Approval emails prove the caller with their own
+  // sign-in token, so they must keep working even if the key is not set yet.
+  // The check therefore lives in the signup branch below, not here.
+  if (!SUPABASE_URL || !ANON_KEY) {
     // Fail closed. An unchecked send is what this change exists to prevent, so
     // a missing setting must stop the email rather than wave it through.
     return new Response(
-      JSON.stringify({ error: 'Email not configured (Supabase keys missing on the server)' }),
+      JSON.stringify({
+        error: 'Email not configured (Supabase project URL/anon key missing on the server).',
+      }),
       { status: 500 }
     );
   }
@@ -133,6 +145,13 @@ export default async function handler(req) {
         return deny('Approval emails can only be sent by a signed-in admin or moderator.');
       }
     } else {
+      if (!SERVICE_KEY) {
+        return deny(
+          'Signup emails are switched off until SUPABASE_SERVICE_ROLE_KEY is set in ' +
+          'Vercel > Settings > Environment Variables. Approval emails are unaffected.',
+          503
+        );
+      }
       if (!(await isFreshSignup(userId, to, SUPABASE_URL, SERVICE_KEY))) {
         return deny('Signup emails can only be sent for an account that was just created.');
       }
