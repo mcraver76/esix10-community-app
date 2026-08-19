@@ -82,9 +82,18 @@ culture. If the initiative is genuinely about community life, that is the case f
 turns out to be mostly logistics, Church Center plus a link is the cheaper honest answer** — say
 so before building, not after.
 
-**⚠️ Decouple the timelines.** The PCO migration and the January launch are two hard deadlines;
-chaining them is how both slip. Design for PCO now, but ship the hub with a simple join and add
-PCO verification + group sync once their People/Groups data has settled.
+**⚠️ Decouple the timelines — the migration is an EXTERNAL dependency.** The Subsplash → PCO
+migration is run by **the church's own tech contact, not Michael**. So it is not a timeline he can
+pull forward if it slips, and January does not move. Design for PCO now, but **ship the hub with a
+simple join** and add PCO verification + group sync once their People/Groups data has settled. If
+their migration lands early, plug in sooner.
+
+**⏳ Time-sensitive ask for the church's tech contact (raise while they are mid-import):**
+> carry a **stable unique ID from the source system into a PCO field on each person.**
+
+It makes *their* re-imports update rather than duplicate (there is always a second pass), and it
+gives *us* a reliable join key later — email is fragile here because spouses share addresses and
+kids sit on a parent's. Cheap at import time; expensive to retrofit across 1,000+ records.
 
 ### Writing back to PCO — the other direction
 
