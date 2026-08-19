@@ -43,6 +43,55 @@ choose the right place to post.
 
 ---
 
+## Planning Center (PCO) is the backbone
+
+_Added 18 Aug 2026. The church is mid-migration from **Subsplash to PCO**, and PCO becomes the
+system of record for everything they do — so the hub has to integrate with it._
+
+**Division of labour.** PCO owns the *facts about people*: who attends, contact details,
+households, life-group rosters, giving, service and event scheduling. ESix10 owns *engagement*:
+the feed, prayer wall, discussion, study series, the community culture. PCO has no real
+equivalent for that second list, and it is precisely the gap the hub fills — **the community
+layer on top of a PCO backbone**, not a competing database.
+
+**It fixes the weakest part of this design.** The open/self-attested join (and the semi-public
+church-wide content that follows from it) exists only because we had no way to verify
+attendance. With PCO People as the roster we do: either "Sign in with Planning Center", or
+match the signup email against the church's People records. **The church hub becomes a verified
+space**, and the trust ladder stops being load-bearing in the way it was.
+
+**Integration pattern: sync, not live proxy.** Do not query PCO per screen — slow, rate-limited,
+and it breaks RLS, which needs local rows to reason about. Instead sync PCO → our tables
+(webhooks where available, plus a periodic reconcile as the safety net); the app reads locally;
+PCO stays source of truth for what it owns and we never write those records back.
+
+**What this changes:**
+- **Phase 1** may not need group-management UI at all if life groups live in **PCO Groups** —
+  they would sync in. In exchange we build a sync engine that was not in the plan. Probably a
+  wash, but a different build.
+- **Sermons/media** may already live in **PCO Publishing** — check before building anything
+  custom (see the media section below).
+- **Events** may come from PCO Calendar/Registrations rather than our events table.
+- **Giving** stays out of the app entirely (consistent with the Six10 Alliance decision).
+
+**⚠️ The question the church's tech contact will ask: "why not just use Church Center?"**
+PCO's own member app is free and already does groups, events, giving and directory. The honest
+answer: Church Center is *transactional* — sign up, give, check in. It does not do an ongoing
+community feed, prayer interaction, discussion threads, or ESix10's discipleship content and
+culture. If the initiative is genuinely about community life, that is the case for a hub. **If it
+turns out to be mostly logistics, Church Center plus a link is the cheaper honest answer** — say
+so before building, not after.
+
+**⚠️ Decouple the timelines.** The PCO migration and the January launch are two hard deadlines;
+chaining them is how both slip. Design for PCO now, but ship the hub with a simple join and add
+PCO verification + group sync once their People/Groups data has settled.
+
+**Before building any of this:** verify the current PCO API specifics (auth options, rate limits,
+webhook coverage for People and Groups, JSON:API pagination) against their live developer docs
+rather than assumption — and find out which PCO products the church is actually adopting.
+
+---
+
 ## The real work: the fixed three groups
 
 Brotherhood / Sisterhood / Family are **hardcoded**: the `GROUPS` constant is used in 9 files,
