@@ -86,9 +86,47 @@ so before building, not after.
 chaining them is how both slip. Design for PCO now, but ship the hub with a simple join and add
 PCO verification + group sync once their People/Groups data has settled.
 
+### Writing back to PCO — the other direction
+
+The church will care about both directions, for two reasons that pull against each other. They
+**want value flowing back** (a pastor looking at someone's PCO record should not be blind to the
+fact that they are active in a life group — otherwise the hub is exactly the data silo the
+Subsplash migration exists to eliminate). And they will be **protective of write access** — no
+church tech lead wants a third-party app holding a pen over the roster they just spent months
+migrating.
+
+Hold both by making write-back **narrow, explicit and tiered** — never a general two-way mirror.
+
+| Tier | What it writes | Notes |
+|---|---|---|
+| **0 — read-only** | nothing | Ship this first. It is enough for the whole January launch if needed. |
+| **1 — append-only** | a note on a person, an entry in a follow-up workflow, an engagement summary in a **custom field we own** | Add, never edit. Core identity (name, email, household) is never touched. |
+| **2 — roster reciprocity** | life-group joins/leaves back to PCO Groups | Needs an explicit rule for who wins when both sides change. |
+| **3 — create people** | app signups not already in PCO | Highest value *and* highest risk. Must land in a **review queue for a human to dedupe**, never a silent create. |
+
+**Three rules that make this safe**
+1. **One writer per field.** Every field has exactly one owning system — never both. This single
+   rule prevents most sync disasters.
+2. **Stamp everything, stay reversible.** An app-source marker on every note, field and record we
+   create, so the church can find and undo everything we have ever written with one query. That is
+   the answer to "what has this thing done to my database?"
+3. **Dry-run before writes.** Report-only mode against their real data, hand them the diff, then
+   enable.
+
+**Two gotchas**
+- **Shared family emails.** Churches are full of spouses sharing an address and kids on a parent's.
+  Email is the obvious dedupe key and is genuinely fragile here — the most likely way to make a
+  mess of their People database. Matching strategy needs real thought, not a default.
+- **🚫 Confidentiality — a hard rule, not a preference.** **Prayer requests and gated life-group
+  discussion must never be written into PCO.** Someone shares something in a small accountability
+  group under an expectation of intimacy; syncing that into a church-wide system readable by any
+  staff member with permissions breaks that expectation quietly and at scale. Participation
+  signals ("active in a group") are fine. **Content is not.**
+
 **Before building any of this:** verify the current PCO API specifics (auth options, rate limits,
-webhook coverage for People and Groups, JSON:API pagination) against their live developer docs
-rather than assumption — and find out which PCO products the church is actually adopting.
+webhook coverage for People and Groups, JSON:API pagination, available scopes) against their live
+developer docs rather than assumption — and find out which PCO products the church is actually
+adopting.
 
 ---
 
