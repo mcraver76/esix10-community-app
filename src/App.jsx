@@ -617,9 +617,10 @@ function PrivateGroups({ profile, allMembers }) {
   const [groups, setGroups] = useState([]);
   const [myGroups, setMyGroups] = useState([]);
   const [showCreate, setShowCreate] = useState(false);
-  const [form, setForm] = useState({ name: '', description: '' });
+  const [form, setForm] = useState({ name: '', description: '', hidden: false });
   const [saving, setSaving] = useState(false);
   const [activeGroup, setActiveGroup] = useState(null);
+  const [linkCopied, setLinkCopied] = useState(false);
   const [messages, setMessages] = useState([]);
   const [body, setBody] = useState('');
   const [sending, setSending] = useState(false);
@@ -645,6 +646,20 @@ function PrivateGroups({ profile, allMembers }) {
   }
 
   useEffect(() => { loadGroups(); }, []);
+  // Invite links (?join=<code>): send a join request; the creator approves it. Works for hidden groups.
+  useEffect(() => {
+    const code = new URLSearchParams(window.location.search).get('join');
+    if (!code) return;
+    (async () => {
+      window.history.replaceState({}, '', window.location.pathname);
+      if (!requireApproved(profile)) return;
+      const { data, error } = await supabase.rpc('request_join_by_code', { code });
+      if (error) { alert(error.message); return; }
+      const row = data?.[0];
+      alert(row?.status === 'member' ? `You're already in "${row.group_name}".` : `Request sent to join "${row?.group_name}". The group's leader will approve it.`);
+      loadGroups();
+    })();
+  }, []);
   useEffect(() => { if (activeGroup) { loadMessages(); loadMembers(); loadRequests(); } }, [activeGroup]);
 
   async function loadGroups() {
@@ -653,7 +668,9 @@ function PrivateGroups({ profile, allMembers }) {
     // instead of pulling every group's member list down and filtering here.
     // The member counts on screen come from private_groups.member_count.
     const [{ data: all }, { data: mineRows }] = await Promise.all([
-      supabase.from('private_groups').select('*').eq('approved', true).order('created_at', { ascending: false }),
+      // The database decides which groups you may see (listed + approved, yours, or ones you're in;
+      // hidden groups only to their members). Unapproved ones show only to their creator and the admin.
+      supabase.from('private_groups').select('*').order('created_at', { ascending: false }),
       supabase.from('private_group_members').select('group_id').eq('user_id', profile.id),
     ]);
     const myIds = new Set((mineRows || []).map(r => r.group_id));
@@ -682,17 +699,15 @@ function PrivateGroups({ profile, allMembers }) {
     if (!requireApproved(profile)) return;
     if (!form.name.trim()) return;
     setSaving(true);
-    const { data } = await supabase.from('private_groups').insert({ name: form.name.trim(), description: form.description.trim(), created_by: profile.id, approved: profile.role === 'admin', member_count: 1 }).select().single();
+    const { data } = await supabase.from('private_groups').insert({ name: form.name.trim(), description: form.description.trim(), created_by: profile.id, approved: profile.role === 'admin', member_count: 1, visibility: form.hidden ? 'hidden' : 'listed' }).select().single();
     if (data) {
       await supabase.from('private_group_members').insert({ group_id: data.id, user_id: profile.id, role: 'creator' });
-      if (profile.role !== 'admin') {
-        // Notify admin
-        await supabase.from('posts').insert({ user_id: profile.id, group_id: profile.group_id, body: `🔒 ${profile.username ? `@${profile.username}` : formatName(profile.full_name)} requested a new private group: "${form.name}"`, reactions: {} });
-      }
+      // No feed post announcing the new group (it used to post the group's NAME to the whole
+      // group feed, security 11-26). The admin sees it under "Pending Approval".
     }
     setSaving(false);
     setShowCreate(false);
-    setForm({ name: '', description: '' });
+    setForm({ name: '', description: '', hidden: false });
     loadGroups();
   }
 
@@ -725,8 +740,10 @@ function PrivateGroups({ profile, allMembers }) {
   }
 
   async function approveRequest(reqId, userId, groupId) {
+    // Add the person first (the database only allows it while their request is pending), then close the request.
+    const { error } = await supabase.from('private_group_members').insert({ group_id: groupId, user_id: userId, role: 'member' });
+    if (error) { alert(`Couldn't add them: ${error.message}`); return; }
     await supabase.from('private_group_requests').update({ status: 'approved' }).eq('id', reqId);
-    await supabase.from('private_group_members').insert({ group_id: groupId, user_id: userId, role: 'member' });
     await syncGroupCount(groupId);
     loadRequests(); loadMembers();
   }
@@ -741,7 +758,9 @@ function PrivateGroups({ profile, allMembers }) {
     if (cap && members.length >= cap) { alert(`This private group is limited to ${cap} members.`); return; }
     const exists = members.find(m => m.user_id === userId);
     if (exists) return;
-    await supabase.from('private_group_members').insert({ group_id: activeGroup.id, user_id: userId, role: 'member' });
+    const { error: addErr } = await supabase.from('private_group_members').insert({ group_id: activeGroup.id, user_id: userId, role: 'member' });
+    // Nobody is put into a private group without asking (security 11-26): they request first.
+    if (addErr) { alert("They need to ask to join first. Send them the group's invite link, then approve their request."); return; }
     await syncGroupCount(activeGroup.id);
     setMemberSearch('');
     loadMembers();
@@ -822,6 +841,13 @@ function PrivateGroups({ profile, allMembers }) {
             <label style={S.label}>Description</label>
             <textarea style={{ ...S.input, minHeight: 60 }} placeholder="What is this group for?" value={form.description} onChange={e => setForm({...form, description: e.target.value})} />
           </div>
+          <label style={{ display: 'flex', gap: 10, alignItems: 'flex-start', marginBottom: 16, cursor: 'pointer' }}>
+            <input type="checkbox" checked={!!form.hidden} onChange={e => setForm({ ...form, hidden: e.target.checked })} style={{ accentColor: '#FF6600', marginTop: 3 }} />
+            <span>
+              <span style={{ color: '#fff', fontSize: 14, fontWeight: 600 }}>🙈 Hidden group</span>
+              <span style={{ display: 'block', color: '#9aa4b2', fontSize: 12, marginTop: 2 }}>Not listed anywhere. Only members can see its name. People join with your invite link, and you approve each one. Recommended for sensitive groups like recovery or survivors.</span>
+            </span>
+          </label>
           <p style={{ color: '#555', fontSize: 12, marginBottom: 12 }}>{profile.role === 'admin' ? 'Group will be created immediately.' : 'Group requires admin approval before going live.'}</p>
           <button style={S.btn} onClick={createGroup} disabled={saving || !form.name.trim()}>{saving ? 'Submitting...' : 'Submit Request'}</button>
         </div>
@@ -868,10 +894,10 @@ function PrivateGroups({ profile, allMembers }) {
 
       <div>
         <span style={S.eyebrow}>Discover Groups</span>
-        {groups.filter(g => g.approved && !myGroups.find(m => m.id === g.id)).length === 0 && (
+        {groups.filter(g => g.approved && g.visibility !== 'hidden' && !myGroups.find(m => m.id === g.id)).length === 0 && (
           <p style={S.muted}>No other groups to discover yet.</p>
         )}
-        {groups.filter(g => g.approved && !myGroups.find(m => m.id === g.id)).map(g => {
+        {groups.filter(g => g.approved && g.visibility !== 'hidden' && !myGroups.find(m => m.id === g.id)).map(g => {
           const open = g.join_policy === 'open';
           const priv = g.join_policy === 'private';
           return (
@@ -899,9 +925,17 @@ function PrivateGroups({ profile, allMembers }) {
         {isMobile && <button onClick={() => setShowList(true)} style={{ background: 'none', border: 'none', color: '#FF6600', cursor: 'pointer', fontSize: 20, padding: 0 }}>←</button>}
         <div style={{ flex: 1 }}>
           <div style={{ fontFamily: "'Inter', sans-serif", fontSize: 15, color: '#fff' }}>{groupPolicy(activeGroup).icon} {activeGroup.name}</div>
-          <div style={{ color: '#555', fontSize: 11 }}>{members.length} members · {groupPolicy(activeGroup).label}</div>
+          <div style={{ color: '#555', fontSize: 11 }}>{members.length} members · {groupPolicy(activeGroup).label}{activeGroup.visibility === 'hidden' ? ' · 🙈 Hidden' : ''}</div>
         </div>
         <div style={{ display: 'flex', gap: 6 }}>
+          {canManage && activeGroup.invite_code && (
+            <button style={{ ...S.btnSm, background: 'rgba(255,255,255,0.06)', color: '#fff', fontSize: 11 }}
+              onClick={async () => {
+                const link = `${window.location.origin}/?join=${activeGroup.invite_code}`;
+                try { await navigator.clipboard.writeText(link); setLinkCopied(true); setTimeout(() => setLinkCopied(false), 2500); }
+                catch { window.prompt('Copy this invite link and send it privately:', link); }
+              }}>{linkCopied ? '✓ Link copied' : '🔗 Invite link'}</button>
+          )}
           {canManage && (
             <button style={{ ...S.btnSm, background: 'rgba(255,102,0,0.1)', color: '#FF6600', fontSize: 11 }} onClick={() => setShowAddMember(!showAddMember)}>+ Add</button>
           )}
@@ -1032,7 +1066,8 @@ export default function App() {
   const [user, setUser] = useState(null);
   const [profile, setProfile] = useState(null);
   const [loading, setLoading] = useState(true);
-  const [tab, setTab] = useState("feed");
+  // An invite link (?join=...) opens straight to Community Groups, which sends the join request.
+  const [tab, setTab] = useState(() => (new URLSearchParams(window.location.search).get("join") ? "privategroups" : "feed"));
   const [feedGroup, setFeedGroup] = useState("all");
   const [showSetup, setShowSetup] = useState(false);
   const [allMembers, setAllMembers] = useState([]);
