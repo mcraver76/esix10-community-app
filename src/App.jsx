@@ -936,6 +936,17 @@ function PrivateGroups({ profile, allMembers }) {
                 catch { window.prompt('Copy this invite link and send it privately:', link); }
               }}>{linkCopied ? '✓ Link copied' : '🔗 Invite link'}</button>
           )}
+          {(isCreator || profile.role === 'admin') && activeGroup.invite_code && (
+            <button style={{ ...S.btnSm, background: 'rgba(255,255,255,0.06)', color: '#9aa4b2', fontSize: 11 }}
+              title="Turns off the old link (use if it reached the wrong person)"
+              onClick={async () => {
+                if (!window.confirm('Make a new invite link? The old link stops working right away.')) return;
+                const { data: newCode, error } = await supabase.rpc('rotate_invite_code', { gid: activeGroup.id });
+                if (error) { alert(error.message); return; }
+                setActiveGroup({ ...activeGroup, invite_code: newCode });
+                alert('New invite link ready. The old one no longer works.');
+              }}>↻ New link</button>
+          )}
           {canManage && (
             <button style={{ ...S.btnSm, background: 'rgba(255,102,0,0.1)', color: '#FF6600', fontSize: 11 }} onClick={() => setShowAddMember(!showAddMember)}>+ Add</button>
           )}

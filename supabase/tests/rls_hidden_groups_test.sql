@@ -5,6 +5,7 @@ begin;
 \set grace   '''10000000-0000-0000-0000-000000000002'''
 \set james   '''10000000-0000-0000-0000-000000000003'''
 \set maria   '''10000000-0000-0000-0000-000000000004'''
+\set david   '''10000000-0000-0000-0000-000000000005'''
 \set newbie  '''10000000-0000-0000-0000-000000000006'''
 \set hg      '''20000000-0000-0000-0000-000000000002'''
 \set hgroom  '''private_20000000-0000-0000-0000-000000000002'''
@@ -64,6 +65,41 @@ update public.private_groups set invite_code = 'chosen-by-creator' where id = :h
 select rls_test.as_service();
 select rls_test.ok((select invite_code = :'code' from public.private_groups where id = :hg),
   'HIDDEN a creator cannot change the invite code to something guessable');
+
+-- a leaked link can be killed by the creator
+select rls_test.as_user(:grace);
+select public.rotate_invite_code(:hg) as newcode \gset
+select set_config('rls.oldcode', :'code', true);
+select rls_test.as_user(:david);
+do $$ begin
+  begin
+    perform public.request_join_by_code(current_setting('rls.oldcode'));
+    raise exception 'FAIL: HIDDEN the old invite link still worked after rotation';
+  exception when others then
+    if sqlerrm like 'FAIL:%' then raise; end if;
+    raise notice 'PASS: HIDDEN after "new invite link", the old link is refused (%)', sqlerrm;
+  end;
+end $$;
+select rls_test.ok((select status = 'requested' from public.request_join_by_code(:'newcode')),
+  'HIDDEN the new invite link works');
+select rls_test.as_user(:james);
+do $$ begin
+  begin
+    perform public.rotate_invite_code('20000000-0000-0000-0000-000000000002');
+    raise exception 'FAIL: HIDDEN a non-creator rotated the invite link';
+  exception when others then
+    if sqlerrm like 'FAIL:%' then raise; end if;
+    raise notice 'PASS: HIDDEN only the creator (or admin) can make a new invite link (%)', sqlerrm;
+  end;
+end $$;
+
+-- a request can't be moved to another group
+select rls_test.as_user(:grace);
+update public.private_group_requests set group_id = '20000000-0000-0000-0000-000000000001'
+  where group_id = :hg and user_id = :david;
+select rls_test.as_service();
+select rls_test.ok((select count(*) = 1 from public.private_group_requests where group_id = :hg and user_id = :david),
+  'HIDDEN a creator cannot move a join request onto another group');
 
 select rls_test.as_user(:james);
 select rls_test.ok((select count(*) >= 1 from public.messages where room_id = :hgroom),
