@@ -144,6 +144,12 @@ select rls_test.as_service();
 select rls_test.ok((select coalesce(array_length(group_ids,1),0) = 0 and group_id is null and username is null from public.profiles where id = :dove),
   'ANON they cannot add themselves to community groups or set a username');
 
+select rls_test.as_user(:grace);
+update public.private_group_members set role = 'moderator' where group_id = :hg and user_id = :dove;
+select rls_test.as_service();
+select rls_test.ok((select role = 'member' from public.private_group_members where group_id = :hg and user_id = :dove),
+  'ANON an anonymous (limited) member can never be made a group moderator');
+
 -------------------------------------------------------------- 5. who can see the limited account
 select rls_test.as_user(:james);
 select rls_test.ok((select count(*) = 0 from public.profiles where id = :dove),

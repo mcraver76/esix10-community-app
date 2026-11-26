@@ -39,6 +39,8 @@ select rls_test.ok((select account_kind = 'limited' and status = 'pending' and u
   'ANON the account is LIMITED + pending, shows only the alias (real name/username in the form are ignored)');
 select rls_test.ok((select used_at is not null from public.group_invites where id = '30000000-0000-0000-0000-0000000000e3'),
   'ANON the invite is burned on use');
+select rls_test.ok((select not (raw_user_meta_data ? 'anon_invite') from auth.users where email = 'a6@example.test'),
+  'ANON the invite code is not kept in the account''s sign-up data');
 select rls_test.ok((select count(*) = 1 from public.private_group_requests r join public.profiles p on p.id = r.user_id
                     where p.email = 'a6@example.test' and r.group_id = :hg and r.status = 'pending'
                       and r.invite_id = '30000000-0000-0000-0000-0000000000e3'),

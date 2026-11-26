@@ -134,6 +134,11 @@ begin
     new.joined_at := old.joined_at; new.user_id := old.user_id; new.group_id := old.group_id;
     -- roles: only member <-> moderator; the creator row never changes
     if old.role = 'creator' or new.role not in ('member','moderator') then new.role := old.role; end if;
+    -- anonymous (limited) accounts never become group moderators (Tauriel 11:05 #4). is_group_manager()
+    -- already needs a full account; this keeps a later change from quietly giving them manager power.
+    if new.role = 'moderator' and exists (select 1 from profiles p where p.id = old.user_id and p.account_kind = 'limited') then
+      new.role := old.role;
+    end if;
   end if;
   return new;
 end $$;
@@ -462,6 +467,8 @@ begin
     update group_invites set used_at = now(), used_by = new.id where id = inv.id;
     insert into private_group_requests (group_id, user_id, status, invite_id)
       values (inv.group_id, new.id, 'pending', inv.id);
+    -- Don't keep the (now burned) invite code in the account's sign-up data (Tauriel 11:05 #1).
+    update auth.users set raw_user_meta_data = raw_user_meta_data - 'anon_invite' where id = new.id;
     return new;
   end if;
 
