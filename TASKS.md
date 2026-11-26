@@ -7,6 +7,8 @@
 - [ ] Lawyer review of legal text (`src/legalContent.js` is a draft template).
 
 ## Open
+- [ ] ℹ️ (Michael 11-26 8:59) The app is FREE, a charitable program of ESix10 Initiative. Focus: disaster response + combating child trafficking, with a veterans tie-in (Nienna drafting the program plan). The media "Premium only" option is hidden and off (media.jsx SHOW_PREMIUM=false) unless he decides otherwise.
+- [ ] ❓ Michael's call (asked 11-26): hidden/unlisted sensitive private groups (Tauriel recommends yes).
 - [ ] ⭐ PRIORITY (Michael 11-26 7:33): security hardening per docs/HARDENING_STATUS.md (Tauriel's checklist), local test server only. Premium design comes after.
 - [ ] LATER, parked (Michael 11-26 7:34): youth / teen version. Needs its own design + Tauriel + attorney review (parent consent, no adult-to-minor DMs, under-13 rules). v1 = adults only.
 - [ ] Church orgs live ONLY in the Community app (Michael 11-26 7:32). No data sharing or login with Alliance. Build org_id locks, the org-admin vs platform-owner split, per-org switches and a cross-org isolation test (checklist P1 5–6, 11).

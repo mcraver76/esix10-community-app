@@ -4,6 +4,9 @@ import { S } from "./styles";
 import { supabase } from "./supabaseClient";
 
 // ─── Media ────────────────────────────────────────────────────────────────────
+// Michael 2026-11-26: the app is FREE (a charitable program of ESix10 Initiative). The old
+// "Premium only" option stays hidden and off unless he decides otherwise.
+const SHOW_PREMIUM = false;
 // Calls the "cloudflare" function as the SIGNED-IN person (their own sign-in token, sent
 // automatically), on whichever database this build points at (local test or live).
 // The function itself checks the caller is approved staff and enforces a daily cap (security P0-3).
@@ -214,8 +217,8 @@ export function Media({ profile }) {
               <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12, marginBottom: 12 }}>
                 <div style={{ gridColumn: '1/-1' }}><label style={S.label}>Title</label><input style={S.input} value={videoForm.title} onChange={e => setVideoForm({...videoForm, title: e.target.value})} placeholder="Video title" /></div>
                 <div><label style={S.label}>Category</label><select style={S.input} value={videoForm.category} onChange={e => setVideoForm({...videoForm, category: e.target.value})}>{['Teaching','Forge','Devotion','Training'].map(c => <option key={c}>{c}</option>)}</select></div>
-                <div style={{ display: 'flex', alignItems: 'center', gap: 8, paddingTop: 20 }}><input type="checkbox" checked={videoForm.premium} onChange={e => setVideoForm({...videoForm, premium: e.target.checked})} style={{ accentColor: '#FF6600' }} /><label style={{ color: '#888', fontSize: 13 }}>Premium only</label></div>
-                <div style={{ gridColumn: '1/-1' }}><label style={S.label}>Description</label><textarea style={{ ...S.input, minHeight: 60 }} value={videoForm.description} onChange={e => setVideoForm({...videoForm, description: e.target.value})} /></div>
+                {SHOW_PREMIUM && <div style={{ display: 'flex', alignItems: 'center', gap: 8, paddingTop: 20 }}><input type="checkbox" checked={videoForm.premium} onChange={e => setVideoForm({...videoForm, premium: e.target.checked})} style={{ accentColor: '#FF6600' }} /><label style={{ color: '#888', fontSize: 13 }}>Premium only</label></div>}
+  <div style={{ gridColumn: '1/-1' }}><label style={S.label}>Description</label><textarea style={{ ...S.input, minHeight: 60 }} value={videoForm.description} onChange={e => setVideoForm({...videoForm, description: e.target.value})} /></div>
               </div>
               {uploadProgress && <p style={{ color: '#FF6600', fontSize: 13, marginBottom: 12 }}>{uploadProgress}</p>}
               <label style={{ ...S.btn, display: 'inline-block', cursor: uploading || !videoForm.title ? 'not-allowed' : 'pointer', opacity: uploading || !videoForm.title ? 0.5 : 1 }}>
@@ -260,7 +263,7 @@ export function Media({ profile }) {
                   <div style={{ position: 'absolute', inset: 0, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
                     <div style={{ width: 48, height: 48, borderRadius: '50%', background: 'rgba(255,102,0,0.9)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 20 }}>▶</div>
                   </div>
-                  {v.premium && <div style={{ position: 'absolute', top: 8, right: 8, background: '#C09A2F', borderRadius: 4, padding: '2px 8px', fontSize: 10, color: '#fff' }}>PREMIUM</div>}
+                  {SHOW_PREMIUM && v.premium && <div style={{ position: 'absolute', top: 8, right: 8, background: '#C09A2F', borderRadius: 4, padding: '2px 8px', fontSize: 10, color: '#fff' }}>PREMIUM</div>}
                 </div>
                 <div style={{ padding: '14px 16px' }}>
                   <div style={{ color: '#FF6600', fontSize: 10, letterSpacing: '0.15em', textTransform: 'uppercase', marginBottom: 4 }}>{v.category}</div>
@@ -285,8 +288,8 @@ export function Media({ profile }) {
               <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12, marginBottom: 12 }}>
                 <div style={{ gridColumn: '1/-1' }}><label style={S.label}>Title</label><input style={S.input} value={audioForm.title} onChange={e => setAudioForm({...audioForm, title: e.target.value})} /></div>
                 <div><label style={S.label}>Episode #</label><input style={S.input} type="number" value={audioForm.episode_number} onChange={e => setAudioForm({...audioForm, episode_number: e.target.value})} /></div>
-                <div style={{ display: 'flex', alignItems: 'center', gap: 8, paddingTop: 20 }}><input type="checkbox" checked={audioForm.premium} onChange={e => setAudioForm({...audioForm, premium: e.target.checked})} style={{ accentColor: '#FF6600' }} /><label style={{ color: '#888', fontSize: 13 }}>Premium only</label></div>
-                <div style={{ gridColumn: '1/-1' }}><label style={S.label}>Description</label><textarea style={{ ...S.input, minHeight: 60 }} value={audioForm.description} onChange={e => setAudioForm({...audioForm, description: e.target.value})} /></div>
+                {SHOW_PREMIUM && <div style={{ display: 'flex', alignItems: 'center', gap: 8, paddingTop: 20 }}><input type="checkbox" checked={audioForm.premium} onChange={e => setAudioForm({...audioForm, premium: e.target.checked})} style={{ accentColor: '#FF6600' }} /><label style={{ color: '#888', fontSize: 13 }}>Premium only</label></div>}
+  <div style={{ gridColumn: '1/-1' }}><label style={S.label}>Description</label><textarea style={{ ...S.input, minHeight: 60 }} value={audioForm.description} onChange={e => setAudioForm({...audioForm, description: e.target.value})} /></div>
               </div>
               {uploadProgress && <p style={{ color: '#FF6600', fontSize: 13, marginBottom: 12 }}>{uploadProgress}</p>}
               <label style={{ ...S.btn, display: 'inline-block', cursor: uploading || !audioForm.title ? 'not-allowed' : 'pointer', opacity: uploading || !audioForm.title ? 0.5 : 1 }}>

@@ -1,6 +1,6 @@
 # ESix10 Initiative apps: launch plan (Lúthien, 2026-11-16, for Cora)
 
-> **UPDATED 2026-11-26 (Michael 7:28 / 7:33 / 7:34):** the dates below are SUPERSEDED. Dec 1 is the account and ownership move to ESix10 Initiative ONLY. The apps stay paused: no go-live, no real members, nothing public until Michael says a design is locked in and Tauriel has passed the hardening checklist (`docs/HARDENING_STATUS.md`). All work happens on the local test server (`LOCAL_TEST_SERVER.md`). Order: security hardening, then premium design. v1 is adults only (18+).
+> **UPDATED 2026-11-26 (Michael 7:28 / 7:33 / 7:34):** the dates below are SUPERSEDED. Dec 1 is the account and ownership move to ESix10 Initiative ONLY. The apps stay paused: no go-live, no real members, nothing public until Michael says a design is locked in and Tauriel has passed the hardening checklist (`docs/HARDENING_STATUS.md`). All work happens on the local test server (`LOCAL_TEST_SERVER.md`). Order: security hardening, then premium design. v1 is adults only (18+). **The app is FREE (Michael 11-26 8:59), a charitable program of ESix10 Initiative; focus: disaster response + combating child trafficking, with a veterans tie-in. No paywall or premium flags.**
 
 The D-U-N-S came in 11-16. Michael wants the community app public "sooner than later". Idril's chat isn't open, so the Alliance app lines below come from her PLAN.md (~/Downloads/six10-alliance/PLAN.md). She should confirm them when her chat is back.
 

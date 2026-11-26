@@ -508,7 +508,6 @@ export function Feed({ profile, activeGroup, setActiveGroup, isNewMember, onNavi
                     <PrivateMedia src={post.photo_url} alt="post" onOpen={setLightbox}
                       videoStyle={{ width: "100%", maxHeight: 320, display: "block", background: "#000" }}
                       style={{ width: "100%", maxHeight: 320, objectFit: "cover", display: "block", cursor: "pointer" }} />
-                    }
                     {post.photo_approved === false && (
                       <div style={{ position: "absolute", top: 8, left: 8, background: "rgba(0,0,0,0.7)", color: "#FF7E33", fontSize: 11, padding: "3px 8px", borderRadius: 6 }}>⏳ Pending approval</div>
                     )}
