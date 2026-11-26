@@ -27,9 +27,11 @@ export async function resolveMedia(ref) {
   const path = ref.slice(PREFIX.length);
   const hit = cache.get(path);
   if (hit && hit.expires > Date.now() + 60_000) return hit.url;
-  const { data, error } = await supabase.storage.from(BUCKET).createSignedUrl(path, TTL_SECONDS);
+  // DMs, private groups and casual groups: 10-minute links, so a forwarded link dies fast (Tauriel 11-26).
+  const ttl = /^(dm_|private_|group_custom_)/.test(path) ? 10 * 60 : TTL_SECONDS;
+  const { data, error } = await supabase.storage.from(BUCKET).createSignedUrl(path, ttl);
   if (error || !data?.signedUrl) return null;
-  cache.set(path, { url: data.signedUrl, expires: Date.now() + TTL_SECONDS * 1000 });
+  cache.set(path, { url: data.signedUrl, expires: Date.now() + ttl * 1000 });
   return data.signedUrl;
 }
 

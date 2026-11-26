@@ -22,6 +22,7 @@ Branch: `security/p0-criticals`.
 ## P1
 | # | Item | Status | Proof / next |
 |---|---|---|---|
+| 7c | **"DV-group standard" follow-ups (Tauriel 11-26 09:10, after the 7b PASS)** | 🟡 | (1) Notifications for private_/dm_/group_custom_ rooms: no text AND no group name, in push AND email. App side done (preview = "You have a new message"); the notify-members server code (Dec 1 download) must also leave out room/group names. (2) Hidden/unlisted sensitive groups: Michael's call (asked 11-26). (3) Reactions: checked; prayers.reactions is an integer count and posts.reactions holds emoji → counts, so no reactor ids are exposed. ✅ (4) Signed links: 10 min for DM/private/casual rooms, 1 h for group posts. ✅ (5) Backup design: no plain off-site copy of private-media; encrypt before any mirror. (6) Moderator reports from a private group show only the reported message and log who opened it. (7) Quick-exit button + neutral app name/icon: product idea, Tauriel → Kora. |
 | 5 | org_id lock on every table | ⬜ | No org layer exists yet. Build it per Michael 11-26 7:32 (Community-only orgs). |
 | 6 | Org admin vs platform owner | ⬜ | Comes with the org layer. |
 | 7 | Pending / removed see nothing | 🟡 11-26 ~9:10: posts, prayers and group photos now refused too (rls_group_isolation_test.sql "PENDING/REMOVED ..." PASS). Still open: events, members list, media, Forge. |
