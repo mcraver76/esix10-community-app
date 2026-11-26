@@ -1,8 +1,31 @@
-# ESix10 / Rhinity — tasks (Lúthien)
+# SIX10 COMMUNITY (was ESix10 / Rhinity) — tasks (Lúthien)
+
+## New from Michael 11-26 9:38–9:50 (via Kora, all in DECISIONS)
+- [ ] ⭐ **GO-LIVE GATE (9:39):** nothing goes live until Apple + Google approve the app (ESix10 Initiative's own developer accounts), on top of the design lock, Tauriel's full PASS, the safety-layer prerequisites and attorney sign-off. **Store readiness to build in:**
+  - app code bundled inside the phone apps (premium item 10, Michael YES 9:40, after hardening; Elanor/Eärwen advise);
+  - privacy labels;
+  - reviewer demo login;
+  - report/block/moderation for user content (Apple 1.2);
+  - in-app account deletion;
+  - 18+ rating.
+  Read `~/claude/mobile/store/STORE-REVIEW-LESSONS-for-nonprofit-apps.md`. Google Play: a new account may need a closed test with 12+ testers for 14 days (unverified; plan a 12-tester pool).
+- [ ] **P0-6 sign-in security (9:38):**
+  - 10+ character passwords plus a leaked-password check;
+  - 2-step sign-in by authenticator/passkey, not SMS, required for admins/moderators/safety officers and offered to all;
+  - secure email change and reset, sign-in alerts, recovery codes.
+  Tracked in docs/HARDENING_STATUS.md #6.
+- [ ] **Chats (9:49):**
+  - label them honestly as "private, not end-to-end encrypted" in the app and the Terms, and point to Signal for the most sensitive details;
+  - ADD a disappearing-messages option. Messages stay reportable before they vanish; reported or matched content is preserved per the safety rules.
+- [x] Video uploads in chats OFF until a video scanner exists (9:49); links stay. Done 11-26 on test.
+- [ ] Church videos play from YouTube/Facebook links, not self-hosted (9:49).
+- [ ] **App name = "SIX10 COMMUNITY" (9:50).**
+  - Update name strings on test.
+  - The ESix10 Initiative logo comes out of the app; Varda designs the Six10 Community logo.
+  - "Rhinity" is dropped. six10community.com/.org = Michael buys them.
+- [x] Server-role table-access test (Idril/Tauriel 10:32): done 11-26.
 
 ## Waiting on Michael
-- [ ] Pick priority: church org layer (Jan 2027) vs Rhinity rename.
-- [ ] Rhinity: plain rename or "Rhinity — an ESix10 Initiative" lockup?
 - [ ] Set `SUPABASE_SERVICE_ROLE_KEY` in Vercel (branded signup emails return 503 without it) — his click.
 - [ ] Lawyer review of legal text (`src/legalContent.js` is a draft template).
 
