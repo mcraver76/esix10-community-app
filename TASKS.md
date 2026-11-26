@@ -8,7 +8,10 @@
 
 ## Open
 - [ ] ℹ️ (Michael 11-26 8:59) The app is FREE, a charitable program of ESix10 Initiative. Focus: disaster response + combating child trafficking, with a veterans tie-in (Nienna drafting the program plan). The media "Premium only" option is hidden and off (media.jsx SHOW_PREMIUM=false) unless he decides otherwise.
-- [ ] ❓ Michael's call (asked 11-26): hidden/unlisted sensitive private groups (Tauriel recommends yes).
+- [ ] LATER, parked (Michael 11-26 9:12, "likes it"): neutral app name/icon option, so the app doesn't look like a support app on someone's home screen (DV safety). Needs the real phone app shell (premium item 10) first.
+- [ ] Panic button / reach-out: OPTIONS PAPER first, no build (Michael 11-26 9:12). docs/PANIC_BUTTON_OPTIONS_DRAFT.md → Tauriel + Melian → Vairë (attorney) before any build.
+- [x] Quick Exit in private groups (Michael 11-26 9:12): red ✕ EXIT button + Esc twice → harmless page, no "back", clears this device's recent-chat memory. Local/test only.
+- [x] Hidden private groups: Michael said yes (11-26 9:08). Built + tested on the security branch (2316dd3); Tauriel reviewing.
 - [ ] ⭐ PRIORITY (Michael 11-26 7:33): security hardening per docs/HARDENING_STATUS.md (Tauriel's checklist), local test server only. Premium design comes after.
 - [ ] LATER, parked (Michael 11-26 7:34): youth / teen version. Needs its own design + Tauriel + attorney review (parent consent, no adult-to-minor DMs, under-13 rules). v1 = adults only.
 - [ ] Church orgs live ONLY in the Community app (Michael 11-26 7:32). No data sharing or login with Alliance. Build org_id locks, the org-admin vs platform-owner split, per-org switches and a cross-org isolation test (checklist P1 5–6, 11).

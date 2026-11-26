@@ -22,6 +22,7 @@ import { Badges, StatsDashboard, ProfileLevelSummary, Profile } from "./profile"
 import { isApproved, requireApproved, isStaff } from "./permissions";
 import { sendMemberEmail, notifyMembers } from "./notify";
 import { uploadPrivate, PrivateMedia } from "./privateMedia";
+import { quickExit, useQuickExitKey } from "./quickExit";
 import { Members } from "./members";
 import { AdminDashboard } from "./admin";
 import { Devotion, PrayerRequests, StatementOfFaith, PlanOfSalvation } from "./faith";
@@ -646,6 +647,8 @@ function PrivateGroups({ profile, allMembers }) {
   }
 
   useEffect(() => { loadGroups(); }, []);
+  // Quick Exit: Escape twice while a private group is open (Michael 11-26).
+  useQuickExitKey(!!activeGroup, profile.id);
   // Invite links (?join=<code>): send a join request; the creator approves it. Works for hidden groups.
   useEffect(() => {
     const code = new URLSearchParams(window.location.search).get('join');
@@ -927,7 +930,13 @@ function PrivateGroups({ profile, allMembers }) {
           <div style={{ fontFamily: "'Inter', sans-serif", fontSize: 15, color: '#fff' }}>{groupPolicy(activeGroup).icon} {activeGroup.name}</div>
           <div style={{ color: '#555', fontSize: 11 }}>{members.length} members · {groupPolicy(activeGroup).label}{activeGroup.visibility === 'hidden' ? ' · 🙈 Hidden' : ''}</div>
         </div>
-        <div style={{ display: 'flex', gap: 6 }}>
+        <div style={{ display: 'flex', gap: 6, alignItems: 'center' }}>
+          {/* Quick Exit: always visible, one tap, no confirmation (Michael 11-26). */}
+          <button onClick={() => quickExit(profile.id)} aria-label="Quick exit: leave this screen now"
+            title="Quick exit (or press Esc twice)"
+            style={{ background: '#C62828', color: '#fff', border: 'none', borderRadius: 8, padding: '8px 12px', fontSize: 12, fontWeight: 800, letterSpacing: '0.04em', cursor: 'pointer', minHeight: 36 }}>
+            ✕ EXIT
+          </button>
           {canManage && activeGroup.invite_code && (
             <button style={{ ...S.btnSm, background: 'rgba(255,255,255,0.06)', color: '#fff', fontSize: 11 }}
               onClick={async () => {
