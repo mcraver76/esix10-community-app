@@ -11,7 +11,7 @@ export const ADMIN_EMAIL = "admin@esix10.com";
 
 // Every profile column EXCEPT email — used everywhere we read profiles, so the
 // email column is never pulled to the client (it's walled off at the DB too).
-export const PROFILE_COLS = "id, full_name, group_id, role, city, bio, created_at, state, status, last_seen, username, avatar_url, group_ids, updated_at, requested_group_id, requested_group_at, marital_status, avatar_pending, terms_accepted_at, terms_version, mod_agreement_at, email_prefs";
+export const PROFILE_COLS = "id, full_name, group_id, role, city, bio, created_at, state, status, last_seen, username, avatar_url, group_ids, updated_at, requested_group_id, requested_group_at, marital_status, avatar_pending, terms_accepted_at, terms_version, mod_agreement_at, email_prefs, account_kind";
 
 export const REACTIONS = ["🔥", "💪", "🙏", "❤️", "✝️"];
 

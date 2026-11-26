@@ -11,7 +11,7 @@ import { parse } from "@babel/parser";
 import _traverse from "@babel/traverse";
 const traverse = _traverse.default || _traverse;
 
-export const GLOBALS = new Set(["window","document","console","navigator","Math","Date","JSON","Object","Array","String","Number","Boolean","Promise","Set","Map","parseInt","parseFloat","isNaN","setTimeout","clearTimeout","setInterval","clearInterval","fetch","alert","confirm","prompt","localStorage","sessionStorage","Intl","URL","Error","FormData","Blob","File","FileReader","crypto","atob","btoa","structuredClone","AbortController","Notification","location","history","screen","performance","requestAnimationFrame","encodeURIComponent","decodeURIComponent","Image","RegExp","Symbol","BigInt","globalThis","process","undefined","NaN","Infinity","Uint8Array","__BUILD_TIME__","React"]);
+export const GLOBALS = new Set(["window","document","console","navigator","Math","Date","JSON","Object","Array","String","Number","Boolean","Promise","Set","Map","parseInt","parseFloat","isNaN","setTimeout","clearTimeout","setInterval","clearInterval","fetch","alert","confirm","prompt","localStorage","sessionStorage","Intl","URL","URLSearchParams","Error","FormData","Blob","File","FileReader","crypto","atob","btoa","structuredClone","AbortController","Notification","location","history","screen","performance","requestAnimationFrame","encodeURIComponent","decodeURIComponent","Image","RegExp","Symbol","BigInt","globalThis","process","undefined","NaN","Infinity","Uint8Array","__BUILD_TIME__","React"]);
 
 export function indexFile(file) {
   const src = readFileSync(file, "utf8");

@@ -101,9 +101,13 @@ select rls_test.as_service();
 select rls_test.ok((select count(*) = 1 from public.private_group_requests where group_id = :hg and user_id = :david),
   'HIDDEN a creator cannot move a join request onto another group');
 
+select rls_test.as_user(:maria);
+insert into public.messages (room_id, user_id, body, sender_name) values (:hgroom, :maria, 'Welcome (after James joined, fake)', 'Maria Lopez');
 select rls_test.as_user(:james);
 select rls_test.ok((select count(*) >= 1 from public.messages where room_id = :hgroom),
   'HIDDEN once approved, the new member can read it');
+select rls_test.ok((select count(*) = 0 from public.messages where room_id = :hgroom and body like 'Hidden-group test message%'),
+  'HIDDEN history from join: the new member does not see what was said before they joined');
 select rls_test.ok((select count(*) = 1 from public.private_groups where id = :hg),
   'HIDDEN once approved, the group shows in their own list');
 

@@ -82,6 +82,8 @@ export function AuthScreen({ onAuth }) {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
   const [msg, setMsg] = useState("");
+  // A personal private invite (?private_invite=<code>) opens the "Join privately" form instead.
+  const [privateCode, setPrivateCode] = useState(() => new URLSearchParams(window.location.search).get("private_invite") || "");
 
   async function handleSubmit() {
     setError(""); setMsg(""); setLoading(true);
@@ -129,6 +131,8 @@ export function AuthScreen({ onAuth }) {
     else setMsg("If an account exists for that email, a password reset link is on its way. Check your inbox (and spam).");
     setLoading(false);
   }
+
+  if (privateCode) return <PrivateJoinScreen code={privateCode} onAuth={onAuth} onCancel={() => { window.history.replaceState({}, "", window.location.pathname); setPrivateCode(""); }} />;
 
   return (
     <div style={{ minHeight: "100vh", background: "#0a0a0a", display: "flex", alignItems: "center", justifyContent: "center", padding: 24 }}>
@@ -227,6 +231,97 @@ export function AuthScreen({ onAuth }) {
                 </div>
               </div>
             )}
+          </div>
+        </div>
+      )}
+    </div>
+  );
+}
+
+// "Join privately" (anonymous invites, Michael 11-26): someone a group moderator invited personally.
+// Asks only for a name to show in the group, a login email (any address that works once; nobody
+// sees it) and a password. No real name, username, photo, phone or city. The server checks the
+// invite, makes a LIMITED account and a join request; another moderator approves it.
+export function PrivateJoinScreen({ code, onAuth, onCancel }) {
+  const [alias, setAlias] = useState("");
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
+  const [ageConfirmed, setAgeConfirmed] = useState(false);
+  const [agreed, setAgreed] = useState(false);
+  const [legalView, setLegalView] = useState(null);
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState("");
+  const [msg, setMsg] = useState("");
+
+  async function join() {
+    setError(""); setMsg("");
+    const a = alias.trim();
+    if (a.length < 2 || a.length > 40) { setError("Pick a name to show in the group (2 to 40 characters). It doesn't have to be your real name."); return; }
+    if (!email.trim() || password.length < 8) { setError("Enter an email you can open once, and a password of at least 8 characters."); return; }
+    if (!ageConfirmed) { setError("You must confirm you are 18 or older to join."); return; }
+    if (!agreed) { setError("Please agree to the Terms of Use and Privacy Policy."); return; }
+    setLoading(true);
+    const { data, error } = await supabase.auth.signUp({ email: email.trim(), password, options: { data: {
+      anon_invite: code, alias: a, age_confirmed_18: true, terms_version: LEGAL_VERSION, terms_accepted_at: new Date().toISOString() } } });
+    setLoading(false);
+    if (error) {
+      setError(/invite|alias|name to show|18/i.test(error.message) ? error.message : "That didn't work. The invite may have expired or been used. Ask the person who invited you for a new one.");
+      return;
+    }
+    window.history.replaceState({}, "", window.location.pathname);
+    if (data.session?.user) { onAuth(data.session.user); return; }
+    setMsg("Almost done. Open the confirmation email we just sent, then sign in. Your request is waiting for a group leader to approve it.");
+  }
+
+  const box = { marginBottom: 16, background: "rgba(255,255,255,0.03)", border: "1px solid rgba(255,255,255,0.08)", borderRadius: 8, padding: 16 };
+  return (
+    <div style={{ minHeight: "100vh", background: "#0a0a0a", display: "flex", alignItems: "center", justifyContent: "center", padding: 24 }}>
+      <div style={{ width: "100%", maxWidth: 420 }}>
+        <div style={S.card}>
+          <span style={S.eyebrow}>Private invite</span>
+          <h2 style={{ ...S.h2, margin: "0 0 8px" }}>Join privately</h2>
+          <p style={{ ...S.grey, fontSize: 13, lineHeight: 1.7, marginBottom: 16 }}>
+            Someone you know invited you to a private group. You stay anonymous: the group sees only the name you pick below.
+            We don't ask for your real name, phone, photo or city.
+          </p>
+          <div style={{ marginBottom: 16 }}>
+            <label style={S.label}>Name to show in the group</label>
+            <input style={S.input} maxLength={40} placeholder="Any name, e.g. Dove" value={alias} onChange={e => setAlias(e.target.value)} />
+          </div>
+          <div style={{ marginBottom: 16 }}>
+            <label style={S.label}>Login email</label>
+            <input style={S.input} type="email" placeholder="any email you can open" value={email} onChange={e => setEmail(e.target.value)} />
+            <p style={{ color: "#8A8A8A", fontSize: 11, marginTop: 4 }}>Only used to sign in. It is never shown to the group. A separate, private email is fine.</p>
+          </div>
+          <div style={{ marginBottom: 16 }}>
+            <label style={S.label}>Password</label>
+            <input style={S.input} type="password" placeholder="at least 8 characters" value={password} onChange={e => setPassword(e.target.value)} />
+          </div>
+          <label style={{ ...box, display: "flex", alignItems: "center", gap: 12, cursor: "pointer" }}>
+            <input type="checkbox" checked={ageConfirmed} onChange={e => setAgeConfirmed(e.target.checked)} style={{ accentColor: "#FF6600", width: 18, height: 18, flexShrink: 0 }} />
+            <span style={{ color: "#fff", fontSize: 13 }}>I confirm that I am <strong>18 years of age or older</strong>.</span>
+          </label>
+          <label style={{ ...box, display: "flex", alignItems: "flex-start", gap: 12, cursor: "pointer" }}>
+            <input type="checkbox" checked={agreed} onChange={e => setAgreed(e.target.checked)} style={{ accentColor: "#FF6600", width: 16, height: 16, flexShrink: 0, marginTop: 3 }} />
+            <span style={{ color: "#fff", fontSize: 13, lineHeight: 1.7 }}>
+              I agree to the <span style={{ color: "#FF7E33", textDecoration: "underline" }} onClick={e => { e.preventDefault(); setLegalView("terms"); }}>Terms of Use</span> and <span style={{ color: "#FF7E33", textDecoration: "underline" }} onClick={e => { e.preventDefault(); setLegalView("privacy"); }}>Privacy Policy</span>.
+            </span>
+          </label>
+          {error && <p style={S.error}>{error}</p>}
+          {msg && <p style={S.success}>{msg}</p>}
+          <button style={{ ...S.btn, width: "100%", padding: "14px 24px" }} onClick={join} disabled={loading}>{loading ? "Please wait..." : "Join privately"}</button>
+          <p style={{ textAlign: "center", marginTop: 16 }}>
+            <span style={{ color: "#8A8A8A", fontSize: 12, cursor: "pointer", textDecoration: "underline" }} onClick={onCancel}>I already have an account</span>
+          </p>
+        </div>
+      </div>
+      {legalView && (
+        <div style={{ position: "fixed", inset: 0, background: "rgba(10,10,10,0.97)", zIndex: 500, overflowY: "auto", padding: "18px 20px 40px" }}>
+          <div style={{ display: "flex", justifyContent: "flex-end" }}><div onClick={() => setLegalView(null)} style={{ color: "#9aa4b2", fontSize: 22, cursor: "pointer" }}>✕</div></div>
+          <div style={{ maxWidth: 640, margin: "0 auto" }}>
+            <h2 style={{ ...S.h2, margin: "0 0 4px" }}>{legalView === "terms" ? "Terms of Use" : "Privacy Policy"}</h2>
+            <p style={{ ...S.muted, marginBottom: 16 }}>Effective {LEGAL_EFFECTIVE}</p>
+            <div style={S.card}><LegalDoc sections={legalView === "terms" ? TERMS : PRIVACY} /></div>
           </div>
         </div>
       )}

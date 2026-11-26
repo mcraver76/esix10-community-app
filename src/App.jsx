@@ -629,6 +629,10 @@ function PrivateGroups({ profile, allMembers }) {
   const [showAddMember, setShowAddMember] = useState(false);
   const [memberSearch, setMemberSearch] = useState('');
   const [requests, setRequests] = useState([]);
+  const [showInvites, setShowInvites] = useState(false);
+  const [privateInvites, setPrivateInvites] = useState([]);
+  const [newInviteLink, setNewInviteLink] = useState("");
+  const isLimited = profile.account_kind === "limited";
   const bottomRef = useRef();
   const msgPhotoRef = useRef();
   const isMobile = useMobile();
@@ -693,9 +697,33 @@ function PrivateGroups({ profile, allMembers }) {
   }
 
   async function loadRequests() {
-    if (activeGroup.created_by !== profile.id && profile.role !== 'admin') return;
+    if (isLimited) { setRequests([]); return; }
+    // The database shows requests only to the group's creator, its moderators and the admin.
     const { data } = await supabase.from('private_group_requests').select('*, profiles(full_name, username)').eq('group_id', activeGroup.id).eq('status', 'pending');
     setRequests(data || []);
+  }
+
+  // Anonymous invites (Michael 11-26): personal, single-use, 72 h, for hidden groups only.
+  async function loadPrivateInvites() {
+    const { data } = await supabase.rpc('list_private_invites', { gid: activeGroup.id });
+    setPrivateInvites(data || []);
+  }
+  async function makePrivateInvite() {
+    const { data, error } = await supabase.rpc('create_private_invite', { gid: activeGroup.id });
+    if (error) { alert(error.message); return; }
+    const row = data?.[0];
+    setNewInviteLink(`${window.location.origin}/?private_invite=${row.code}`);
+    loadPrivateInvites();
+  }
+  async function cancelPrivateInvite(id) {
+    const { error } = await supabase.rpc('revoke_private_invite', { iid: id });
+    if (error) { alert(error.message); return; }
+    loadPrivateInvites();
+  }
+  async function approveInviteRequest(reqId) {
+    const { error } = await supabase.rpc('approve_private_invite_request', { rid: reqId });
+    if (error) { alert(error.message); return; }
+    loadRequests(); loadMembers(); loadGroups();
   }
 
   async function createGroup() {
@@ -830,7 +858,7 @@ function PrivateGroups({ profile, allMembers }) {
           <span style={S.eyebrow}>Community</span>
           <h2 style={{ ...S.h2, margin: 0 }}>Community Groups</h2>
         </div>
-        <button style={S.btn} onClick={() => setShowCreate(!showCreate)}>+ Create Group</button>
+        {!isLimited && <button style={S.btn} onClick={() => setShowCreate(!showCreate)}>+ Create Group</button>}
       </div>
 
       {showCreate && (
@@ -895,7 +923,7 @@ function PrivateGroups({ profile, allMembers }) {
         </div>
       )}
 
-      <div>
+      {!isLimited && <div>
         <span style={S.eyebrow}>Discover Groups</span>
         {groups.filter(g => g.approved && g.visibility !== 'hidden' && !myGroups.find(m => m.id === g.id)).length === 0 && (
           <p style={S.muted}>No other groups to discover yet.</p>
@@ -917,7 +945,7 @@ function PrivateGroups({ profile, allMembers }) {
             </div>
           </div>
         );})}
-      </div>
+      </div>}
     </div>
   );
 
@@ -928,7 +956,7 @@ function PrivateGroups({ profile, allMembers }) {
         {isMobile && <button onClick={() => setShowList(true)} style={{ background: 'none', border: 'none', color: '#FF6600', cursor: 'pointer', fontSize: 20, padding: 0 }}>←</button>}
         <div style={{ flex: 1 }}>
           <div style={{ fontFamily: "'Inter', sans-serif", fontSize: 15, color: '#fff' }}>{groupPolicy(activeGroup).icon} {activeGroup.name}</div>
-          <div style={{ color: '#555', fontSize: 11 }}>{members.length} members · {groupPolicy(activeGroup).label}{activeGroup.visibility === 'hidden' ? ' · 🙈 Hidden' : ''}</div>
+          <div style={{ color: '#555', fontSize: 11 }}>{isLimited ? (activeGroup.member_count || members.length) : members.length} members · {groupPolicy(activeGroup).label}{activeGroup.visibility === 'hidden' ? ' · 🙈 Hidden' : ''}</div>
         </div>
         <div style={{ display: 'flex', gap: 6, alignItems: 'center' }}>
           {/* Quick Exit: always visible, one tap, no confirmation (Michael 11-26). */}
@@ -956,6 +984,11 @@ function PrivateGroups({ profile, allMembers }) {
                 alert('New invite link ready. The old one no longer works.');
               }}>↻ New link</button>
           )}
+          {canManage && !isLimited && activeGroup.visibility === 'hidden' && activeGroup.approved && (
+            <button style={{ ...S.btnSm, background: 'rgba(255,255,255,0.06)', color: '#fff', fontSize: 11 }}
+              title="A personal one-time invite: they join anonymously, under a name they pick"
+              onClick={() => { const next = !showInvites; setShowInvites(next); setNewInviteLink(''); if (next) loadPrivateInvites(); }}>🕶 Private invite</button>
+          )}
           {canManage && (
             <button style={{ ...S.btnSm, background: 'rgba(255,102,0,0.1)', color: '#FF6600', fontSize: 11 }} onClick={() => setShowAddMember(!showAddMember)}>+ Add</button>
           )}
@@ -964,6 +997,38 @@ function PrivateGroups({ profile, allMembers }) {
           )}
         </div>
       </div>
+
+      {showInvites && canManage && !isLimited && (
+        <div style={{ padding: '12px 16px', borderBottom: '1px solid rgba(255,255,255,0.05)', background: 'rgba(255,255,255,0.03)' }}>
+          <div style={{ color: '#fff', fontSize: 13, fontWeight: 600, marginBottom: 4 }}>🕶 Invite someone privately</div>
+          <p style={{ color: '#9aa4b2', fontSize: 12, lineHeight: 1.6, margin: '0 0 10px' }}>
+            Only invite someone <strong style={{ color: '#fff' }}>you know personally</strong>. They join under a name they pick; nobody in the group sees who they are.
+            The link works once, for 72 hours. Another leader of this group (or the admin) approves them, not you.
+          </p>
+          {newInviteLink ? (
+            <div style={{ marginBottom: 10 }}>
+              <input readOnly style={{ ...S.input, fontSize: 12 }} value={newInviteLink} onFocus={e => e.target.select()} />
+              <div style={{ display: 'flex', gap: 8, marginTop: 6, alignItems: 'center' }}>
+                <button style={S.btnSm} onClick={async () => { try { await navigator.clipboard.writeText(newInviteLink); alert('Copied. Send it privately (text or in person).'); } catch { window.prompt('Copy this link:', newInviteLink); } }}>Copy link</button>
+                <span style={{ color: '#fcc419', fontSize: 11 }}>Shown only once. Copy it now.</span>
+              </div>
+            </div>
+          ) : (
+            <button style={{ ...S.btnSm, marginBottom: 10 }} onClick={makePrivateInvite}>Make a private invite link</button>
+          )}
+          {privateInvites.length > 0 && (
+            <div>
+              {privateInvites.slice(0, 8).map(i => (
+                <div key={i.id} style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '4px 0', fontSize: 12, color: '#9aa4b2' }}>
+                  <span style={{ color: i.state === 'open' ? '#51cf66' : '#666', minWidth: 64 }}>{i.state}</span>
+                  <span>by {i.invited_by} · {new Date(i.created_at).toLocaleString()}</span>
+                  {i.state === 'open' && <span onClick={() => cancelPrivateInvite(i.id)} style={{ color: '#ff4444', cursor: 'pointer', marginLeft: 'auto' }}>Cancel</span>}
+                </div>
+              ))}
+            </div>
+          )}
+        </div>
+      )}
 
       {showAddMember && canManage && (
         <div style={{ padding: '10px 16px', borderBottom: '1px solid rgba(255,255,255,0.05)', background: 'rgba(255,102,0,0.04)' }}>
@@ -998,9 +1063,13 @@ function PrivateGroups({ profile, allMembers }) {
           <span style={{ color: '#FF6600', fontSize: 11, letterSpacing: '0.1em', textTransform: 'uppercase' }}>Join Requests ({requests.length})</span>
           {requests.map(r => (
             <div key={r.id} style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '6px 0' }}>
-              <span style={{ color: '#fff', fontSize: 13 }}>{r.profiles?.username ? `@${r.profiles.username}` : formatName(r.profiles?.full_name)}</span>
+              <span style={{ color: '#fff', fontSize: 13 }}>
+                {r.invite_id
+                  ? <>🕶 {r.profiles?.full_name || 'Private invite'} <span style={{ color: '#9aa4b2', fontSize: 11 }}>· joined by private invite</span></>
+                  : (r.profiles?.username ? `@${r.profiles.username}` : formatName(r.profiles?.full_name))}
+              </span>
               <div style={{ display: 'flex', gap: 6 }}>
-                <button style={{ ...S.btnSm, background: '#51cf66', padding: '4px 10px', fontSize: 11 }} onClick={() => approveRequest(r.id, r.user_id, r.group_id)}>✓</button>
+                <button style={{ ...S.btnSm, background: '#51cf66', padding: '4px 10px', fontSize: 11 }} onClick={() => r.invite_id ? approveInviteRequest(r.id) : approveRequest(r.id, r.user_id, r.group_id)}>✓</button>
                 <button style={{ ...S.btnDanger, padding: '4px 10px', fontSize: 11 }} onClick={() => denyRequest(r.id)}>✕</button>
               </div>
             </div>
@@ -1305,6 +1374,29 @@ export default function App() {
   if (recovering) return <PasswordResetScreen onDone={() => setRecovering(false)} />;
   if (!user) return <AuthScreen onAuth={(u) => loadProfile(u)} />;
   if (showSetup) return <SetupModal onClose={() => { setShowSetup(false); loadProfile(user); }} />;
+  // Anonymous-invite (LIMITED) accounts see only their private groups: no feed, directory,
+  // DMs or community groups (the database enforces the same thing).
+  if (profile?.account_kind === "limited") return (
+    <div style={{ ...S.app, minHeight: "100vh" }}>
+      <style>{GLOBAL_CSS}</style>
+      <nav style={{ ...S.nav, height: 60, padding: "0 16px" }}>
+        <span style={{ color: "#fff", fontSize: 15, fontWeight: 700 }}>{profile.full_name || "Private group"}</span>
+        <button style={{ ...S.btnGhost, padding: "6px 12px", fontSize: 12 }} onClick={signOut}>Sign out</button>
+      </nav>
+      <div style={{ paddingTop: 72, maxWidth: 800, margin: "0 auto" }}>
+        {profile.status === "approved"
+          ? <PrivateGroups profile={profile} allMembers={[]} />
+          : (
+            <div style={{ ...S.card, margin: 24 }}>
+              <span style={S.eyebrow}>Private invite</span>
+              <h2 style={{ ...S.h2, margin: "0 0 8px" }}>Waiting for approval</h2>
+              <p style={{ ...S.grey, lineHeight: 1.7 }}>Your request was sent. A group leader will approve it, usually soon. Check back here. The group sees only the name you picked.</p>
+              <button style={{ ...S.btn, marginTop: 16 }} onClick={() => loadProfile(user)}>Check again</button>
+            </div>
+          )}
+      </div>
+    </div>
+  );
   if (!profile?.group_id) return <GroupSelect user={user} onSelect={(g, groups) => { setProfile({ ...profile, group_id: g, group_ids: groups }); setFeedGroup(g); }} />;
   if (profile && profile.terms_version !== LEGAL_VERSION) return (
     <AgreementGate

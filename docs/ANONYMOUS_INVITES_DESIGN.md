@@ -73,3 +73,58 @@ Each step gets a test as `authenticator` + Tauriel's PASS.
 5. Break-glass reveal + audit.
 
 Every step gets a test in `supabase/tests/` and a browser check as fake members, then Tauriel's PASS.
+
+## Build log
+### Steps 1–2 built 11-26 ~10:00 (local test server). Waiting on Tauriel's PASS.
+Migration `20261126150000_anonymous_invites.sql`.
+
+**What it does**
+- **Limited accounts:** `profiles.account_kind` = full | limited, set only by the server.
+  - `is_approved()` / `is_admin()` / `is_staff()` now mean an approved **full** account, so every existing rule shuts limited accounts out automatically.
+  - Chats and private photos use the new `is_active_member()` and let limited accounts into **their own private_ rooms only**.
+  - Limited profiles are visible only to self, the admin, the people in their group, and that group's creator/moderators while a request is pending.
+  - A limited account sees only itself + its group's people.
+  - No welcome DM. No username or community groups, ever.
+- **Invites:** `group_invites` table. RLS is on with no policies, so it's reachable only through these functions:
+  - `create_private_invite(gid)`: hidden + approved groups only; creator / group moderator / admin; 128-bit code, SHA-256 hash only, 72 h; max 5 open and 10 a day per moderator.
+  - `revoke_private_invite(id)` and `list_private_invites(gid)`. The list never shows the code or who used it.
+- **Sign-up:** `handle_new_user()` reads `anon_invite` + `alias` from the sign-up form.
+  - It checks the invite is unused, not revoked and not expired, then burns it.
+  - It makes a limited, pending profile (alias = display name, username null) plus a pending request linked to the invite.
+  - A bad invite means no account is made.
+- **Second-person approval:** `approve_private_invite_request(rid)`.
+  - The approver must be the creator, a group moderator or the admin, and must **not** be the issuer (the admin is exempt).
+  - The 15-member cap still applies to "private" groups.
+  - Group creators can't skip this by inserting the member row directly.
+  - Platform moderators can't approve limited accounts from the admin screen.
+- **Step 2, history from join:** in **hidden** groups, the `messages` read rule also requires `created_at >= joined_at`.
+  - `joined_at` is now set by the server and can't be edited.
+  - Listed groups keep their full history.
+- **Fixed in passing:** the "↑mod" button had no database permission, so it silently did nothing.
+  - Now the creator or admin can switch a member between member and moderator only. The creator row never changes, and nobody else can be made "creator".
+  - This is needed so a group has a second leader who can approve.
+- **Group moderators** now see their group's join requests (deciding normal requests is still creator/admin).
+
+**Screens** (App.jsx, auth.jsx)
+- "🕶 Private invite" button for group leaders in hidden groups: makes a link shown once, lists open/used/cancelled invites with Cancel, and warns "only invite someone you know personally".
+- `/?private_invite=…` opens the **Join privately** form: name to show, login email (never shown), password, 18+, terms.
+- Limited accounts get a groups-only screen: "Waiting for approval", then just their group with the EXIT button.
+- Join requests from invites show "🕶 alias · joined by private invite"; ✓ calls the approval function.
+
+**Proof**
+- `run-rls-tests.sh` on a fresh rebuild: **135 checks, all PASS**.
+  - `server_anon_invite_signup_test.sql`: 13 checks.
+  - `rls_anon_invites_test.sql`: 41 checks.
+  - The hidden-groups test was updated for history-from-join.
+- Browser (11-26 ~9:55, the user path, on the local test server):
+  1. Grace makes Maria a group moderator.
+  2. Grace makes a private invite.
+  3. A new person opens it and joins as "Wren (test)" → Waiting for approval.
+  4. Grace's own ✓ is refused: "A second person must approve…".
+  5. Maria approves (204). Group = 3 members.
+  6. Wren signs in and sees only the group, with no menu, feed or members, and only the message sent after joining. The older message is hidden.
+
+**Known limits until step 3**
+- Full members of the group still see a limited member's account id in the roster and on their messages.
+- Limited accounts have no DMs and no roster.
+- The platform admin has no screen for hidden groups (approval by the admin works through the database function only).

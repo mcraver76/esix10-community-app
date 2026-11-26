@@ -99,9 +99,10 @@ insert into public.messages (room_id, user_id, sender_name, body, created_at) va
 -- A HIDDEN private group (Michael 11-26: hidden groups for sensitive circles). Creator Grace, member Maria.
 insert into public.private_groups (id, name, description, created_by, approved, member_count, join_policy, visibility) values
  ('20000000-0000-0000-0000-000000000002', 'Survivors Circle (test)', 'Fake hidden group', '10000000-0000-0000-0000-000000000002', true, 2, 'approval', 'hidden');
-insert into public.private_group_members (group_id, user_id, role) values
- ('20000000-0000-0000-0000-000000000002', '10000000-0000-0000-0000-000000000002', 'creator'),
- ('20000000-0000-0000-0000-000000000002', '10000000-0000-0000-0000-000000000004', 'member');
+-- joined a week ago (hidden groups show history only from the join date, anonymous invites step 2)
+insert into public.private_group_members (group_id, user_id, role, joined_at) values
+ ('20000000-0000-0000-0000-000000000002', '10000000-0000-0000-0000-000000000002', 'creator', now() - interval '7 days'),
+ ('20000000-0000-0000-0000-000000000002', '10000000-0000-0000-0000-000000000004', 'member', now() - interval '7 days');
 insert into public.messages (room_id, user_id, sender_name, body, created_at) values
  ('private_20000000-0000-0000-0000-000000000002', '10000000-0000-0000-0000-000000000004', 'Maria Lopez',
   'Hidden-group test message (fake).', now() - interval '1 hour');
