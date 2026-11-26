@@ -36,6 +36,23 @@ Branch: `security/p0-criticals`.
 ## P2 (15–19)
 ⬜ All open: headers (`public/_headers` for Cloudflare Pages), auth settings, backups + restore drill, logging, sensitive-group privacy (anonymous prayers, stream_key, marital status).
 
+## App Build Standard v2 (Tauriel PASS 11-26 07:52), adopted 11-26
+**File size check (`wc -l`, 11-26 7:50):**
+- **Over 800: `src/App.jsx` = 1,544 lines.** Split it before the org layer lands. Messages + PrivateGroups out first, using the existing split scripts + `check:imports`.
+- Watch list (500–800): forge.jsx 651, profile.jsx 629, feed.jsx 545.
+- Everything else is under 500.
+
+| # | Tooling to copy | Status | Notes |
+|---|---|---|---|
+| 1 | CI: lint → import check → tests → build + migration replay + RLS suite + 800-line warning | ⬜ | The local replay + RLS run already works (`run-rls-tests.sh`); needs `.github/workflows/ci.yml` |
+| 2 | RLS harness (fixtures, 2 orgs, "A can't see B") — NOTE (Idril 11-26): if guards switch to `is_trusted_server()`, psql sessions count as trusted and would skip the guards, so switch to the API harness (`rls-test.mjs`, shared with Alliance) in the same change | 🟡 | The SQL harness exists (`supabase/tests/rls_p0_test.sql`); add an API-level harness (Idril's `rls-test.mjs`) + 2 orgs when the org layer exists |
+| 3 | Ship-script template (gates → dry-run → push → verify → merge) | ⬜ | Galadriel pairs |
+| 4 | Live query helper (temp-folder link, one SQL file) | ⬜ | Galadriel pairs |
+| 5 | Off-site DB backup + check + restore drill | ⬜ | Galadriel pairs; = checklist P2-17 |
+| 6 | File backup function + bucket-coverage test | ⬜ | with P1-9 storage |
+| 7 | Actions pinned to SHAs | ⬜ | with #1 |
+| 8 | EN + ES strings file + missing-key test | ⬜ | The app is English-only today; add `src/strings.js` during the premium pass |
+
 ## Other Highs from the 11-26 audit still open
 - Anonymous prayers expose user_id/author (schema.sql:1552).
 - stream_key readable by all members.

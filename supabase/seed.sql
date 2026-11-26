@@ -87,12 +87,9 @@ insert into public.room_members (room_id, user_id, added_by) values
  ('dm_10000000-0000-0000-0000-000000000003_10000000-0000-0000-0000-000000000004', '10000000-0000-0000-0000-000000000003', '10000000-0000-0000-0000-000000000003'),
  ('dm_10000000-0000-0000-0000-000000000003_10000000-0000-0000-0000-000000000004', '10000000-0000-0000-0000-000000000004', '10000000-0000-0000-0000-000000000003');
 
--- One approved private group. The app's guard trigger requires a signed-in approved member,
--- and there is no sign-in while seeding, so triggers are paused for these two inserts only.
-set session_replication_role = replica;
+-- One approved private group (the guards trust the server while seeding: is_trusted_server()).
 insert into public.private_groups (id, name, description, created_by, approved, member_count, join_policy) values
  ('20000000-0000-0000-0000-000000000001', 'Recovery Circle (test)', 'Fake private group', '10000000-0000-0000-0000-000000000002', true, 2, 'approval');
 insert into public.private_group_members (group_id, user_id, role) values
  ('20000000-0000-0000-0000-000000000001', '10000000-0000-0000-0000-000000000002', 'creator'),
  ('20000000-0000-0000-0000-000000000001', '10000000-0000-0000-0000-000000000004', 'member');
-set session_replication_role = origin;
