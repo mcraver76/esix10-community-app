@@ -101,7 +101,7 @@ export function AuthScreen({ onAuth }) {
         const { data: available, error: uErr } = await supabase.rpc("username_available", { u: cleanU });
         if (uErr) { setError("Couldn't check that username right now — please try again."); setLoading(false); return; }
         if (available === false) { setError(`"${cleanU}" is already taken — try another username.`); setLoading(false); return; }
-        const { data, error } = await supabase.auth.signUp({ email, password, options: { data: { full_name: name, username: cleanU, terms_version: LEGAL_VERSION, terms_accepted_at: new Date().toISOString() } } });
+        const { data, error } = await supabase.auth.signUp({ email, password, options: { data: { full_name: name, username: cleanU, age_confirmed_18: ageConfirmed === true, terms_version: LEGAL_VERSION, terms_accepted_at: new Date().toISOString() } } });
         if (error) throw error;
         if (data.user) {
           // We do NOT create the profiles row here: with email confirmation on,

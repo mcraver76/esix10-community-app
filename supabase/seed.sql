@@ -5,7 +5,7 @@
 -- Test logins (local only, all share one test password): see LOCAL_TEST_SERVER.md.
 --   admin@example.test (admin) · mod@example.test (moderator)
 --   james@example.test, maria@example.test, david@example.test (approved members)
---   newbie@example.test (pending approval)
+--   newbie@example.test (pending approval) · removed@example.test (removed member, for security tests)
 
 create extension if not exists pgcrypto;
 
@@ -18,7 +18,8 @@ declare
     {"id":"10000000-0000-0000-0000-000000000003","email":"james@example.test","name":"James Carter","user":"jcarter","role":"member","status":"approved","group":"brotherhood"},
     {"id":"10000000-0000-0000-0000-000000000004","email":"maria@example.test","name":"Maria Lopez","user":"mlopez","role":"member","status":"approved","group":"sisterhood"},
     {"id":"10000000-0000-0000-0000-000000000005","email":"david@example.test","name":"David & Ana Kim","user":"thekims","role":"member","status":"approved","group":"family"},
-    {"id":"10000000-0000-0000-0000-000000000006","email":"newbie@example.test","name":"Sam Newcomer","user":"samnew","role":"member","status":"pending","group":"brotherhood"}
+    {"id":"10000000-0000-0000-0000-000000000006","email":"newbie@example.test","name":"Sam Newcomer","user":"samnew","role":"member","status":"pending","group":"brotherhood"},
+    {"id":"10000000-0000-0000-0000-000000000007","email":"removed@example.test","name":"Rex Removed","user":"rexremoved","role":"member","status":"removed","group":"brotherhood"}
   ]';
   p jsonb;
 begin
@@ -28,7 +29,7 @@ begin
       confirmation_token, recovery_token, email_change_token_new, email_change)
     values ('00000000-0000-0000-0000-000000000000', (p->>'id')::uuid, 'authenticated', 'authenticated',
       p->>'email', pw, now(), now() - interval '30 days', now(),
-      '{"provider":"email","providers":["email"]}', jsonb_build_object('full_name', p->>'name'),
+      '{"provider":"email","providers":["email"]}', jsonb_build_object('full_name', p->>'name', 'username', p->>'user', 'age_confirmed_18', true),
       '', '', '', '')
     on conflict (id) do nothing;
 
@@ -43,7 +44,11 @@ begin
     values ((p->>'id')::uuid, p->>'email', p->>'name', p->>'user', p->>'role', p->>'status',
       p->>'group', array[p->>'group'], 'Marietta', 'GA', 'Fake test profile for the local test server.',
       now(), '2026-06-13', case when p->>'role' in ('admin','moderator') then now() end, now())
-    on conflict (id) do nothing;
+    on conflict (id) do update set role = excluded.role, status = excluded.status,
+      group_id = excluded.group_id, group_ids = excluded.group_ids, city = excluded.city,
+      state = excluded.state, bio = excluded.bio, terms_accepted_at = excluded.terms_accepted_at,
+      terms_version = excluded.terms_version, mod_agreement_at = excluded.mod_agreement_at,
+      last_seen = excluded.last_seen;
   end loop;
 end $$;
 
@@ -76,6 +81,11 @@ insert into public.messages (room_id, user_id, sender_name, body, created_at) va
  ('group_brotherhood', '10000000-0000-0000-0000-000000000001', 'Test Admin', 'Count me in. (fake)', now() - interval '90 minutes'),
  ('group_sisterhood', '10000000-0000-0000-0000-000000000004', 'Maria Lopez', 'Praying for everyone this week. (fake)', now() - interval '5 hours'),
  ('dm_10000000-0000-0000-0000-000000000003_10000000-0000-0000-0000-000000000004', '10000000-0000-0000-0000-000000000003', 'James Carter', 'Thanks for the prayer last week. (fake DM)', now() - interval '1 day');
+
+-- The DM above is a real room with exactly its two people (security P0-2).
+insert into public.room_members (room_id, user_id, added_by) values
+ ('dm_10000000-0000-0000-0000-000000000003_10000000-0000-0000-0000-000000000004', '10000000-0000-0000-0000-000000000003', '10000000-0000-0000-0000-000000000003'),
+ ('dm_10000000-0000-0000-0000-000000000003_10000000-0000-0000-0000-000000000004', '10000000-0000-0000-0000-000000000004', '10000000-0000-0000-0000-000000000003');
 
 -- One approved private group. The app's guard trigger requires a signed-in approved member,
 -- and there is no sign-in while seeding, so triggers are paused for these two inserts only.

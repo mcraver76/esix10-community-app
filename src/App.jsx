@@ -128,7 +128,8 @@ function Messages({ profile, members, onRead }) {
   async function loadCustomRooms() {
     // Casual groups are visible only to their members (room_members).
     const { data: mem } = await supabase.from("room_members").select("room_id").eq("user_id", profile.id);
-    const ids = [...new Set((mem || []).map(r => r.room_id))];
+    // DMs are real roster rows too now (security P0-2); only casual groups belong in this list.
+    const ids = [...new Set((mem || []).map(r => r.room_id).filter(id => id.startsWith("group_custom_")))];
     if (!ids.length) { setCustomRooms([]); return; }
     const { data } = await supabase.from("messages").select("room_id, body").in("room_id", ids).order("created_at", { ascending: false });
     const roomMap = {};
@@ -220,7 +221,13 @@ function Messages({ profile, members, onRead }) {
       setUploading(false);
     }
     const senderName = profile.username ? `@${profile.username}` : formatName(profile.full_name);
-    const { error } = await supabase.from("messages").insert({ 
+    // DMs are real rooms with exactly two people (security P0-2): make sure it exists first.
+    if (activeRoom.startsWith("dm_")) {
+      const other = activeRoom.slice(3).split("_").find(id => id !== profile.id);
+      const { error: dmErr } = await supabase.rpc("start_dm", { other });
+      if (dmErr) { alert(`Message failed: ${dmErr.message}`); setPosting(false); return; }
+    }
+    const { error } = await supabase.from("messages").insert({
       room_id: activeRoom, 
       user_id: profile.id, 
       body: body.trim() || "📷",
@@ -393,13 +400,9 @@ function Messages({ profile, members, onRead }) {
               disabled={!newGroupName.trim() || newGroupMembers.length === 0 || creatingGroup}
               onClick={async () => {
                 setCreatingGroup(true);
-                const roomId = `group_custom_${Date.now()}`;
-                const senderName = profile.username ? `@${profile.username}` : formatName(profile.full_name);
-                await supabase.from("messages").insert({ room_id: roomId, user_id: profile.id, body: `📢 [GROUP:${newGroupName}] Members: ${newGroupMembers.map(m => m.username ? `@${m.username}` : formatName(m.full_name)).join(", ")}`, sender_name: senderName });
-                // Insert the creator first (establishes the room), then the invited members —
-                // this lets the security rule verify "you created this room" before adding others.
-                await supabase.from("room_members").insert({ room_id: roomId, user_id: profile.id, added_by: profile.id, is_creator: true });
-                if (newGroupMembers.length) await supabase.from("room_members").insert(newGroupMembers.map(m => ({ room_id: roomId, user_id: m.id, added_by: profile.id })));
+                // The server creates the room, its roster and the announcement in one step (security P0-2).
+                const { data: roomId, error: roomErr } = await supabase.rpc("create_custom_room", { room_name: newGroupName.trim(), member_ids: newGroupMembers.map(m => m.id) });
+                if (roomErr) { alert(`Couldn't create the group: ${roomErr.message}`); setCreatingGroup(false); return; }
                 await loadCustomRooms();
                 isMobileChat ? selectRoomMobile(roomId) : selectRoom(roomId);
                 setShowNewGroup(false); setNewGroupName(""); setNewGroupMembers([]); setCreatingGroup(false);
@@ -1145,19 +1148,9 @@ export default function App() {
     try {
       const { data, error } = await supabase.from("profiles").select(PROFILE_COLS).eq("id", u.id).single();
       if (error && error.code === "PGRST116") {
-        const isAdmin = u.email === ADMIN_EMAIL;
-        const md = u.user_metadata || {};
-        await supabase.from("profiles").insert({
-          id: u.id,
-          email: u.email,
-          full_name: md.full_name || "",
-          username: md.username || null,
-          role: isAdmin ? "admin" : "member",
-          status: isAdmin ? "approved" : "pending",
-          terms_accepted_at: md.terms_accepted_at || null,
-          terms_version: md.terms_version || null
-        });
-        const { data: newProfile } = await supabase.from("profiles").select(PROFILE_COLS).eq("id", u.id).single();
+        // The server creates every profile at sign-up (member + pending; security P0-1),
+        // so the browser never writes one. If it isn't visible yet, read it once more.
+        const { data: newProfile } = await supabase.from("profiles").select(PROFILE_COLS).eq("id", u.id).maybeSingle();
         if (newProfile) newProfile.email = u.email;   // own email from session, not the DB
         setProfile(newProfile);
         // NOTE: the admin "new member" text is sent once from GroupSelect.confirm()
@@ -1173,11 +1166,7 @@ export default function App() {
         if (retry) { retry.email = u.email; setProfile(retry); checkUnread(retry); }
         else if (!profile) { setShowSetup(true); }
       } else {
-        if (u.email === ADMIN_EMAIL && (data.role !== "admin" || data.status !== "approved")) {
-          await supabase.from("profiles").update({ role: "admin", status: "approved" }).eq("id", u.id);
-          data.role = "admin";
-          data.status = "approved";
-        }
+        // Admins are set on the server only (security P0-1); no auto-admin by email.
         data.email = u.email;   // own email from session, not the DB
         setProfile(data);
         // Check for unread messages

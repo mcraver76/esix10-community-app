@@ -8,7 +8,7 @@ Michael (7:20, via Idril): "an in-depth analysis of how it's set up, security…
 - One saved script (`~/claude/esix10/scripts/audit-checks.sh`) ran `git status`, `npm audit`, the RLS table count and the code searches.
 - Idril's 93-item RhinoScore checklist (`six10-alliance/docs/baseline-audit-2026-11-26/RHINOSCORE_BASELINE.md`) is the shared yardstick for the follow-up.
 
-**Nobody can use any of this today.** The database and its edge functions are paused, so none of these holes can be exploited right now. All of them have to be fixed **before** the fresh database goes live at the Dec 1 sitting. The fixes go in as migrations, and Tauriel passes them.
+**Nobody can use any of this today.** The database and its edge functions are paused, so none of these holes can be exploited right now. All of them have to be fixed before the app is ever turned on for real members. Michael (11-26 7:33): Dec 1 is the **account and ownership move only**, and the app stays paused until he says a design is locked in and Tauriel has passed every item on the hardening checklist (`docs/HARDENING_STATUS.md`). The fixes go in as migrations and are tested on the local test server first.
 
 ---
 
@@ -90,6 +90,6 @@ Next tier: notch/safe areas (check on a phone), landscape allowed, no screen or 
 ---
 
 ## D. Suggested order (all on branches; nothing goes live without Michael's yes)
-1. **Before Dec 1:** security fixes A1–A11 as migrations, replayed on a scratch database, then Tauriel's pass. Commit the untracked files (after a secrets check). CI. Security headers (`public/_headers`). ErrorBoundary.
+1. **First (Michael 11-26: hardening before design):** security fixes A1–A11 as migrations, tested on the local test server, then Tauriel's pass. Dec 1 moves the accounts only; the app stays paused. Commit the untracked files (after a secrets check). CI. Security headers (`public/_headers`). ErrorBoundary.
 2. **Before the App Store:** Delete account, Block user, photo permission text, built-in files instead of the live-site wrapper, native push, the Capacitor update.
 3. **Premium pass:** chat fixes, then the shared tokens and kit, then loading, tap targets, motion and speed.

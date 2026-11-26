@@ -2,7 +2,7 @@
 import React, { useState, useEffect } from "react";
 import { CheckCircle2, Dumbbell, Flame, Footprints, NotebookPen, Unlock, Zap } from "lucide-react";
 import { S, FORGE_CSS } from "./styles";
-import { supabase, SUPABASE_ANON_KEY } from "./supabaseClient";
+import { supabase } from "./supabaseClient";
 import { TabCarousel } from "./ui";
 import { formatName, localDateStr, cleanWodTitle } from "./helpers";
 
@@ -217,16 +217,15 @@ export function ForgeChallenge({ profile }) {
       const hasFuture = last && last.scheduled_date >= today;
       const base = hasFuture ? new Date(last.scheduled_date + 'T12:00:00') : new Date(today + 'T12:00:00');
       const off = hasFuture ? 1 : 0;
-      const response = await fetch('https://bffcrhjdibxqfmdreksi.supabase.co/functions/v1/generate', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${SUPABASE_ANON_KEY}` },
-        body: JSON.stringify({
+      // Signed-in call on whichever database this build uses (security P0-3; was hard-wired to live + public key).
+      const { data, error: fnErr } = await supabase.functions.invoke('generate', {
+        body: {
           prompt: 'Generate 7 daily challenges for ESix10 — a faith-based community of everyday people built on Ephesians 6:10. Mix categories: Scripture (priority), Physical, Mental, Preparedness, Leadership. RULES: each challenge must be a CLEAR, SPECIFIC, one-day action anyone can do and understand immediately — plain everyday language, no vague spiritual jargon or insider church terms. Title = short and motivating. Description = exactly what to do today, in one or two simple, concrete sentences. Faith-forward but accessible to newcomers. Return ONLY a JSON array, no markdown: [{"title":"","description":"","category":"Scripture|Physical|Mental|Preparedness|Leadership"}]',
           max_tokens: 2000
-        })
+        }
       });
-      const data = await response.json();
-      if (!data.content) throw new Error(data.error || 'No content returned');
+      if (fnErr) throw new Error(fnErr.message);
+      if (!data?.content) throw new Error(data.error || 'No content returned');
       const text = data.content.replace(/```json|```/g, '').trim();
       const challenges = JSON.parse(text);
       const insertData = challenges.map((c, i) => {
@@ -417,16 +416,15 @@ export function ForgeWOD({ profile }) {
       const hasFuture = last && last.scheduled_date >= today;
       const base = hasFuture ? new Date(last.scheduled_date + 'T12:00:00') : new Date(today + 'T12:00:00');
       const off = hasFuture ? 1 : 0;
-      const response = await fetch('https://bffcrhjdibxqfmdreksi.supabase.co/functions/v1/generate', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${SUPABASE_ANON_KEY}` },
-        body: JSON.stringify({
+      // Signed-in call on whichever database this build uses (security P0-3; was hard-wired to live + public key).
+      const { data, error: fnErr } = await supabase.functions.invoke('generate', {
+        body: {
           prompt: 'Generate 7 bodyweight workouts for a faith-based fitness community of EVERYDAY people of all ages and fitness levels (NOT athletes or CrossFitters). CRITICAL RULE: use ONLY plain, common movement names that anyone instantly understands — push-ups, squats, lunges, planks, jumping jacks, sit-ups, wall sits, mountain climbers, glute bridges, calf raises, high knees, marching in place, arm circles, etc. Do NOT use gym jargon or acronyms (no AMRAP, EMOM, RFT, "thrusters", "burpees over bar", etc.) and do NOT use cryptic codename titles or movements. If you ever include a less-common move, explain it in one short plain sentence right where it appears so nobody has to look it up. Titles must be clear and motivating (e.g. "Foundation Strength", "Steady and Strong"), never codenames, and must NOT include any day of the week or time of day (no "Monday", "Morning", etc.). Vary the difficulty across the week. Keep each field concise and beginner-friendly; coaching_notes may add a brief faith encouragement. Return ONLY a JSON array, no markdown: [{"title":"","warmup":"","main_work":"","cooldown":"","coaching_notes":"","estimated_minutes":30,"difficulty":3}]. difficulty 1-5 (1=very easy, 5=hard).',
           max_tokens: 2500
-        })
+        }
       });
-      const data = await response.json();
-      if (!data.content) throw new Error(data.error || 'No content returned');
+      if (fnErr) throw new Error(fnErr.message);
+      if (!data?.content) throw new Error(data.error || 'No content returned');
       const text = data.content.replace(/```json|```/g, '').trim();
       const wods = JSON.parse(text);
       const insertData = wods.map((w, i) => {

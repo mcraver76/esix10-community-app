@@ -1,27 +1,21 @@
 // Media — Watch (Cloudflare VOD), Listen (audio/podcast) and Live streams.
 import React from "react";
 import { S } from "./styles";
-import { supabase, SUPABASE_ANON_KEY } from "./supabaseClient";
-
-// ─── Statement of Faith ───────────────────────────────────────────────────────
+import { supabase } from "./supabaseClient";
 
 // ─── Media ────────────────────────────────────────────────────────────────────
-export const CF_FUNCTION_URL = 'https://bffcrhjdibxqfmdreksi.supabase.co/functions/v1/cloudflare';
-
+// Calls the "cloudflare" function as the SIGNED-IN person (their own sign-in token, sent
+// automatically), on whichever database this build points at (local test or live).
+// The function itself checks the caller is approved staff and enforces a daily cap (security P0-3).
 export async function callCloudflare(action, data = {}) {
   try {
-    const response = await fetch(CF_FUNCTION_URL, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        'apikey': SUPABASE_ANON_KEY,
-        'Authorization': `Bearer ${SUPABASE_ANON_KEY}`
-      },
-      body: JSON.stringify({ action, data })
-    });
-    const json = await response.json().catch(() => ({}));
-    if (!response.ok) return { error: json.error || json.message || `Cloudflare request failed (${response.status})` };
-    return json;
+    const { data: json, error } = await supabase.functions.invoke("cloudflare", { body: { action, data } });
+    if (error) {
+      let msg = error.message;
+      try { const body = await error.context?.json?.(); msg = body?.error || msg; } catch (_) {}
+      return { error: msg || "Cloudflare request failed." };
+    }
+    return json || {};
   } catch (e) {
     return { error: e.message || "Network error reaching Cloudflare." };
   }
