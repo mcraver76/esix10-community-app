@@ -93,3 +93,9 @@ insert into public.private_groups (id, name, description, created_by, approved, 
 insert into public.private_group_members (group_id, user_id, role) values
  ('20000000-0000-0000-0000-000000000001', '10000000-0000-0000-0000-000000000002', 'creator'),
  ('20000000-0000-0000-0000-000000000001', '10000000-0000-0000-0000-000000000004', 'member');
+insert into public.messages (room_id, user_id, sender_name, body, created_at) values
+ ('private_20000000-0000-0000-0000-000000000001', '10000000-0000-0000-0000-000000000004', 'Maria Lopez',
+  'Sensitive test message inside the private group (fake).', now() - interval '3 hours');
+-- one prayer per group, so cross-group tests have something to find
+insert into public.prayers (user_id, group_id, body, anonymous, author_name, reactions, created_at) values
+ ('10000000-0000-0000-0000-000000000005', 'family', 'Family prayer request (fake)', false, 'David & Ana Kim', 1, now() - interval '2 hours');

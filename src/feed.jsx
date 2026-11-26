@@ -4,6 +4,7 @@ import { Award, Camera, Eye, Flag, Flame, Footprints, MapPin } from "lucide-reac
 import { S } from "./styles";
 import { GROUPS, REACTIONS, VERSES, CHARGES } from "./constants";
 import { supabase } from "./supabaseClient";
+import { uploadPrivate, PrivateMedia } from "./privateMedia";
 import { formatName, localDateStr } from "./helpers";
 import { LevelIcon } from "./icons";
 import { displayName, fetchProfileStats, getLevel, getXP } from "./stats";
@@ -111,8 +112,8 @@ export function PersonalHeader({ profile }) {
         .in("group_id", profile.group_ids || [profile.group_id]);
 
       const { count: newPrayers } = await supabase
-        .from("prayers")
-        .select("*", { count: "exact", head: true })
+        .from("prayer_wall")
+        .select("id", { count: "exact", head: true })
         .gt("created_at", lastVisit)
         .eq("group_id", profile.group_id);
 
@@ -334,20 +335,18 @@ export function Feed({ profile, activeGroup, setActiveGroup, isNewMember, onNavi
     setPosting(true);
     setUploading(true);
     let photoUrl = null;
+    const target = postTarget;
     if (photoFile) {
-      const ext = photoFile.name.split(".").pop();
-      const path = `${profile.id}/post_${Date.now()}.${ext}`;
-      const { error: upErr } = await supabase.storage.from("avatars").upload(path, photoFile);
+      // Private store, readable only by this group's members (security 11-26).
+      const { ref, error: upErr } = await uploadPrivate(`posts/${target}`, photoFile, profile.id);
       if (upErr) {
         setUploading(false); setPosting(false);
         alert("Your photo couldn't upload — your post was not sent. Please try again.");
         return;
       }
-      const { data } = supabase.storage.from("avatars").getPublicUrl(path);
-      photoUrl = data.publicUrl;
+      photoUrl = ref;
     }
     setUploading(false);
-    const target = postTarget;
     const { error } = await supabase.from("posts").insert({ user_id: profile.id, group_id: target, body: body.trim(), photo_url: photoUrl, photo_approved: photoUrl ? false : true, reactions: {} });
     if (error) {
       setPosting(false);
@@ -506,9 +505,9 @@ export function Feed({ profile, activeGroup, setActiveGroup, isNewMember, onNavi
               {post.photo_url && (
                 (post.photo_approved !== false || post.user_id === profile?.id || isStaff(profile)) ? (
                   <div style={{ marginTop: 12, borderRadius: 10, overflow: "hidden", position: "relative" }}>
-                    {isVideoUrl(post.photo_url)
-                      ? <video src={post.photo_url} controls style={{ width: "100%", maxHeight: 320, display: "block", background: "#000" }} />
-                      : <img src={post.photo_url} alt="post" onClick={() => setLightbox(post.photo_url)} style={{ width: "100%", maxHeight: 320, objectFit: "cover", display: "block", cursor: "pointer" }} />
+                    <PrivateMedia src={post.photo_url} alt="post" onOpen={setLightbox}
+                      videoStyle={{ width: "100%", maxHeight: 320, display: "block", background: "#000" }}
+                      style={{ width: "100%", maxHeight: 320, objectFit: "cover", display: "block", cursor: "pointer" }} />
                     }
                     {post.photo_approved === false && (
                       <div style={{ position: "absolute", top: 8, left: 8, background: "rgba(0,0,0,0.7)", color: "#FF7E33", fontSize: 11, padding: "3px 8px", borderRadius: 6 }}>⏳ Pending approval</div>

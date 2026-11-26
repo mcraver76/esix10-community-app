@@ -165,7 +165,8 @@ export function PrayerRequests({ profile }) {
   useEffect(() => { loadPrayers(); }, []);
 
   async function loadPrayers() {
-    const { data } = await supabase.from("prayers").select("*").eq("group_id", profile.group_id).order("pinned", { ascending: false }).order("created_at", { ascending: false }).limit(50);
+    // prayer_wall: group-scoped, and never reveals who posted an anonymous request (security, 11-26).
+    const { data } = await supabase.from("prayer_wall").select("*").eq("group_id", profile.group_id).order("pinned", { ascending: false }).order("created_at", { ascending: false }).limit(50);
     setPrayers(data || []);
   }
 
@@ -239,7 +240,7 @@ export function PrayerRequests({ profile }) {
               </div>
               <div style={S.flex}>
                 {profile.role === "admin" && <button style={S.btnSm} onClick={() => pin(p.id, p.pinned)}>{p.pinned ? "Unpin" : "📌 Pin"}</button>}
-                {(profile.role === "admin" || profile.id === p.user_id) && <button style={S.btnDanger} onClick={() => deletePrayer(p.id)}>Remove</button>}
+                {(profile.role === "admin" || p.is_mine) && <button style={S.btnDanger} onClick={() => deletePrayer(p.id)}>Remove</button>}
               </div>
             </div>
             <p style={S.postBody}>{p.body}</p>

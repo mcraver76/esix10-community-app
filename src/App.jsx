@@ -21,6 +21,7 @@ import { NavIcon, LevelIcon, Avatar, LevelBadgeForUser } from "./icons";
 import { Badges, StatsDashboard, ProfileLevelSummary, Profile } from "./profile";
 import { isApproved, requireApproved, isStaff } from "./permissions";
 import { sendMemberEmail, notifyMembers } from "./notify";
+import { uploadPrivate, PrivateMedia } from "./privateMedia";
 import { Members } from "./members";
 import { AdminDashboard } from "./admin";
 import { Devotion, PrayerRequests, StatementOfFaith, PlanOfSalvation } from "./faith";
@@ -208,25 +209,22 @@ function Messages({ profile, members, onRead }) {
     if (!body.trim() && !photoFile) return;
     if (!activeRoom) return;
     setPosting(true);
-    let photoUrl = null;
-    if (photoFile) {
-      setUploading(true);
-      const ext = photoFile.name.split(".").pop();
-      const path = `${profile.id}/msg_${Date.now()}.${ext}`;
-      const { error: uploadError } = await supabase.storage.from("avatars").upload(path, photoFile);
-      if (!uploadError) {
-        const { data } = supabase.storage.from("avatars").getPublicUrl(path);
-        photoUrl = data.publicUrl;
-      }
-      setUploading(false);
-    }
-    const senderName = profile.username ? `@${profile.username}` : formatName(profile.full_name);
     // DMs are real rooms with exactly two people (security P0-2): make sure it exists first.
     if (activeRoom.startsWith("dm_")) {
       const other = activeRoom.slice(3).split("_").find(id => id !== profile.id);
       const { error: dmErr } = await supabase.rpc("start_dm", { other });
       if (dmErr) { alert(`Message failed: ${dmErr.message}`); setPosting(false); return; }
     }
+    let photoUrl = null;
+    if (photoFile) {
+      // Private store, readable only by this chat's members (security 11-26).
+      setUploading(true);
+      const { ref, error: uploadError } = await uploadPrivate(activeRoom, photoFile, profile.id);
+      setUploading(false);
+      if (uploadError) { alert(`Photo upload failed: ${uploadError.message}`); setPosting(false); return; }
+      photoUrl = ref;
+    }
+    const senderName = profile.username ? `@${profile.username}` : formatName(profile.full_name);
     const { error } = await supabase.from("messages").insert({
       room_id: activeRoom, 
       user_id: profile.id, 
@@ -237,7 +235,10 @@ function Messages({ profile, members, onRead }) {
     if (error) {
       alert(`Message failed: ${error.message}`);
     } else {
-      notifyMembers({ kind: "message", room_id: activeRoom, actor_id: profile.id, preview: body.trim() || "📷" });
+      // Lock-screen safety (11-26): DMs, private groups and casual group chats never put
+      // message text into a notification. Someone else may be holding the phone.
+      const privateRoom = /^(dm_|private_|group_custom_)/.test(activeRoom);
+      notifyMembers({ kind: "message", room_id: activeRoom, actor_id: profile.id, preview: privateRoom ? "You have a new message" : (body.trim() || "📷") });
       setBody(""); setPhotoFile(null); setPhotoPreview(null);
       setTimeout(() => loadMessages(), 300);
     }
@@ -535,9 +536,9 @@ function Messages({ profile, members, onRead }) {
                   </div>
                 )}
                 {msg.photo_url && (
-                  isVideoUrl(msg.photo_url)
-                    ? <video src={msg.photo_url} controls style={{ marginTop: 6, maxWidth: 220, borderRadius: 8, display: "block", marginLeft: isOwn ? "auto" : 0 }} />
-                    : <img src={msg.photo_url} alt="shared photo" onClick={() => setLightbox(msg.photo_url)} style={{ marginTop: 6, maxWidth: 220, maxHeight: 220, borderRadius: 8, objectFit: "cover", cursor: "pointer", display: "block", marginLeft: isOwn ? "auto" : 0 }} />
+                  <PrivateMedia src={msg.photo_url} onOpen={setLightbox}
+                    videoStyle={{ marginTop: 6, maxWidth: 220, borderRadius: 8, display: "block", marginLeft: isOwn ? "auto" : 0 }}
+                    style={{ marginTop: 6, maxWidth: 220, maxHeight: 220, borderRadius: 8, objectFit: "cover", cursor: "pointer", display: "block", marginLeft: isOwn ? "auto" : 0 }} />
                 )}
                 <div style={{ display: "flex", gap: 12, justifyContent: isOwn ? "flex-end" : "flex-start", marginTop: 2 }}>
                   {(isOwn || profile.role === "admin") && (
@@ -765,15 +766,16 @@ function PrivateGroups({ profile, allMembers }) {
     let photoUrl = null;
     if (photoFile) {
       setUploading(true);
-      const ext = photoFile.name.split('.').pop();
-      const path = `${profile.id}/pg_${Date.now()}.${ext}`;
-      const { error } = await supabase.storage.from('avatars').upload(path, photoFile);
-      if (!error) { const { data } = supabase.storage.from('avatars').getPublicUrl(path); photoUrl = data.publicUrl; }
+      // Private store, readable only by this private group's members (security 11-26).
+      const { ref, error } = await uploadPrivate(`private_${activeGroup.id}`, photoFile, profile.id);
       setUploading(false);
+      if (error) { alert(`Photo upload failed: ${error.message}`); setSending(false); return; }
+      photoUrl = ref;
     }
     const senderName = profile.username ? `@${profile.username}` : formatName(profile.full_name);
     await supabase.from('messages').insert({ room_id: `private_${activeGroup.id}`, user_id: profile.id, body: body.trim(), sender_name: senderName, photo_url: photoUrl });
-    notifyMembers({ kind: "message", room_id: `private_${activeGroup.id}`, actor_id: profile.id, preview: body.trim() || "📷" });
+    // Lock-screen safety (11-26): private group text never goes into a notification.
+    notifyMembers({ kind: "message", room_id: `private_${activeGroup.id}`, actor_id: profile.id, preview: "You have a new message" });
     setBody(''); setPhotoFile(null); setPhotoPreview(null);
     setSending(false);
     loadMessages();
@@ -976,9 +978,9 @@ function PrivateGroups({ profile, allMembers }) {
                     </div>
                   )}
                   {msg.photo_url && (
-                    isVideoUrl(msg.photo_url)
-                      ? <video src={msg.photo_url} controls style={{ marginTop: 4, maxWidth: 220, borderRadius: 8, display: 'block' }} />
-                      : <img src={msg.photo_url} alt="shared photo" onClick={() => setLightbox(msg.photo_url)} style={{ marginTop: 4, maxWidth: 220, maxHeight: 220, borderRadius: 8, objectFit: 'cover', cursor: 'pointer' }} />
+                    <PrivateMedia src={msg.photo_url} onOpen={setLightbox}
+                      videoStyle={{ marginTop: 4, maxWidth: 220, borderRadius: 8, display: 'block' }}
+                      style={{ marginTop: 4, maxWidth: 220, maxHeight: 220, borderRadius: 8, objectFit: 'cover', cursor: 'pointer' }} />
                   )}
                   {!isOwn && (
                     <button onClick={() => flagPGMessage(msg)} style={{ background: 'none', border: 'none', cursor: 'pointer', fontSize: 10, color: '#8A8A8A', marginTop: 2 }}>⚑ report</button>
