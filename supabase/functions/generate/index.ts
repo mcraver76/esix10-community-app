@@ -48,7 +48,7 @@ serve(async (req) => {
   // ---- which fixed prompt? (the browser can't send its own) ------------------
   let kind = "";
   try { ({ kind = "" } = await req.json()); } catch { return reply({ error: "Bad request." }, 400); }
-  const prompt = PROMPTS[kind];
+  const prompt = typeof kind === "string" && Object.hasOwn(PROMPTS, kind) ? PROMPTS[kind] : "";
   if (!prompt) return reply({ error: "Unknown kind (use 'challenges' or 'wods')." }, 400);
 
   // ---- daily cap -------------------------------------------------------------
