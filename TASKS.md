@@ -10,6 +10,8 @@
 - [ ] ℹ️ (Michael 11-26 8:59) The app is FREE, a charitable program of ESix10 Initiative. Focus: disaster response + combating child trafficking, with a veterans tie-in (Nienna drafting the program plan). The media "Premium only" option is hidden and off (media.jsx SHOW_PREMIUM=false) unless he decides otherwise.
 - [ ] LATER, parked (Michael 11-26 9:12, "likes it"): neutral app name/icon option, so the app doesn't look like a support app on someone's home screen (DV safety). Needs the real phone app shell (premium item 10) first.
 - [ ] Panic button / reach-out: OPTIONS PAPER first, no build (Michael 11-26 9:12). docs/PANIC_BUTTON_OPTIONS_DRAFT.md → Tauriel + Melian → Vairë (attorney) before any build.
+- [ ] ❓ Michael's call (Tauriel rec): after Quick Exit, lock private rooms until a PIN/Face ID ("private rooms lock"), or simply sign out. In the panic-button paper.
+- [ ] Phone app (later, Elanor/Eärwen): privacy screen that hides private rooms in the app switcher.
 - [x] Quick Exit in private groups (Michael 11-26 9:12): red ✕ EXIT button + Esc twice → harmless page, no "back", clears this device's recent-chat memory. Local/test only.
 - [x] Hidden private groups: Michael said yes (11-26 9:08). Built + tested on the security branch (2316dd3); Tauriel reviewing.
 - [ ] ⭐ PRIORITY (Michael 11-26 7:33): security hardening per docs/HARDENING_STATUS.md (Tauriel's checklist), local test server only. Premium design comes after.
